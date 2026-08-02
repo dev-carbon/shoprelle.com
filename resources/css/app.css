@@ -1,0 +1,626 @@
+@import 'tailwindcss';
+
+@import 'tw-animate-css';
+
+@source '../views';
+@source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
+
+@custom-variant dark (&:is(.dark *));
+
+@theme {
+    --font-sans:
+        'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif,
+        'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol',
+        'Noto Color Emoji';
+
+    /* Display only, and never below 700: Archivo is a grotesque drawn for size,
+       and it is here for one reason — it carries a true 900, where most humanist
+       sans families stop at 700 and leave the browser to fake the rest. Body
+       copy stays in the sans above; the two differ enough in build that the
+       pairing reads as deliberate. */
+    --font-display: 'Archivo', ui-sans-serif, system-ui, sans-serif;
+
+    /* Buttons and inputs sit at 12px, cards at 16px. */
+    --radius-lg: var(--radius);
+    --radius-md: calc(var(--radius) - 2px);
+    --radius-sm: calc(var(--radius) - 4px);
+    --radius-xl: 1rem;
+
+    /* Type scale. The three display steps are fluid: they are set large enough
+       that a fixed value would either overflow a phone or look timid on a
+       desktop, and a clamp settles both without a breakpoint in the markup.
+       Body stays fixed at 16 / small 14 — copy does not want to move. */
+    --text-display: clamp(2.75rem, 7vw, 4.5rem);
+    --text-display--line-height: 1;
+    --text-display--letter-spacing: -0.035em;
+    --text-hero: clamp(2.5rem, 6vw, 3.75rem);
+    --text-hero--line-height: 1.03;
+    --text-hero--letter-spacing: -0.03em;
+    --text-title: clamp(2rem, 4vw, 2.5rem);
+    --text-title--line-height: 1.12;
+    --text-title--letter-spacing: -0.025em;
+    --text-subtitle: 1.375rem;
+    --text-subtitle--line-height: 1.3;
+    --text-subtitle--letter-spacing: -0.015em;
+
+    --color-accent-brand: var(--accent-brand);
+    --color-accent-brand-foreground: var(--accent-brand-foreground);
+    --color-accent-brand-ink: var(--accent-brand-ink);
+    --color-surface-brand: var(--surface-brand);
+    --color-surface-brand-foreground: var(--surface-brand-foreground);
+    --color-surface-tile: var(--surface-tile);
+    --color-surface-dark: var(--surface-dark);
+    --color-surface-alt: var(--surface-alt);
+    --color-success: var(--success);
+    --color-warning: var(--warning);
+
+    --color-background: var(--background);
+    --color-foreground: var(--foreground);
+
+    --color-card: var(--card);
+    --color-card-foreground: var(--card-foreground);
+
+    --color-popover: var(--popover);
+    --color-popover-foreground: var(--popover-foreground);
+
+    --color-primary: var(--primary);
+    --color-primary-foreground: var(--primary-foreground);
+
+    --color-secondary: var(--secondary);
+    --color-secondary-foreground: var(--secondary-foreground);
+
+    --color-muted: var(--muted);
+    --color-muted-foreground: var(--muted-foreground);
+
+    --color-accent: var(--accent);
+    --color-accent-foreground: var(--accent-foreground);
+
+    --color-destructive: var(--destructive);
+    --color-destructive-foreground: var(--destructive-foreground);
+
+    --color-border: var(--border);
+    --color-input: var(--input);
+    --color-ring: var(--ring);
+
+    --color-chart-1: var(--chart-1);
+    --color-chart-2: var(--chart-2);
+    --color-chart-3: var(--chart-3);
+    --color-chart-4: var(--chart-4);
+    --color-chart-5: var(--chart-5);
+
+    --color-sidebar: var(--sidebar);
+    --color-sidebar-foreground: var(--sidebar-foreground);
+    --color-sidebar-primary: var(--sidebar-primary);
+    --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+    --color-sidebar-accent: var(--sidebar-accent);
+    --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+    --color-sidebar-border: var(--sidebar-border);
+    --color-sidebar-ring: var(--sidebar-ring);
+}
+
+/*
+ * Brand palette:
+ *
+ *   #001524  navy   oklch(0.187 0.043 240)  page ink, dark surface
+ *   #225EE6  blue   oklch(0.532 0.215 263)  primary
+ *   #FFECD1  cream  oklch(0.951 0.041 77)   secondary surface, dark-mode ink
+ *   #FFC300  gold   oklch(0.848 0.174 86)   brand accent — logo and headings
+ *   #218041  green  oklch(0.53 0.13 150)    success
+ *
+ * The blue carries trust and the gold carries the brand; the green only ever
+ * confirms. That division is why the blue owns every interactive element and
+ * the gold owns none of them — a gold button would be unreadable at the sizes
+ * buttons come in.
+ *
+ * The blue is a shade darker than the #2563EB it comes from. At the source
+ * value it lands on 4.47:1 against the cream band, just under the threshold,
+ * and the band is where half the page's links sit.
+ *
+ * The page stays a *warm* off-white rather than the cooler #F8FAFC: the cream
+ * band is warm, and a cool page beneath a warm band reads as a mistake rather
+ * than as a choice.
+ *
+ * Contrast was computed, not eyeballed: every text pair clears 4.5:1 and the
+ * chart steps clear 3:1, in both modes. Chart hues are left alone — they are
+ * tuned for separation under colour-vision deficiency, and pulling one of them
+ * toward the new primary would collide with the blue step already in the set.
+ */
+:root {
+    --background: oklch(0.985 0.011 77);
+    --foreground: oklch(0.187 0.043 240);
+    --card: oklch(1 0 0);
+    --card-foreground: oklch(0.187 0.043 240);
+    --popover: oklch(1 0 0);
+    --popover-foreground: oklch(0.187 0.043 240);
+    --primary: oklch(0.532 0.215 263);
+    /* White, not cream: the blue is dark enough to carry it at 5.5:1, and a
+       warm tint on a saturated blue reads as a printing error. */
+    --primary-foreground: oklch(1 0 0);
+    --secondary: oklch(0.951 0.041 77);
+    --secondary-foreground: oklch(0.35 0.08 263);
+    --muted: oklch(0.957 0.022 78);
+    --muted-foreground: oklch(0.505 0.035 263);
+    --accent: oklch(0.945 0.03 78);
+    --accent-foreground: oklch(0.35 0.08 263);
+    /* The brand gold, #FFC300. A *surface* token: it carries the navy ink at
+       11.5:1, but as text on a light page it is 1.5:1, so it is only ever a
+       fill (logo, badges), with `accent-brand-foreground` on top of it. */
+    --accent-brand: oklch(0.848 0.174 86);
+    --accent-brand-foreground: oklch(0.187 0.043 240);
+    /* The gold as text — the *exact* logo gold, #FFC300, by explicit decision:
+       the section labels are meant to be the same colour as the mark, not a
+       darkened cousin of it.
+       ⚠️ Measured, it is 1.53:1 on the page and 1.62:1 on the cream band. It is
+       legible on the dark and blue sections and nowhere else, so anything set
+       in it on a light ground is decorative, not information. */
+    --accent-brand-ink: oklch(0.848 0.174 86);
+    /* A section filled with the brand blue, pinned to the light-theme step in
+       both themes: it is a filled surface, so it never needs the lift that
+       keeps blue *text* legible on navy. */
+    --surface-brand: oklch(0.532 0.215 263);
+    --surface-brand-foreground: oklch(1 0 0);
+    /* Marketplace tiles stay white in both themes. Brand marks are drawn in
+       their own colours, and those colours are specified against white — a tile
+       that flipped to navy would either wash them out or force a recolour that
+       is no longer the brand's. */
+    --surface-tile: oklch(1 0 0);
+    /* The band for a section that should read apart from the page: the
+       palette's cream used as a surface rather than as a chip. Its dark
+       counterpart is a deep blue, not a brown — see the note there. */
+    --surface-alt: oklch(0.951 0.041 77);
+    /* A section that stays dark in both themes. It exists so a heading can be
+       set in the gold itself: #FFC300 is 1.5:1 on the light page and 11.5:1
+       here, and no weight or size closes that gap. */
+    --surface-dark: oklch(0.187 0.043 240);
+    --surface-dark-foreground: oklch(0.951 0.041 77);
+    --surface-dark-muted: oklch(0.735 0.033 226);
+    --surface-dark-border: oklch(0.31 0.038 234);
+    --surface-dark-primary: oklch(0.7 0.15 263);
+    /* The exact logo gold again, which a dark ground carries at 11.5:1. */
+    --surface-dark-ink: oklch(0.848 0.174 86);
+    /* The green only ever confirms, so it is tuned as ink first: #22C55E is
+       2.3:1 on white and cannot carry a word. This is that hue taken down far
+       enough to read, and it is the value `text-success` resolves to. */
+    --success: oklch(0.53 0.13 150);
+    --warning: oklch(0.55 0.17 42);
+    --destructive: oklch(0.55 0.22 27);
+    --destructive-foreground: oklch(0.985 0.011 77);
+    --border: oklch(0.9 0.018 78);
+    --input: oklch(0.9 0.018 78);
+    --ring: oklch(0.532 0.215 263);
+    --chart-1: oklch(0.58 0.103 215);
+    --chart-2: oklch(0.66 0.17 52);
+    --chart-3: oklch(0.5 0.13 255);
+    --chart-4: oklch(0.64 0.13 90);
+    --chart-5: oklch(0.52 0.15 32);
+    --radius: 0.75rem;
+    --sidebar: oklch(0.975 0.018 78);
+    --sidebar-foreground: oklch(0.187 0.043 240);
+    --sidebar-primary: oklch(0.532 0.215 263);
+    --sidebar-primary-foreground: oklch(1 0 0);
+    --sidebar-accent: oklch(0.94 0.032 78);
+    --sidebar-accent-foreground: oklch(0.35 0.08 263);
+    --sidebar-border: oklch(0.9 0.018 78);
+    --sidebar-ring: oklch(0.532 0.215 263);
+}
+
+/*
+ * Dark mode is composed, not flipped: the navy becomes the page and the cream
+ * becomes the ink, which is the palette read the other way round. The blue is
+ * lifted to oklch 0.70 because #225EE6 on #001524 is only 2.2:1.
+ */
+.dark {
+    --background: oklch(0.187 0.043 240);
+    --foreground: oklch(0.951 0.041 77);
+    --card: oklch(0.245 0.042 238);
+    --card-foreground: oklch(0.951 0.041 77);
+    --popover: oklch(0.245 0.042 238);
+    --popover-foreground: oklch(0.951 0.041 77);
+    --primary: oklch(0.7 0.15 263);
+    --primary-foreground: oklch(0.187 0.043 240);
+    --secondary: oklch(0.3 0.04 235);
+    --secondary-foreground: oklch(0.951 0.041 77);
+    --muted: oklch(0.3 0.04 235);
+    --muted-foreground: oklch(0.735 0.033 226);
+    --accent: oklch(0.3 0.04 235);
+    --accent-foreground: oklch(0.951 0.041 77);
+    /* Same gold in both themes: it is a fill, so it needs no lift. */
+    --accent-brand: oklch(0.848 0.174 86);
+    --accent-brand-foreground: oklch(0.187 0.043 240);
+    /* The exact logo gold. On the navy page it lands at 11.5:1, which is where
+       this colour was always meant to live. */
+    --accent-brand-ink: oklch(0.848 0.174 86);
+    --surface-brand: oklch(0.532 0.215 263);
+    --surface-brand-foreground: oklch(1 0 0);
+    /* Still white — see the note on the light step. */
+    --surface-tile: oklch(1 0 0);
+    /* Deliberately *not* a dark version of the cream: taking the warm hue down
+       to this depth lands on a muddy brown that deadens the section. The band
+       swaps to a deep blue instead — the primary's own hue, with enough chroma
+       to read as a surface rather than as dimmed navy. */
+    --surface-alt: oklch(0.3 0.06 258);
+    /* A section that stays dark in both themes. It exists so a heading can be
+       set in the gold itself: #FFC300 is 1.5:1 on the light page and 11.5:1
+       here, and no weight or size closes that gap. */
+    --surface-dark: oklch(0.187 0.043 240);
+    --surface-dark-foreground: oklch(0.951 0.041 77);
+    --surface-dark-muted: oklch(0.735 0.033 226);
+    --surface-dark-border: oklch(0.31 0.038 234);
+    --surface-dark-primary: oklch(0.7 0.15 263);
+    --surface-dark-ink: oklch(0.848 0.174 86);
+    --success: oklch(0.72 0.16 150);
+    --warning: oklch(0.78 0.16 45);
+    --destructive: oklch(0.65 0.21 28);
+    --destructive-foreground: oklch(0.187 0.043 240);
+    --border: oklch(0.31 0.038 234);
+    --input: oklch(0.31 0.038 234);
+    --ring: oklch(0.7 0.15 263);
+    --chart-1: oklch(0.6 0.105 215);
+    --chart-2: oklch(0.655 0.17 58);
+    --chart-3: oklch(0.55 0.14 262);
+    --chart-4: oklch(0.665 0.125 95);
+    --chart-5: oklch(0.54 0.155 28);
+    --sidebar: oklch(0.165 0.04 241);
+    --sidebar-foreground: oklch(0.951 0.041 77);
+    --sidebar-primary: oklch(0.7 0.15 263);
+    --sidebar-primary-foreground: oklch(0.187 0.043 240);
+    --sidebar-accent: oklch(0.3 0.04 235);
+    --sidebar-accent-foreground: oklch(0.951 0.041 77);
+    --sidebar-border: oklch(0.31 0.038 234);
+    --sidebar-ring: oklch(0.7 0.15 263);
+}
+
+/*
+ * ── Why these override `--color-*` and not the palette tokens ───────────────
+ *
+ * Tailwind's utilities read the aliases (`--color-muted-foreground`), and those
+ * are declared once on `:root` as `var(--muted-foreground)`. A custom property
+ * is substituted where it is *declared*, so the alias resolves to the root's
+ * value and descendants inherit the finished colour. Redeclaring the palette
+ * token further down the tree changes nothing at all.
+ *
+ * `.dark` gets away with it only because it sits on the same element as
+ * `:root`. A section in the middle of the page does not, so it has to reset
+ * the aliases themselves.
+ *
+ * ── A dark section, on a page that is otherwise light.
+ *
+ * Rather than restyling every child, it re-declares the tokens its contents
+ * already read: the heading's `accent-brand-ink` becomes the gold that a dark
+ * ground allows, ink becomes cream, and the blue is lifted to the step that
+ * survives a navy ground. Anything dropped inside adapts without knowing where
+ * it is.
+ */
+@utility section-dark {
+    background-color: var(--surface-dark);
+    color: var(--surface-dark-foreground);
+
+    --color-background: var(--surface-dark);
+    --color-foreground: var(--surface-dark-foreground);
+    --color-muted-foreground: var(--surface-dark-muted);
+    --color-border: var(--surface-dark-border);
+    --color-primary: var(--surface-dark-primary);
+    --color-accent-brand-ink: var(--surface-dark-ink);
+}
+
+/*
+ * The counterpart to `section-dark`, in the brand blue.
+ *
+ * The blue is pinned to the light-theme step in both modes, exactly as the
+ * marketplace tiles are: this is a filled surface, so it never needs the lift
+ * that keeps blue text legible on navy, and lifting it would put white on a
+ * blue too pale to hold it. The primary pair is inverted so a button dropped
+ * inside comes out white with a blue label, which is the only pairing that
+ * reads on this ground.
+ */
+@utility section-brand {
+    background-color: var(--surface-brand);
+    color: var(--surface-brand-foreground);
+
+    --color-background: var(--surface-brand);
+    --color-foreground: var(--surface-brand-foreground);
+    /* Near-white, not a muted tint. White itself only reaches 5.50:1 on this
+       blue, so that is the ceiling for *any* ink here — a genuinely muted tone
+       lands around 4.6:1 and reads as washed out however legal it is. On this
+       band the hierarchy comes from size and weight instead of colour. */
+    --color-muted-foreground: oklch(0.98 0.02 263);
+    --color-border: oklch(0.85 0.09 263);
+    --color-card: var(--surface-brand-foreground);
+    --color-card-foreground: var(--surface-brand);
+    --color-primary: var(--surface-brand-foreground);
+    --color-primary-foreground: var(--surface-brand);
+    --color-ring: var(--surface-brand-foreground);
+}
+
+/*
+ * The third filled section, in the logo's own gold.
+ *
+ * This one inverts the rule the other two follow. #FFC300 is a light colour:
+ * white on it is 1.61:1, so it cannot carry the pale ink the blue does. The
+ * navy goes on top instead — and lands at 11.52:1, the highest contrast
+ * anywhere on the site. It reuses `accent-brand` rather than declaring a colour
+ * of its own, so the band and the mark can never drift apart.
+ */
+@utility section-accent {
+    background-color: var(--accent-brand);
+    color: var(--accent-brand-foreground);
+
+    --color-background: var(--accent-brand);
+    --color-foreground: var(--accent-brand-foreground);
+    /* A deep warm brown rather than a grey: a neutral muted tone over a colour
+       this saturated reads as dirt on the page. 7.39:1. */
+    --color-muted-foreground: oklch(0.34 0.08 80);
+    --color-border: oklch(0.55 0.12 80);
+    --color-card: var(--accent-brand-foreground);
+    --color-card-foreground: var(--accent-brand);
+    /* A navy button with a cream label, at 16:1. */
+    --color-primary: var(--accent-brand-foreground);
+    --color-primary-foreground: var(--surface-dark-foreground);
+    --color-ring: var(--accent-brand-foreground);
+}
+
+@layer base {
+    * {
+        @apply border-border;
+    }
+
+    body {
+        @apply bg-background text-foreground;
+        -webkit-font-smoothing: antialiased;
+    }
+
+    /* The landing page's header is sticky, so an anchor that scrolls to the top
+       of a section would put its heading underneath the bar. Every section that
+       a nav link points at reserves that height for itself. */
+    :target {
+        scroll-margin-top: 6rem;
+    }
+
+    @media (prefers-reduced-motion: no-preference) {
+        html {
+            scroll-behavior: smooth;
+        }
+    }
+}
+
+/*
+ * Motion is deliberately quiet: entrances only, short, and never more than a
+ * few pixels of travel. A concierge does not put on a show.
+ */
+@utility animate-enter {
+    animation: shoprelle-enter 0.24s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@utility animate-rise {
+    animation: shoprelle-rise 0.65s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes shoprelle-enter {
+    from {
+        opacity: 0;
+        transform: translateY(4px) scale(0.99);
+    }
+}
+
+/*
+ * A delivery zone, pinging.
+ *
+ * A ring that grows and fades, not a dot changing opacity: at the size this
+ * renders on a world map, a blink is invisible and an expanding circle is the
+ * only thing the eye catches at the edge of vision. `transform-box: fill-box`
+ * is what makes the scale happen about the circle's own centre rather than the
+ * origin of the SVG's coordinate system.
+ */
+@utility animate-ripple {
+    transform-box: fill-box;
+    transform-origin: center;
+    animation: shoprelle-ripple 3s cubic-bezier(0.2, 0.6, 0.35, 1) infinite;
+}
+
+@keyframes shoprelle-ripple {
+    from {
+        transform: scale(0.4);
+        opacity: 0.6;
+    }
+    to {
+        transform: scale(3);
+        opacity: 0;
+    }
+}
+
+/*
+ * ── The hero's looping story ────────────────────────────────────────────────
+ *
+ * The four cards light up one after another and then reset, so the service
+ * explains itself before anybody reads a word. One shared cycle, and each card
+ * enters at its own `animation-delay` — no timers, no library, and the whole
+ * thing stops dead under `prefers-reduced-motion`, where the cards simply sit
+ * at their untouched state: nothing here sets an opacity outside the keyframes.
+ */
+@utility animate-stage {
+    animation: shoprelle-stage 14s cubic-bezier(0.16, 1, 0.3, 1) infinite both;
+}
+
+@keyframes shoprelle-stage {
+    0% {
+        opacity: 0.35;
+        transform: translateY(10px);
+    }
+    5% {
+        opacity: 1;
+        transform: translateY(0);
+    }
+    /* Held for most of the cycle: the four stages are meant to be read, and a
+       card that fades the moment it has finished arriving was never read. */
+    82% {
+        opacity: 1;
+        transform: translateY(0);
+    }
+    92%,
+    100% {
+        opacity: 0.35;
+        transform: translateY(10px);
+    }
+}
+
+/* The parcel's progress, drawn as it happens rather than sitting finished. */
+@utility animate-stage-fill {
+    transform-origin: left;
+    animation: shoprelle-stage-fill 14s cubic-bezier(0.16, 1, 0.3, 1) infinite
+        both;
+}
+
+@keyframes shoprelle-stage-fill {
+    0% {
+        transform: scaleX(0);
+    }
+    18% {
+        transform: scaleX(1);
+    }
+    82% {
+        transform: scaleX(1);
+    }
+    92%,
+    100% {
+        transform: scaleX(0);
+    }
+}
+
+/*
+ * The delivery truck, nudging forward. Three pixels and no more: it is there to
+ * say the parcel is moving, not to be watched.
+ */
+@utility animate-shuttle {
+    animation: shoprelle-shuttle 1.8s ease-in-out infinite;
+}
+
+@keyframes shoprelle-shuttle {
+    0%,
+    100% {
+        transform: translateX(0);
+    }
+    50% {
+        transform: translateX(3px);
+    }
+}
+
+@keyframes shoprelle-rise {
+    from {
+        opacity: 0;
+        transform: translateY(16px);
+    }
+}
+
+/*
+ * ── The delivery network ────────────────────────────────────────────────────
+ *
+ * A route drawing itself from the hub to its destination.
+ *
+ * The path carries `pathLength="1"`, which rescales every dash calculation to
+ * that one unit — so a single keyframe draws a short hop and a long haul alike,
+ * with no per-route length to measure and no custom property to thread through
+ * the markup. The dash array is one whole unit, so the "dash" is the route
+ * itself and there is no gap to catch the eye.
+ */
+@utility animate-route {
+    animation: shoprelle-route 1.5s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes shoprelle-route {
+    from {
+        stroke-dashoffset: 1;
+    }
+    to {
+        stroke-dashoffset: 0;
+    }
+}
+
+/*
+ * A parcel on its way, as a point of light running the arc it belongs to.
+ *
+ * `offset-path` is what carries it: the dot is drawn at the origin and the
+ * property moves it along the same curve the route is stroked from, which the
+ * compositor can run on its own. Animating `cx`/`cy`, or a `translate` computed
+ * per frame in JavaScript, would put the same motion back on the main thread.
+ *
+ * Written as plain CSS rather than a `@utility` because of the `@supports`
+ * below: an unlayered rule outranks every layered one whatever the order, so
+ * the fallback and the real thing cannot end up fighting.
+ */
+.route-parcel {
+    opacity: 0;
+}
+
+@supports (offset-path: path('M 0 0')) {
+    .route-parcel {
+        /* The dot is round, so rotating it along the tangent would only cost
+           work nobody can see. */
+        offset-rotate: 0deg;
+        animation: shoprelle-parcel 5s cubic-bezier(0.45, 0, 0.55, 1) infinite
+            both;
+    }
+}
+
+@keyframes shoprelle-parcel {
+    0% {
+        offset-distance: 0%;
+        opacity: 0;
+    }
+    /* Faded in just off the hub and out just short of the destination: a dot
+       that pops into being on top of a marker reads as a glitch, and one that
+       lands on it competes with the marker's own ping. */
+    14% {
+        opacity: 1;
+    }
+    76% {
+        opacity: 1;
+    }
+    100% {
+        offset-distance: 100%;
+        opacity: 0;
+    }
+}
+
+/*
+ * The marketplace ticker. Each track holds its list twice, so shifting it by
+ * half its width lands exactly back on the start and the loop is seamless. The
+ * reverse variant runs the same distance the other way, for the second row.
+ */
+@utility animate-marquee {
+    animation: shoprelle-marquee 42s linear infinite;
+}
+
+@utility animate-marquee-reverse {
+    animation: shoprelle-marquee 42s linear infinite reverse;
+}
+
+@keyframes shoprelle-marquee {
+    from {
+        transform: translateX(0);
+    }
+    to {
+        transform: translateX(-50%);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .animate-ripple,
+    .animate-shuttle,
+    .animate-stage,
+    .animate-stage-fill,
+    .animate-enter,
+    .animate-rise,
+    .animate-marquee,
+    .animate-marquee-reverse,
+    .animate-route,
+    .route-parcel {
+        animation: none;
+    }
+
+    /* The route is drawn by animating its dash offset away, so switching the
+       animation off would leave every route hidden. Cancelling the dash
+       instead lands on the state the animation was going to finish in. */
+    .animate-route {
+        stroke-dasharray: none;
+    }
+}

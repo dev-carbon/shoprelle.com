@@ -1,0 +1,6 @@
+resources/js/components/ui/*
+resources/views/mail/*
+
+# Generated map data, kept minified on purpose: it is 36 KB of
+# coordinates that nobody reads and pretty-printing doubles.
+resources/js/data/world.json
