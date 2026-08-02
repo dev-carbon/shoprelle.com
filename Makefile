@@ -155,7 +155,14 @@ schedule:
 permissions:
 	mkdir -p storage/pail storage/logs storage/framework/cache storage/framework/sessions storage/framework/views
 	sudo chown -R $(WEB_USER):$(WEB_GROUP) storage bootstrap/cache
-	sudo chmod -R 775 storage bootstrap/cache
+	# 775 sur les dossiers, 664 sur les fichiers, et non un `chmod -R 775` sur
+	# les deux. Le mode récursif pose aussi le bit exécutable sur les fichiers,
+	# y compris les .gitignore que git suit dans storage/ et bootstrap/cache/ ;
+	# git enregistre ce bit, et le serveur se retrouve avec des fichiers
+	# « modifiés » sans qu'une seule ligne ait changé — ce qui bloque le
+	# prochain git pull.
+	sudo find storage bootstrap/cache -type d -exec chmod 775 {} +
+	sudo find storage bootstrap/cache -type f -exec chmod 664 {} +
 	sudo chown $(WEB_USER):$(WEB_GROUP) database/database.sqlite
 	sudo chmod 664 database/database.sqlite
 	sudo chown $(WEB_USER):$(WEB_GROUP) database
