@@ -576,7 +576,9 @@ export default function Welcome({
                         className="pointer-events-none absolute inset-0 bg-[radial-gradient(60%_60%_at_50%_0%,var(--color-primary)_0%,transparent_70%)] opacity-[0.07]"
                     />
 
-                    <WorldBackdrop />
+                    <WorldBackdrop
+                        codes={countries.map((country) => country.code)}
+                    />
 
                     <div className="relative mx-auto w-full max-w-3xl px-4 pt-24 pb-16 text-center lg:pt-28">
                         <h1

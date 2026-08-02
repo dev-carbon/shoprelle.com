@@ -1,6 +1,9 @@
 resources/js/components/ui/*
 resources/views/mail/*
 
-# Generated map data, kept minified on purpose: it is 36 KB of
-# coordinates that nobody reads and pretty-printing doubles.
+# Generated map data, kept minified on purpose: it is coordinates that nobody
+# reads and pretty-printing doubles. `world.json` is the source the other two
+# are projected from — see the map component for how they are regenerated.
 resources/js/data/world.json
+resources/js/data/world-atlas.json
+resources/js/data/hero-dots.json

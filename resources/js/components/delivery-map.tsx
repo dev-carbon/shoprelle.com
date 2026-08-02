@@ -2,27 +2,8 @@ import { memo, useMemo, useState } from 'react';
 
 import atlas from '@/data/world-atlas.json';
 import { useInView } from '@/hooks/use-in-view';
+import { ISO_NUMERIC, ORIGIN_ID } from '@/lib/destinations';
 import { cn } from '@/lib/utils';
-
-/**
- * ISO 3166-1 numeric ids for the destinations, keyed by the alpha-2 codes
- * `config/shoprelle.php` uses.
- *
- * The atlas is keyed by the numeric code and ours by alpha-2, so the two have
- * to be joined on something, and the code is the only thing that will not
- * drift. An id with no shape is simply never looked up, so opening a destination
- * stays a line in `config/shoprelle.php` and nothing here.
- */
-const ISO_NUMERIC: Record<string, string> = {
-    CM: '120', // Cameroun
-    CI: '384', // Côte d'Ivoire
-    SN: '686', // Sénégal
-    GA: '266', // Gabon
-    CG: '178', // Congo
-};
-
-/** France, where every order is bought and every parcel leaves from. */
-const ORIGIN_ID = '250';
 
 /**
  * The world, projected and committed rather than computed.
@@ -40,11 +21,13 @@ const ORIGIN_ID = '250';
 const {
     view: VIEW,
     hub: HUB_POINT,
+    graticule: GRATICULE,
     anchors: ANCHORS,
     shapes: SHAPES,
 } = atlas as unknown as {
     view: [number, number, number, number];
     hub: [number, number];
+    graticule: string;
     anchors: Record<string, [number, number]>;
     shapes: Record<string, string>;
 };
@@ -184,10 +167,22 @@ const Network = memo(function Network({
                 WebkitMaskComposite: 'source-in',
             }}
         >
-            {/* Four tiers, each a single flat fill, and not one stroke on the
-                whole map. Borders are what make a world map read as a
-                reference work; without them the ground is just land, and the
-                only shapes with an edge are the ones that matter.
+            {/* The graticule, under everything.
+
+                Meridians and parallels every twenty and fifteen degrees, which
+                is sparse enough to stay a texture rather than become a mesh.
+                Drawn in the brand blue rather than in a neutral, and held down
+                near the floor of what is visible: it has to say "globe" without
+                ever being mistaken for a route, and the routes are the same
+                colour four times over. */}
+            <path
+                d={GRATICULE}
+                fill="none"
+                strokeWidth={0.4}
+                className="stroke-primary/20"
+            />
+
+            {/* Four tiers, each a single flat fill.
 
                 Measured rather than eyeballed: the ground sits at 1.21:1 on the
                 page behind it — near enough to sit back as context — the
@@ -211,6 +206,21 @@ const Network = memo(function Network({
                     strokeLinejoin="round"
                 />
             </g>
+
+            {/* The countries, separated by a hairline of the page's own colour
+                rather than by a drawn border. It is the ground showing through,
+                not a line added on top, which is what keeps the landmass
+                reading as one silhouette while its parts stay legible.
+
+                Only on the base: a lit country is drawn over this and comes out
+                whole, which is the point — the eye should find one shape, not a
+                country with its provinces marked. */}
+            <path
+                d={LAND}
+                fill="none"
+                strokeWidth={0.45}
+                className="stroke-background/60"
+            />
 
             {/* France, a step up from the ground: it has to be findable as the
                 origin of every route without ever competing with a
