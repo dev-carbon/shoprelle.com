@@ -34,7 +34,7 @@ export default function AuthSplitLayout({
                     className="relative z-10 flex w-fit items-center gap-2.5 text-lg font-semibold"
                 >
                     <span className="flex size-8 items-center justify-center rounded-lg bg-primary-foreground/15">
-                        <AppLogoIcon className="size-4 fill-current" />
+                        <AppLogoIcon className="size-4" />
                     </span>
                     Shoprelle
                 </Link>
@@ -75,7 +75,7 @@ export default function AuthSplitLayout({
                         className="flex items-center justify-center gap-2.5 font-semibold lg:hidden"
                     >
                         <span className="flex size-8 items-center justify-center rounded-lg bg-accent-brand">
-                            <AppLogoIcon className="size-4 fill-current text-accent-brand-foreground" />
+                            <AppLogoIcon className="size-4 text-accent-brand-foreground" />
                         </span>
                         Shoprelle
                     </Link>

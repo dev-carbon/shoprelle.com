@@ -516,7 +516,7 @@ export default function Welcome({
                                 scrolled ? 'size-7' : 'size-8',
                             )}
                         >
-                            <AppLogoIcon className="size-4 fill-current text-accent-brand-foreground" />
+                            <AppLogoIcon className="size-4 text-accent-brand-foreground" />
                         </span>
                         Shoprelle
                     </a>
@@ -1288,7 +1288,7 @@ export default function Welcome({
                     <div>
                         <span className="flex items-center gap-2.5 font-display text-lg font-extrabold tracking-tight">
                             <span className="flex size-8 items-center justify-center rounded-lg bg-accent-brand">
-                                <AppLogoIcon className="size-4 fill-current text-accent-brand-foreground" />
+                                <AppLogoIcon className="size-4 text-accent-brand-foreground" />
                             </span>
                             Shoprelle
                         </span>

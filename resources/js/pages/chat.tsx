@@ -60,7 +60,7 @@ export default function Chat({ conversation }: Props) {
                         className="flex items-center gap-2.5 font-semibold"
                     >
                         <span className="flex size-8 items-center justify-center rounded-lg bg-accent-brand">
-                            <AppLogoIcon className="size-4 fill-current text-accent-brand-foreground" />
+                            <AppLogoIcon className="size-4 text-accent-brand-foreground" />
                         </span>
                         Shoprelle
                     </Link>
