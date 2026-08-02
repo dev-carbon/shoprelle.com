@@ -10,7 +10,15 @@ export type UseAppearanceReturn = {
 };
 
 const listeners = new Set<() => void>();
-let currentAppearance: Appearance = 'system';
+/**
+ * Le clair est le défaut, et « système » n'est plus qu'un choix explicite.
+ *
+ * La vitrine est dessinée en clair — fond off-white chaud, or de marque, carte
+ * dont les contrastes ont été mesurés sur ce fond. Laisser le système décider
+ * revenait à ce que la moitié des visiteurs découvrent le site dans une
+ * variante que personne n'avait validée.
+ */
+let currentAppearance: Appearance = 'light';
 
 const prefersDark = (): boolean => {
     if (typeof window === 'undefined') {
@@ -31,10 +39,10 @@ const setCookie = (name: string, value: string, days = 365): void => {
 
 const getStoredAppearance = (): Appearance => {
     if (typeof window === 'undefined') {
-        return 'system';
+        return 'light';
     }
 
-    return (localStorage.getItem('appearance') as Appearance) || 'system';
+    return (localStorage.getItem('appearance') as Appearance) || 'light';
 };
 
 const isDarkMode = (appearance: Appearance): boolean => {
@@ -75,11 +83,10 @@ export function initializeTheme(): void {
         return;
     }
 
-    if (!localStorage.getItem('appearance')) {
-        localStorage.setItem('appearance', 'system');
-        setCookie('appearance', 'system');
-    }
-
+    // Rien n'est écrit ici. Semer un défaut dans le stockage le rend collant :
+    // le jour où ce défaut change, tous ceux qui n'ont jamais rien choisi
+    // gardent l'ancien. Seul un choix explicite est mémorisé, et l'absence de
+    // valeur veut dire « clair », côté serveur comme côté client.
     currentAppearance = getStoredAppearance();
     applyTheme(currentAppearance);
 
@@ -91,7 +98,7 @@ export function useAppearance(): UseAppearanceReturn {
     const appearance: Appearance = useSyncExternalStore(
         subscribe,
         () => currentAppearance,
-        () => 'system',
+        () => 'light',
     );
 
     const resolvedAppearance: ResolvedAppearance = isDarkMode(appearance)
