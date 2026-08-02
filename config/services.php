@@ -35,7 +35,11 @@ return [
 
     'telegram' => [
         'token' => env('TELEGRAM_BOT_TOKEN'),
-        'username' => env('TELEGRAM_BOT_USERNAME'),
+        // Le nom du bot porte sa valeur par défaut : c'est un fait de marque,
+        // pas un réglage de machine, et c'est lui seul qui fabrique l'URL
+        // t.me. Le token, lui, reste hors du dépôt — il n'a de valeur par
+        // défaut nulle part.
+        'username' => env('TELEGRAM_BOT_USERNAME', 'TheShoprelleBot'),
         'webhook_secret' => env('TELEGRAM_WEBHOOK_SECRET'),
         'api_url' => env('TELEGRAM_API_URL', 'https://api.telegram.org'),
         'timeout' => (int) env('TELEGRAM_TIMEOUT', 10),
