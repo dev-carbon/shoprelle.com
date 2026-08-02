@@ -185,6 +185,17 @@ const ASSURANCES: { icon: LucideIcon; title: string; description: string }[] = [
     },
 ];
 
+/**
+ * Le vert du logo WhatsApp.
+ *
+ * Sa couleur, pas la nôtre — comme les marques des marketplaces plus haut sur
+ * la page. Le glyphe reste blanc dessus, ce qui est le verrouillage officiel de
+ * WhatsApp : mesuré, le blanc n'y est qu'à 1,98:1, mais la pastille ne porte
+ * aucune information seule — le mot « WhatsApp » est écrit juste à côté, à
+ * pleine encre. Elle sert à reconnaître, pas à lire.
+ */
+const WHATSAPP_GREEN = '#25D366';
+
 const QUESTIONS: { question: string; answer: string }[] = [
     {
         question: 'Sur quels sites puis-je commander ?',
@@ -318,6 +329,7 @@ function ChannelCard({
     name,
     description,
     badge,
+    brand,
     href,
     external,
 }: {
@@ -326,13 +338,29 @@ function ChannelCard({
     name: string;
     description: string;
     badge: string;
+    /**
+     * La couleur propre de la marque, pour la pastille de l'icône.
+     *
+     * Même règle que les tuiles marketplace : une marque se dessine dans sa
+     * couleur, pas dans celle du site. Quand elle est absente, la pastille
+     * prend le bleu de Shoprelle — les canaux que Shoprelle opère lui-même.
+     */
+    brand?: string;
     href?: string;
     external?: boolean;
 }) {
     const body = (
         <>
             <div className="flex items-center gap-3">
-                <span className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-primary text-primary-foreground">
+                <span
+                    style={brand ? { backgroundColor: brand } : undefined}
+                    className={cn(
+                        'flex size-11 shrink-0 items-center justify-center rounded-xl',
+                        brand
+                            ? 'text-white'
+                            : 'bg-primary text-primary-foreground',
+                    )}
+                >
                     <Icon className="size-5" />
                 </span>
                 <div className="min-w-0">
@@ -1051,6 +1079,7 @@ export default function Welcome({
                             <Reveal from="right" delay={280} className="h-full">
                                 <ChannelCard
                                     icon={WhatsAppIcon}
+                                    brand={WHATSAPP_GREEN}
                                     name="WhatsApp"
                                     badge={
                                         whatsappUrl

@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Spinner } from '@/components/ui/spinner';
 import { Textarea } from '@/components/ui/textarea';
+import { cn } from '@/lib/utils';
 import { message, menu, skip, upload } from '@/routes/chat';
 import type { ChatStep } from '@/types';
 
@@ -116,16 +117,28 @@ export function ChatComposer({
 
     if (step.input_type === 'choice') {
         return (
+            /* Les réponses proposées sont le principal moyen d'avancer : elles
+               doivent se voir et se donner pour cliquables. `secondary` ne le
+               permettait pas — cette variante est crème, exactement la teinte
+               qu'avait la page, et les puces disparaissaient dedans.
+
+               Blanches, cernées, ombrées, elles se détachent du fond ; le bleu
+               ne vient qu'au survol, pour que dix propositions côte à côte ne
+               forment pas un mur de couleur. */
             <div className="flex flex-wrap justify-center gap-2">
                 {step.options.map((option) => (
                     <Button
                         key={option.value}
                         type="button"
-                        variant={
-                            option.value === 'restart' ? 'outline' : 'secondary'
-                        }
+                        variant="outline"
                         disabled={busy}
                         onClick={() => send(option.value)}
+                        className={cn(
+                            'rounded-full border-border bg-card font-medium shadow-sm transition-colors',
+                            'hover:border-primary hover:bg-primary/5 hover:text-primary',
+                            option.value === 'restart' &&
+                                'text-muted-foreground',
+                        )}
                     >
                         {option.label}
                     </Button>

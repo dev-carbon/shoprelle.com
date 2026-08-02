@@ -50,10 +50,10 @@ export default function Chat({ conversation }: Props) {
         // the transcript owns the scrolling, which is what lets it be scrolled
         // to the newest message. On `min-h-svh` the page grew instead, the
         // transcript never overflowed, and scrollTo had nothing to move.
-        <div className="flex h-svh flex-col bg-surface-alt">
+        <div className="flex h-svh flex-col bg-background">
             <Head title="Votre concierge d'achat" />
 
-            <header className="shrink-0 border-b bg-surface-alt">
+            <header className="shrink-0 border-b bg-background">
                 <div className="mx-auto flex w-full max-w-3xl items-center justify-between gap-4 px-4 py-3">
                     <Link
                         href={home()}
@@ -138,7 +138,7 @@ export default function Chat({ conversation }: Props) {
                 </div>
             </main>
 
-            <div className="shrink-0 border-t bg-surface-alt">
+            <div className="shrink-0 border-t bg-background">
                 <div className="mx-auto w-full max-w-3xl space-y-3 px-4 py-4">
                     {errorMessage && (
                         <Alert variant="destructive" className="animate-enter">
