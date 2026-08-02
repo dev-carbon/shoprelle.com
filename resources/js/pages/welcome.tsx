@@ -552,7 +552,7 @@ export default function Welcome({
                         >
                             <Link href={chat()}>
                                 <span className="hidden sm:inline">
-                                    Créer ma demande
+                                    Nouvelle commande
                                 </span>
                                 <span className="sm:hidden">Commander</span>
                                 <ArrowRight className="size-4" />
@@ -584,22 +584,7 @@ export default function Welcome({
                             className="mx-auto max-w-3xl animate-rise font-display text-hero font-black text-balance"
                             style={{ animationDelay: '40ms' }}
                         >
-                            Vos envies,{' '}
-                            {/* L'or en aplat derrière le mot, jamais en encre :
-                                #FFC300 sur la page mesure 1,5:1 et ne peut pas
-                                porter un caractère. Posé dessous à 40 %, il
-                                laisse l'encre à plus de 12:1 et donne à la
-                                phrase le seul accent de marque que la palette
-                                autorise ici. Le léger dévers empêche le trait de
-                                ressembler à une erreur de rendu. */}
-                            <span className="relative inline-block">
-                                <span
-                                    aria-hidden
-                                    className="absolute inset-x-[-0.09em] bottom-[0.13em] h-[0.34em] -rotate-[0.7deg] rounded-[3px] bg-accent-brand/40"
-                                />
-                                <span className="relative">enfin livrées</span>
-                            </span>{' '}
-                            chez vous.
+                            Vos envies, enfin livrées chez vous.
                         </h1>
 
                         <p
