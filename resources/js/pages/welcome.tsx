@@ -32,6 +32,7 @@ import { ScrollProgress } from '@/components/scroll-progress';
 import { SOCIAL_ICONS } from '@/components/social-icons';
 import { ThemeSwitcher } from '@/components/theme-switcher';
 import { Button } from '@/components/ui/button';
+import { WorldBackdrop } from '@/components/world-backdrop';
 import { useCountUp } from '@/hooks/use-count-up';
 import { useScrolled } from '@/hooks/use-scrolled';
 import { cn } from '@/lib/utils';
@@ -201,7 +202,16 @@ const QUESTIONS: { question: string; answer: string }[] = [
     },
 ];
 
-type Destination = { code: string; name: string };
+/**
+ * A destination as the page receives it. The estimate is attached by the
+ * controller from `config/shoprelle.delivery_times` and is null for any country
+ * nobody has measured — a delay is a promise, and the map invents none.
+ */
+type Destination = {
+    code: string;
+    name: string;
+    deliveryTime: string | null;
+};
 
 type SocialNetwork = 'instagram' | 'facebook' | 'tiktok';
 
@@ -555,12 +565,18 @@ export default function Welcome({
 
             <main className="flex-1">
                 {/* Hero — a soft radial wash gives the section depth without
-                    adding anything the eye has to decode. */}
+                    adding anything the eye has to decode, and the ghosted world
+                    behind it says "everywhere" before a word has been read.
+                    Both are masked away well above the headline: the hero's job
+                    is the sentence and the field under it, and texture behind
+                    either would only make them harder to read. */}
                 <section id="top" className="relative overflow-hidden border-b">
                     <div
                         aria-hidden
                         className="pointer-events-none absolute inset-0 bg-[radial-gradient(60%_60%_at_50%_0%,var(--color-primary)_0%,transparent_70%)] opacity-[0.07]"
                     />
+
+                    <WorldBackdrop />
 
                     <div className="relative mx-auto w-full max-w-3xl px-4 pt-24 pb-16 text-center lg:pt-28">
                         <h1
@@ -687,44 +703,47 @@ export default function Welcome({
                                 de vos commandes jusqu'à votre destination.
                             </p>
                         </Reveal>
+                    </div>
 
-                        {/* Held in a panel rather than run full bleed: what is
-                            drawn now is a network diagram, and a diagram wants
-                            an edge to be a diagram *of* something. The gutter
-                            is also what gives the tooltips room to open above a
-                            marker without leaving the section. */}
-                        <Reveal
-                            delay={150}
-                            className="mx-auto mt-14 max-w-5xl rounded-2xl border bg-card/60 p-4 shadow-sm sm:p-8"
+                    {/* Full bleed, and the only thing on the page that is: the
+                        map is the answer this section exists to give, and a
+                        gutter around it turns the world into an illustration of
+                        somewhere else. Capped all the same — past about eighteen
+                        hundred pixels it stops being a band and starts being a
+                        wall. */}
+                    <Reveal
+                        delay={150}
+                        className="relative mx-auto mt-14 w-full max-w-[1800px] lg:mt-16"
+                    >
+                        <Suspense
+                            fallback={
+                                <div className="aspect-[793/334] w-full animate-pulse bg-muted-foreground/10" />
+                            }
                         >
-                            <Suspense
-                                fallback={
-                                    <div className="aspect-[692/368] w-full animate-pulse rounded-xl bg-muted-foreground/10" />
-                                }
-                            >
-                                <DeliveryMap
-                                    countries={countries}
-                                    upcomingCountries={upcomingCountries}
-                                />
-                            </Suspense>
+                            <DeliveryMap
+                                countries={countries}
+                                upcomingCountries={upcomingCountries}
+                            />
+                        </Suspense>
+                    </Reveal>
 
-                            <ul className="mt-6 flex flex-wrap items-center justify-center gap-x-7 gap-y-2 border-t pt-6 text-xs font-semibold">
-                                <Legend swatch="bg-accent-brand">
-                                    Hub · France
-                                </Legend>
-                                <Legend swatch="bg-primary">
-                                    Livraison ouverte
-                                </Legend>
-                                <Legend swatch="bg-primary/50">
-                                    Bientôt desservi
-                                </Legend>
-                            </ul>
-                        </Reveal>
+                    <div className="relative mx-auto w-full max-w-7xl px-4">
+                        <ul className="mt-8 flex flex-wrap items-center justify-center gap-x-7 gap-y-2 text-xs font-semibold">
+                            <Legend swatch="bg-accent-brand">
+                                Hub · France
+                            </Legend>
+                            <Legend swatch="bg-primary">
+                                Livraison disponible
+                            </Legend>
+                            <Legend swatch="bg-primary/50">
+                                Bientôt desservi
+                            </Legend>
+                        </ul>
 
                         {/* The counters, on a rule of their own: they are the
-                            claim the map makes, stated as numbers, and putting
-                            them inside the panel would make them look like part
-                            of the drawing's furniture. */}
+                            claim the map makes, stated as numbers, and sitting
+                            them under the drawing would make them read as its
+                            caption. */}
                         <div className="mx-auto mt-16 grid max-w-4xl gap-10 border-t pt-12 sm:grid-cols-3 sm:gap-6">
                             {figures.map((figure, index) => (
                                 <Reveal

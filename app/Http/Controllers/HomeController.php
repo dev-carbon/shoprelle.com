@@ -32,18 +32,27 @@ class HomeController extends Controller
     /**
      * Turn a code-keyed country map into a list the page can name and draw.
      *
-     * The alpha-2 code travels with the name because the map joins on it: its
-     * own features are named in English, and ours are not.
+     * The alpha-2 code travels with the name because the map joins on it: the
+     * atlas is keyed by ISO numeric code, and the names in it are English.
+     *
+     * The estimate is attached here rather than looked up in the page, so the
+     * component is handed data and never has to know a country exists. A
+     * destination with no measured delay carries none, and the tooltip leaves
+     * the line out entirely.
      *
      * @param  array<string, string>  $countries
-     * @return list<array{code: string, name: string}>
+     * @return list<array{code: string, name: string, deliveryTime: ?string}>
      */
     private function asList(array $countries): array
     {
         $list = [];
 
         foreach ($countries as $code => $name) {
-            $list[] = ['code' => $code, 'name' => $name];
+            $list[] = [
+                'code' => $code,
+                'name' => $name,
+                'deliveryTime' => config('shoprelle.delivery_times.'.$code),
+            ];
         }
 
         return $list;

@@ -44,6 +44,29 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Delivery Times
+    |--------------------------------------------------------------------------
+    |
+    | The estimate shown when a visitor hovers a destination on the landing
+    | page's map, keyed by the same alpha-2 codes as the two lists above.
+    |
+    | Deliberately its own table rather than a third column on `countries`: that
+    | list is a flat code => name map read by the chatbot, the admin filters and
+    | the models, and giving it a shape none of them expect would break all of
+    | them to add a line of marketing copy.
+    |
+    | A country with no entry here simply shows no estimate. That is the point —
+    | a delay is a promise, and the page must never invent one for a destination
+    | nobody has measured.
+    |
+    */
+
+    'delivery_times' => [
+        'CM' => '7 à 14 jours',
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Network Figures
     |--------------------------------------------------------------------------
     |

@@ -57,16 +57,22 @@ it('offers no Telegram link while the bot is incomplete', function (?string $tok
 ]);
 
 it('lists the destination countries the assistant actually accepts', function () {
-    config(['shoprelle.countries' => ['CM' => 'Cameroun', 'SN' => 'Sénégal']]);
+    config([
+        'shoprelle.countries' => ['CM' => 'Cameroun', 'SN' => 'Sénégal'],
+        'shoprelle.delivery_times' => ['CM' => '7 à 14 jours'],
+    ]);
 
-    // A list of pairs rather than a map: the page names the countries and the
-    // map draws them, and the drawing joins on the code because its own
-    // features are named in English.
+    // A list of records rather than a map: the page names the countries and the
+    // map draws them, and the drawing joins on the code because the atlas it
+    // reads is keyed by ISO numeric id.
+    //
+    // Senegal carries no estimate because nobody has measured one, and the
+    // tooltip drops the line rather than inventing a delay.
     $this->get(route('home'))
         ->assertInertia(fn ($page) => $page
             ->where('countries', [
-                ['code' => 'CM', 'name' => 'Cameroun'],
-                ['code' => 'SN', 'name' => 'Sénégal'],
+                ['code' => 'CM', 'name' => 'Cameroun', 'deliveryTime' => '7 à 14 jours'],
+                ['code' => 'SN', 'name' => 'Sénégal', 'deliveryTime' => null],
             ])
         );
 });
@@ -75,12 +81,31 @@ it('announces the destinations that are not open yet, separately', function () {
     config([
         'shoprelle.countries' => ['CM' => 'Cameroun'],
         'shoprelle.upcoming_countries' => ['SN' => 'Sénégal'],
+        'shoprelle.delivery_times' => [],
     ]);
 
     $this->get(route('home'))
         ->assertInertia(fn ($page) => $page
-            ->where('countries', [['code' => 'CM', 'name' => 'Cameroun']])
-            ->where('upcomingCountries', [['code' => 'SN', 'name' => 'Sénégal']])
+            ->where('countries', [['code' => 'CM', 'name' => 'Cameroun', 'deliveryTime' => null]])
+            ->where('upcomingCountries', [['code' => 'SN', 'name' => 'Sénégal', 'deliveryTime' => null]])
+        );
+});
+
+it('quotes a delivery estimate for an announced destination too', function () {
+    config([
+        'shoprelle.countries' => [],
+        'shoprelle.upcoming_countries' => ['SN' => 'Sénégal'],
+        'shoprelle.delivery_times' => ['SN' => '10 à 18 jours'],
+    ]);
+
+    // The estimate table is keyed independently of which list a country sits
+    // in, so a destination can be measured before it opens — and it keeps its
+    // figure on the day it moves up rather than losing it in the move.
+    $this->get(route('home'))
+        ->assertInertia(fn ($page) => $page
+            ->where('upcomingCountries', [
+                ['code' => 'SN', 'name' => 'Sénégal', 'deliveryTime' => '10 à 18 jours'],
+            ])
         );
 });
 

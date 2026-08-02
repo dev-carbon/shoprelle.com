@@ -1,7 +1,6 @@
-import { geoCentroid, geoEqualEarth, geoPath } from 'd3-geo';
 import { memo, useMemo, useState } from 'react';
 
-import world from '@/data/world.json';
+import atlas from '@/data/world-atlas.json';
 import { useInView } from '@/hooks/use-in-view';
 import { cn } from '@/lib/utils';
 
@@ -9,12 +8,10 @@ import { cn } from '@/lib/utils';
  * ISO 3166-1 numeric ids for the destinations, keyed by the alpha-2 codes
  * `config/shoprelle.php` uses.
  *
- * The map's own features carry the numeric code and an English name; ours are
- * keyed by alpha-2 and named in French, so the two have to be joined on
- * something, and the code is the only thing that will not drift.
- *
- * An id with no matching country is simply never looked up, so opening a
- * destination is a line in `config/shoprelle.php` and nothing here.
+ * The atlas is keyed by the numeric code and ours by alpha-2, so the two have
+ * to be joined on something, and the code is the only thing that will not
+ * drift. An id with no shape is simply never looked up, so opening a destination
+ * stays a line in `config/shoprelle.php` and nothing here.
  */
 const ISO_NUMERIC: Record<string, string> = {
     CM: '120', // Cameroun
@@ -28,161 +25,108 @@ const ISO_NUMERIC: Record<string, string> = {
 const ORIGIN_ID = '250';
 
 /**
- * The hub itself, as a point rather than as France's centroid.
+ * The world, projected and committed rather than computed.
  *
- * Paris, because that is a place a parcel can leave from; the centroid of the
- * country is a spot in the Berry that means nothing to anybody, and it moves
- * the day the outline file is regenerated at a different resolution.
+ * `world-atlas.json` was generated once from the country outlines — Equal
+ * Earth, cropped to the frame the section wants — by an ad hoc script, exactly
+ * as `world.json` before it. Which is why nothing here imports `d3-geo`: the
+ * projection ran at build time, and what ships is a path string per country.
+ *
+ * The shape is asserted rather than inferred: a JSON module widens every array
+ * to `number[]`, so the pairs and the viewport come back having forgotten how
+ * many numbers they hold. The generator fixes that shape, and this is the one
+ * place that says so.
  */
-const HUB: [number, number] = [2.35, 48.85];
+const {
+    view: VIEW,
+    hub: HUB_POINT,
+    anchors: ANCHORS,
+    shapes: SHAPES,
+} = atlas as unknown as {
+    view: [number, number, number, number];
+    hub: [number, number];
+    anchors: Record<string, [number, number]>;
+    shapes: Record<string, string>;
+};
 
-const WIDTH = 1000;
-const HEIGHT = 500;
+const VIEW_BOX = VIEW.join(' ');
 
 /**
- * The window the map is cropped to, in degrees.
+ * The frame, dissolved rather than cut.
  *
- * The projection still covers the whole globe — this only decides what is in
- * frame. Fitted to the land, the map spent a third of its width on the Pacific
- * and the destinations came out too small to read; cropped here, Africa is
- * nearly half again as large.
- *
- * The eastern edge is 158°, not 135°: at 135 the crop runs through the middle
- * of Australia, and a continent cut in half reads as a bug rather than a frame.
+ * This runs edge to edge of the page, so the crop lands in the middle of
+ * Scandinavia at the top and of the Pacific at the sides. A hard edge there
+ * reads as a screenshot of a bigger map; fading the last few percent reads as a
+ * map that simply stops. It is kept off the routes and the markers — nothing
+ * that carries meaning is anywhere near an edge.
  */
-const FRAME: [[number, number], [number, number]] = [
-    [-95, -45],
-    [158, 66],
-];
+const EDGE_MASK = [
+    'linear-gradient(to bottom, transparent 0%, black 9%, black 94%, transparent 100%)',
+    'linear-gradient(to right, transparent 0%, black 6%, black 94%, transparent 100%)',
+].join(', ');
 
 /**
- * Equal Earth, not Mercator: on a whole world Mercator makes Greenland the size
- * of Africa, which is exactly the wrong impression for a page about shipping to
- * Africa. Fitted to the globe rather than to the data, so the antimeridian —
- * which Russia and Fiji both straddle — cannot throw the extent.
- */
-const projection = geoEqualEarth().fitExtent(
-    [
-        [8, 8],
-        [WIDTH - 8, HEIGHT - 8],
-    ],
-    { type: 'Sphere' },
-);
-
-const toPath = geoPath(projection);
-
-/**
- * The viewport, measured by walking the frame's own boundary.
+ * Every landmass on Earth, as a single path built once at module scope.
  *
- * A rectangle in degrees is not a rectangle once projected — its edges bow — so
- * the corners alone would crop the map inside its own frame. Sampling along all
- * four sides catches the bulge.
+ * One path and no stroke at all, which is the whole of the restraint here: a
+ * hundred and sixty-seven separately outlined countries is an atlas, and an
+ * atlas is a reference work. Merged into one silhouette, the ground says
+ * "land" and nothing else, leaving the only edges on the map to the places
+ * Shoprelle actually delivers to.
  *
- * Kept as numbers and not only as a `viewBox` string: the markers are HTML laid
- * over the drawing rather than shapes inside it, and they are placed by turning
- * a projected point back into a percentage of this box.
+ * The lit countries are drawn *over* this rather than cut out of it: overdrawing
+ * five shapes costs nothing, and subtracting them would mean rebuilding the
+ * whole basemap every time the destination list changes.
  */
-const VIEW = ((): { x: number; y: number; width: number; height: number } => {
-    const [[west, south], [east, north]] = FRAME;
+const LAND = Object.values(SHAPES).join('');
 
-    let minX = Infinity;
-    let minY = Infinity;
-    let maxX = -Infinity;
-    let maxY = -Infinity;
+const ORIGIN_SHAPE = SHAPES[ORIGIN_ID] ?? '';
 
-    const measure = (lon: number, lat: number) => {
-        const point = projection([lon, lat]);
+export type Destination = {
+    code: string;
+    name: string;
+    /** Null for any country nobody has measured; the tooltip drops the line. */
+    deliveryTime?: string | null;
+};
 
-        if (!point) {
-            return;
-        }
-
-        minX = Math.min(minX, point[0]);
-        maxX = Math.max(maxX, point[0]);
-        minY = Math.min(minY, point[1]);
-        maxY = Math.max(maxY, point[1]);
-    };
-
-    const steps = 60;
-
-    for (let i = 0; i <= steps; i++) {
-        const lon = west + ((east - west) * i) / steps;
-        const lat = south + ((north - south) * i) / steps;
-
-        measure(lon, south);
-        measure(lon, north);
-        measure(west, lat);
-        measure(east, lat);
-    }
-
-    return { x: minX, y: minY, width: maxX - minX, height: maxY - minY };
-})();
-
-const VIEW_BOX = [VIEW.x, VIEW.y, VIEW.width, VIEW.height].join(' ');
-
-type Feature = (typeof world)['features'][number];
-
-/** Every outline, built once at module scope: the geometry never changes. */
-const SHAPES: { id: string; d: string }[] = world.features.flatMap(
-    (feature: Feature) => {
-        const d = toPath(feature as unknown as Parameters<typeof toPath>[0]);
-
-        return d ? [{ id: String(feature.id), d }] : [];
-    },
-);
-
-/** The same outlines, addressable by id, for the one country under the cursor. */
-const SHAPE_BY_ID: Record<string, string> = Object.fromEntries(
-    SHAPES.map((shape) => [shape.id, shape.d]),
-);
-
-/** Where each country's marker goes, already projected. */
-const POINTS: Record<string, [number, number]> = Object.fromEntries(
-    world.features.flatMap((feature: Feature) => {
-        const point = projection(
-            geoCentroid(
-                feature as unknown as Parameters<typeof geoCentroid>[0],
-            ),
-        );
-
-        return point ? [[String(feature.id), point] as const] : [];
-    }),
-);
-
-const SPHERE = toPath({ type: 'Sphere' } as unknown as Parameters<
-    typeof toPath
->[0]);
-
-const HUB_POINT = projection(HUB) ?? [0, 0];
+/** A destination that was found on the map, with its route already traced. */
+type Placed = Destination & {
+    id: string;
+    point: [number, number];
+    route: string;
+    served: boolean;
+};
 
 const round = (value: number) => Math.round(value * 100) / 100;
 
 /**
- * Where a projected point sits inside the frame, as percentages.
+ * Where a point sits inside the frame, as percentages.
  *
  * The drawing is an `<svg>` at full width with `height: auto`, so the element's
  * box and its `viewBox` share an aspect ratio exactly — which is what lets an
- * HTML marker be placed on a percentage and land on the country underneath it,
- * at every width, without anything ever being measured.
+ * HTML marker be placed on a percentage and land on the country underneath it, at
+ * every width, without anything ever being measured.
  */
 const percent = ([x, y]: [number, number]) => ({
-    left: `${round(((x - VIEW.x) / VIEW.width) * 100)}%`,
-    top: `${round(((y - VIEW.y) / VIEW.height) * 100)}%`,
+    left: `${round(((x - VIEW[0]) / VIEW[2]) * 100)}%`,
+    top: `${round(((y - VIEW[1]) / VIEW[3]) * 100)}%`,
 });
 
 /**
  * The route from the hub to a destination, as a quadratic arc.
  *
- * A straight line between two points on a world map reads as a diagram; the
- * bow is what makes it read as a flight. Its control point is pushed off the
- * midpoint along the perpendicular, always to the same side and always by the
- * same fraction of the distance — so several routes leaving one hub fan out
- * evenly and never cross each other.
+ * A straight line between two points on a world map reads as a diagram; the bow
+ * is what makes it read as a flight. The control point is pushed off the
+ * midpoint along the perpendicular, by a generous fraction of the distance —
+ * a timid curve just looks like a line somebody failed to draw straight.
  *
- * That side is the west one, which sends the arcs out over the Atlantic rather
- * than across the Sahara: an empty ground behind a curve is what keeps it
- * legible.
+ * Which side it bows to is the destination's own: everything west of Paris
+ * bows further west, everything east of it bows east. So the routes leave the
+ * hub as a fan opening on both sides rather than as a bundle all leaning the
+ * same way, and no two of them cross.
  */
+const BOW = 0.4;
+
 const arc = (to: [number, number]): string => {
     const [x1, y1] = HUB_POINT;
     const [x2, y2] = to;
@@ -193,30 +137,21 @@ const arc = (to: [number, number]): string => {
         return `M ${round(x1)} ${round(y1)}`;
     }
 
-    const bow = span * 0.17;
+    const side = x2 < x1 ? 1 : -1;
+    const bow = span * BOW * side;
+
     const controlX = (x1 + x2) / 2 - ((y2 - y1) / span) * bow;
     const controlY = (y1 + y2) / 2 + ((x2 - x1) / span) * bow;
 
     return `M ${round(x1)} ${round(y1)} Q ${round(controlX)} ${round(controlY)} ${round(x2)} ${round(y2)}`;
 };
 
-export type Destination = { code: string; name: string };
-
-/** A destination that was found on the map, with its route already traced. */
-type Placed = Destination & {
-    id: string;
-    point: [number, number];
-    route: string;
-    served: boolean;
-};
-
 /**
  * The drawing: the world, the routes, and the parcels running them.
  *
- * Memoised and deliberately unaware of what the cursor is doing. This is a
- * hundred and sixty-nine paths, and re-conciling all of them every time a
- * pointer crosses a marker is work with nothing to show for it — the highlight
- * is one extra path in a layer of its own, above.
+ * Memoised and deliberately unaware of what the cursor is doing, so a pointer
+ * crossing a marker cannot cost a redraw of the map — the highlight is one
+ * extra path in a layer of its own, above.
  */
 const Network = memo(function Network({
     destinations,
@@ -225,14 +160,14 @@ const Network = memo(function Network({
     destinations: Placed[];
     drawn: boolean;
 }) {
-    const tiers = useMemo(() => {
-        const byId: Record<string, 'served' | 'upcoming'> = {};
+    const lit = useMemo(() => {
+        const tier = (served: boolean) =>
+            destinations
+                .filter((destination) => destination.served === served)
+                .map((destination) => SHAPES[destination.id] ?? '')
+                .join('');
 
-        for (const destination of destinations) {
-            byId[destination.id] = destination.served ? 'served' : 'upcoming';
-        }
-
-        return byId;
+        return { served: tier(true), upcoming: tier(false) };
     }, [destinations]);
 
     return (
@@ -242,42 +177,75 @@ const Network = memo(function Network({
             role="presentation"
             focusable="false"
             aria-hidden
+            style={{
+                maskImage: EDGE_MASK,
+                maskComposite: 'intersect',
+                WebkitMaskImage: EDGE_MASK,
+                WebkitMaskComposite: 'source-in',
+            }}
         >
-            {/* The globe's edge, as a fill and nothing more: it gives the land
-                something to sit in without drawing attention to a diagram
-                nobody is here to read. */}
-            {SPHERE && (
-                <path d={SPHERE} className="fill-muted-foreground/[0.05]" />
-            )}
+            {/* Four tiers, each a single flat fill, and not one stroke on the
+                whole map. Borders are what make a world map read as a
+                reference work; without them the ground is just land, and the
+                only shapes with an edge are the ones that matter.
 
-            {/* Four tiers, separated by measurement rather than by eye: solid
-                blue reads at 4.75:1 on the band behind it, the announced
-                countries at 2.29:1, and the rest of the world at 1.21:1 — near
-                enough to the ground to sit back as context. France is a step
-                above that last one: it has to be findable as the origin of
-                every route without ever competing with a destination. */}
-            {SHAPES.map((shape) => (
+                Measured rather than eyeballed: the ground sits at 1.21:1 on the
+                page behind it — near enough to sit back as context — the
+                announced countries at 2.29:1, and the open ones at 4.75:1.
+
+                Each tier is opaque inside a group that is *then* faded, rather
+                than being drawn in a translucent colour. Two reasons, and both
+                of them are visible: a stroke over its own translucent fill
+                double-blends into a brighter coastline, and the outlines are
+                simplified to a tenth of a degree, so neighbouring countries no
+                longer share an exact border and the hairline gaps between them
+                show through as darker seams. Stroking each tier in its own
+                colour closes those gaps; flattening the group before fading it
+                is what stops the repair from being visible. */}
+            <g className="text-muted-foreground" opacity={0.15}>
                 <path
-                    key={shape.id}
-                    d={shape.d}
-                    strokeWidth={0.5}
-                    className={cn(
-                        'stroke-background',
-                        tiers[shape.id] === 'served'
-                            ? 'fill-primary'
-                            : tiers[shape.id] === 'upcoming'
-                              ? 'fill-primary/55'
-                              : shape.id === ORIGIN_ID
-                                ? 'fill-muted-foreground/35'
-                                : 'fill-muted-foreground/15',
-                    )}
+                    d={LAND}
+                    fill="currentColor"
+                    stroke="currentColor"
+                    strokeWidth={0.6}
+                    strokeLinejoin="round"
                 />
-            ))}
+            </g>
+
+            {/* France, a step up from the ground: it has to be findable as the
+                origin of every route without ever competing with a
+                destination. */}
+            <g className="text-muted-foreground" opacity={0.35}>
+                <path
+                    d={ORIGIN_SHAPE}
+                    fill="currentColor"
+                    stroke="currentColor"
+                    strokeWidth={0.6}
+                    strokeLinejoin="round"
+                />
+            </g>
+
+            <g className="text-primary" opacity={0.45}>
+                <path
+                    d={lit.upcoming}
+                    fill="currentColor"
+                    stroke="currentColor"
+                    strokeWidth={0.6}
+                    strokeLinejoin="round"
+                />
+            </g>
+
+            <path
+                d={lit.served}
+                strokeWidth={0.6}
+                strokeLinejoin="round"
+                className="fill-primary stroke-primary"
+            />
 
             {/* The network. Routes to open destinations get a soft underlay a
                 few units wide, which is the whole of the depth in this drawing:
-                a blurred shadow at this scale only makes the line look
-                out of focus. */}
+                a blurred shadow at this scale only makes the line look out of
+                focus. */}
             <g fill="none" strokeLinecap="round">
                 {destinations.map((destination, index) => (
                     <g key={destination.code}>
@@ -298,10 +266,10 @@ const Network = memo(function Network({
 
                         {/* `pathLength="1"` rescales the dash maths to a single
                             unit, so one keyframe draws a short hop and a long
-                            haul alike — see the stylesheet. Until the section
-                            is reached the offset holds the route fully
-                            retracted; a map that arrives already finished has
-                            nothing left to say. */}
+                            haul alike — see the stylesheet. Until the section is
+                            reached the offset holds the route fully retracted; a
+                            map that arrives already finished has nothing left to
+                            say. */}
                         <path
                             d={destination.route}
                             pathLength={1}
@@ -326,8 +294,7 @@ const Network = memo(function Network({
 
                 Held back until the routes exist, because `offset-path` places
                 the dot along a curve — with no curve drawn yet it would sit
-                waiting at the origin of the coordinate system, in the middle of
-                the Atlantic. */}
+                waiting at the origin of the coordinate system. */}
             {drawn &&
                 destinations
                     .filter((destination) => destination.served)
@@ -367,15 +334,17 @@ function Marker({
     onActivate: () => void;
     onDismiss: () => void;
 }) {
+    const status = destination.served
+        ? 'Livraison disponible'
+        : 'Bientôt desservi';
+
     return (
         <li className="absolute" style={percent(destination.point)}>
             <button
                 type="button"
-                aria-label={
-                    destination.served
-                        ? `${destination.name} — livraison ouverte`
-                        : `${destination.name} — bientôt`
-                }
+                aria-label={[destination.name, status, destination.deliveryTime]
+                    .filter(Boolean)
+                    .join(' — ')}
                 onMouseEnter={onActivate}
                 onMouseLeave={onDismiss}
                 onFocus={onActivate}
@@ -419,11 +388,11 @@ function Marker({
 /**
  * Shoprelle's delivery network, drawn on the whole world.
  *
- * Plain SVG over `d3-geo`, with no mapping library above it: nothing here pans
- * or zooms, so a library offering those would only be bringing its own copy of
- * d3 along for the ride. The outlines ship with the page rather than being
- * fetched from a CDN — a landing page should not phone a third party before it
- * can finish drawing itself.
+ * Plain SVG with no mapping library above it: nothing here pans or zooms, so a
+ * library offering those would only be bringing its own copy of a projection
+ * along for the ride. The atlas ships with the page rather than being fetched
+ * from a CDN — a landing page should not phone a third party before it can
+ * finish drawing itself.
  *
  * The drawing carries no name a screen reader could read, so it is hidden and
  * the destinations are exposed as an ordinary list of buttons on top of it —
@@ -455,7 +424,7 @@ export function DeliveryMap({
 
         return listed.flatMap((destination) => {
             const id = ISO_NUMERIC[destination.code];
-            const point = id ? POINTS[id] : undefined;
+            const point = id ? ANCHORS[id] : undefined;
 
             return point
                 ? [{ ...destination, id, point, route: arc(point) }]
@@ -473,8 +442,8 @@ export function DeliveryMap({
 
             {/* The country under the cursor, redrawn on top rather than
                 restyled in place: the layer below is memoised, and reaching
-                into it would cost a reconciliation of the entire world to
-                change one fill. */}
+                into it would cost a rebuild of the entire basemap to brighten
+                one country. */}
             <svg
                 viewBox={VIEW_BOX}
                 aria-hidden
@@ -482,10 +451,11 @@ export function DeliveryMap({
                 focusable="false"
                 className="pointer-events-none absolute inset-0 block h-auto w-full"
             >
-                {highlighted && SHAPE_BY_ID[highlighted.id] && (
+                {highlighted && (
                     <path
-                        d={SHAPE_BY_ID[highlighted.id]}
-                        strokeWidth={1}
+                        d={SHAPES[highlighted.id] ?? ''}
+                        strokeWidth={1.5}
+                        strokeLinejoin="round"
                         className={cn(
                             'stroke-primary',
                             highlighted.served
@@ -552,22 +522,31 @@ export function DeliveryMap({
                     style={percent(highlighted.point)}
                     className="pointer-events-none absolute z-10 -translate-x-1/2 -translate-y-full pb-4"
                 >
-                    <div className="animate-enter rounded-lg border bg-popover px-3 py-2 text-center shadow-md">
+                    <div className="min-w-40 animate-enter rounded-xl border bg-popover px-4 py-3 text-center shadow-lg">
                         <p className="font-display text-sm font-extrabold whitespace-nowrap text-popover-foreground">
                             {highlighted.name}
                         </p>
                         <p
                             className={cn(
-                                'mt-0.5 text-[11px] font-semibold whitespace-nowrap',
+                                'mt-1 text-xs font-semibold whitespace-nowrap',
                                 highlighted.served
                                     ? 'text-success'
                                     : 'text-muted-foreground',
                             )}
                         >
                             {highlighted.served
-                                ? 'Livraison ouverte'
-                                : 'Bientôt'}
+                                ? 'Livraison disponible'
+                                : 'Bientôt desservi'}
                         </p>
+
+                        {highlighted.deliveryTime && (
+                            <p className="mt-2.5 border-t pt-2.5 text-xs whitespace-nowrap text-muted-foreground">
+                                Délai estimé
+                                <span className="mt-0.5 block font-display text-sm font-extrabold text-popover-foreground">
+                                    {highlighted.deliveryTime}
+                                </span>
+                            </p>
+                        )}
                     </div>
                 </div>
             )}
