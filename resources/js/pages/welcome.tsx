@@ -238,23 +238,6 @@ type Props = {
 };
 
 /**
- * A small uppercase label naming the section above its heading.
- *
- * Set in the exact logo gold, which is why it sits on a navy pill rather than
- * straight on the page: #FFC300 is 1.5:1 on the off-white and 11.5:1 on the
- * navy, and no weight or size closes a gap that size. On the dark and blue
- * sections the pill's ground and the section's own nearly coincide, so the same
- * component reads as plain gold text there without needing a variant.
- */
-function Eyebrow({ children }: { children: string }) {
-    return (
-        <p className="inline-flex items-center rounded-full bg-surface-dark px-3.5 py-1.5 font-display text-xs font-extrabold tracking-[0.16em] text-accent-brand-ink uppercase">
-            {children}
-        </p>
-    );
-}
-
-/**
  * A figure grouped the French way: a narrow no-break space every three digits.
  *
  * Written out rather than handed to `toLocaleString`, which picks its separator
@@ -695,8 +678,7 @@ export default function Welcome({
 
                     <div className="relative mx-auto w-full max-w-7xl px-4">
                         <Reveal className="mx-auto flex max-w-3xl flex-col items-center text-center">
-                            <Eyebrow>Livraison internationale</Eyebrow>
-                            <h2 className="mt-4 font-display text-title font-black text-balance">
+                            <h2 className="font-display text-title font-black text-balance">
                                 Vos envies voyagent jusqu'à vous.
                             </h2>
                             <p className="mt-4 text-lg text-muted-foreground">
@@ -714,12 +696,12 @@ export default function Welcome({
                         hundred pixels it stops being a band and starts being a
                         wall. */}
                     <Reveal
-                        delay={150}
+                        delay={100}
                         className="relative mx-auto mt-14 w-full max-w-[1800px] lg:mt-16"
                     >
                         <Suspense
                             fallback={
-                                <div className="aspect-[793/334] w-full animate-pulse bg-muted-foreground/10" />
+                                <div className="aspect-[957/348] w-full animate-pulse bg-muted-foreground/10" />
                             }
                         >
                             <DeliveryMap
@@ -750,7 +732,7 @@ export default function Welcome({
                             {figures.map((figure, index) => (
                                 <Reveal
                                     key={figure.label}
-                                    delay={index * 160}
+                                    delay={index * 80}
                                     className="sm:not-first:border-l sm:not-first:border-border"
                                 >
                                     <Stat {...figure} />
@@ -775,7 +757,7 @@ export default function Welcome({
                                         <Reveal
                                             as="li"
                                             key={country.code}
-                                            delay={index * 130}
+                                            delay={index * 55}
                                             className="rounded-full border bg-card px-4 py-1.5 text-sm font-semibold shadow-sm"
                                         >
                                             {country.name}
@@ -800,7 +782,7 @@ export default function Welcome({
                                                 <Reveal
                                                     as="li"
                                                     key={country.code}
-                                                    delay={index * 130}
+                                                    delay={index * 55}
                                                     className="rounded-full border border-dashed px-4 py-1.5 text-sm font-medium text-muted-foreground"
                                                 >
                                                     {country.name}
@@ -812,29 +794,49 @@ export default function Welcome({
                             )}
                         </div>
 
-                        <ul className="mx-auto mt-16 grid max-w-5xl gap-4 border-t pt-12 sm:grid-cols-3">
-                            {ASSURANCES.map((assurance, index) => (
-                                <Reveal
-                                    as="li"
-                                    key={assurance.title}
-                                    delay={index * 160}
-                                    className="flex gap-4"
-                                >
-                                    <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-accent-brand text-accent-brand-foreground">
-                                        <assurance.icon className="size-5" />
-                                    </span>
+                        {/* Two columns, and the same split the rest of the page
+                            uses: the heading holds the narrow side and the
+                            content takes the width. Stacked one per line rather
+                            than side by side — three columns forced each
+                            description into four ragged lines, and a promise
+                            that has to be deciphered is not reassuring. Given a
+                            full line each they read at a glance. */}
+                        <div className="mt-16 grid gap-10 border-t pt-14 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] lg:gap-14">
+                            <div className="lg:sticky lg:top-28 lg:self-start">
+                                <h3 className="font-display text-subtitle font-extrabold text-balance">
+                                    Le même parcours, quelle que soit la
+                                    destination.
+                                </h3>
+                                <p className="mt-3 max-w-sm text-muted-foreground">
+                                    Chaque commande suit les mêmes étapes, du
+                                    panier français jusqu'à votre ville.
+                                </p>
+                            </div>
 
-                                    <div>
-                                        <p className="font-display text-sm font-extrabold">
-                                            {assurance.title}
-                                        </p>
-                                        <p className="mt-1.5 text-sm text-muted-foreground">
-                                            {assurance.description}
-                                        </p>
-                                    </div>
-                                </Reveal>
-                            ))}
-                        </ul>
+                            <ul className="flex flex-col">
+                                {ASSURANCES.map((assurance, index) => (
+                                    <Reveal
+                                        as="li"
+                                        key={assurance.title}
+                                        delay={index * 80}
+                                        className="flex gap-5 border-b py-5 first:pt-0 last:border-b-0 last:pb-0"
+                                    >
+                                        <span className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-accent-brand text-accent-brand-foreground">
+                                            <assurance.icon className="size-5" />
+                                        </span>
+
+                                        <div className="pt-1">
+                                            <p className="font-display font-extrabold">
+                                                {assurance.title}
+                                            </p>
+                                            <p className="mt-1 text-muted-foreground">
+                                                {assurance.description}
+                                            </p>
+                                        </div>
+                                    </Reveal>
+                                ))}
+                            </ul>
+                        </div>
                     </div>
                 </section>
 
@@ -882,8 +884,7 @@ export default function Welcome({
                         its paragraphs past reading length. */}
                     <div className="mx-auto grid w-full max-w-7xl gap-10 px-4 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] lg:gap-14">
                         <div className="lg:sticky lg:top-28 lg:self-start">
-                            <Eyebrow>Comment ça marche</Eyebrow>
-                            <h2 className="mt-4 font-display text-title font-black text-balance">
+                            <h2 className="font-display text-title font-black text-balance">
                                 Trois étapes, et c'est tout
                             </h2>
                             <p className="mt-4 max-w-sm text-lg text-muted-foreground">
@@ -900,7 +901,7 @@ export default function Welcome({
                                 <Reveal
                                     as="li"
                                     key={step.title}
-                                    delay={index * 220}
+                                    delay={index * 110}
                                     className="group grid grid-cols-[auto_1fr] gap-x-5 sm:gap-x-8"
                                 >
                                     <div className="flex flex-col items-center">
@@ -940,8 +941,7 @@ export default function Welcome({
                 <section id="assistant" className="border-b py-24 lg:py-32">
                     <div className="mx-auto grid w-full max-w-7xl items-center gap-10 px-4 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] lg:gap-14">
                         <div>
-                            <Eyebrow>L'assistant</Eyebrow>
-                            <h2 className="mt-4 font-display text-title font-black text-balance">
+                            <h2 className="font-display text-title font-black text-balance">
                                 Commandez simplement en discutant
                             </h2>
                             <p className="mt-4 max-w-sm text-lg text-muted-foreground">
@@ -962,7 +962,7 @@ export default function Welcome({
                                 />
                             </Reveal>
 
-                            <Reveal delay={240} className="h-full">
+                            <Reveal delay={140} className="h-full">
                                 <ChannelCard
                                     icon={Send}
                                     name="Telegram"
@@ -990,8 +990,7 @@ export default function Welcome({
                 >
                     <div className="mx-auto grid w-full max-w-7xl gap-12 px-4 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] lg:gap-16">
                         <Reveal className="lg:sticky lg:top-28 lg:self-start">
-                            <Eyebrow>À propos</Eyebrow>
-                            <h2 className="mt-4 font-display text-title font-black text-balance">
+                            <h2 className="font-display text-title font-black text-balance">
                                 Pourquoi Shoprelle existe ?
                             </h2>
                             <p className="mt-6 text-lg text-muted-foreground">
@@ -1027,7 +1026,7 @@ export default function Welcome({
                             </Reveal>
 
                             <Reveal
-                                delay={150}
+                                delay={100}
                                 className="rounded-2xl border bg-card p-6 shadow-sm sm:p-7"
                             >
                                 <p className="font-display text-sm font-extrabold">
@@ -1052,8 +1051,7 @@ export default function Welcome({
                 <section className="border-b py-24 lg:py-32">
                     <div className="mx-auto w-full max-w-7xl px-4">
                         <div className="max-w-2xl">
-                            <Eyebrow>Confiance</Eyebrow>
-                            <h2 className="mt-4 font-display text-title font-black text-balance">
+                            <h2 className="font-display text-title font-black text-balance">
                                 Une solution simple, transparente et fiable
                             </h2>
                         </div>
@@ -1065,7 +1063,7 @@ export default function Welcome({
                             {PROMISES.map((promise, index) => (
                                 <Reveal
                                     key={promise.title}
-                                    delay={index * 160}
+                                    delay={index * 80}
                                     className={cn(
                                         'rounded-2xl border bg-card p-7 shadow-sm transition-[transform,box-shadow] duration-200 hover:-translate-y-1 hover:shadow-md sm:p-8',
                                         index === 0 && 'sm:col-span-2',
@@ -1097,8 +1095,7 @@ export default function Welcome({
                 <section className="border-b py-24 lg:py-32">
                     <div className="mx-auto grid w-full max-w-7xl gap-10 px-4 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] lg:gap-14">
                         <div className="lg:sticky lg:top-28 lg:self-start">
-                            <Eyebrow>Questions fréquentes</Eyebrow>
-                            <h2 className="mt-4 font-display text-title font-black text-balance">
+                            <h2 className="font-display text-title font-black text-balance">
                                 Ce qu'on nous demande le plus
                             </h2>
                         </div>
@@ -1112,7 +1109,7 @@ export default function Welcome({
                                 <Reveal
                                     as="details"
                                     key={item.question}
-                                    delay={index * 160}
+                                    delay={index * 80}
                                     name="questions-frequentes"
                                     className="group border-b"
                                 >
@@ -1144,8 +1141,7 @@ export default function Welcome({
                 >
                     <div className="mx-auto grid w-full max-w-7xl gap-12 px-4 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] lg:gap-14">
                         <Reveal>
-                            <Eyebrow>Contact</Eyebrow>
-                            <h2 className="mt-4 font-display text-title font-black text-balance">
+                            <h2 className="font-display text-title font-black text-balance">
                                 Nous contacter
                             </h2>
                             <p className="mt-4 max-w-md text-muted-foreground">
@@ -1155,7 +1151,7 @@ export default function Welcome({
                             </p>
                         </Reveal>
 
-                        <Reveal delay={240} className="flex flex-col gap-6">
+                        <Reveal delay={140} className="flex flex-col gap-6">
                             <div>
                                 <p className="text-sm text-muted-foreground">
                                     Par email
@@ -1330,7 +1326,7 @@ export default function Welcome({
                     </p>
                 </div>
 
-                <BrandWordmark className="mt-4" />
+                <BrandWordmark />
             </footer>
         </div>
     );

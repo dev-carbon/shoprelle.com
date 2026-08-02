@@ -6,7 +6,7 @@ import { useEffect, useRef, useState } from 'react';
  * part of the initial state rather than a correction made after the first
  * paint — which is what would make the content flash.
  */
-const CAN_OBSERVE = typeof IntersectionObserver !== 'undefined';
+export const CAN_OBSERVE = typeof IntersectionObserver !== 'undefined';
 
 /**
  * Whether an element has ever come into view.

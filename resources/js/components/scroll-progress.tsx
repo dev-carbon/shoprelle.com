@@ -50,7 +50,11 @@ export function ScrollProgress() {
             className="absolute inset-x-0 top-0 z-10 h-1 overflow-hidden"
         >
             <div
-                className="h-full origin-left bg-primary transition-[width] duration-150 ease-out"
+                // No transition: the width is already recomputed on every
+                // frame the browser paints, and easing towards a target that
+                // moved a frame ago makes the bar lag the page and stutter as
+                // the two chase each other.
+                className="h-full origin-left bg-primary"
                 style={{ width: `${progress}%` }}
             />
         </div>

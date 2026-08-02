@@ -392,7 +392,7 @@
 }
 
 @utility animate-rise {
-    animation: shoprelle-rise 0.65s cubic-bezier(0.16, 1, 0.3, 1) both;
+    animation: shoprelle-rise 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
 @keyframes shoprelle-enter {
@@ -507,7 +507,7 @@
 @keyframes shoprelle-rise {
     from {
         opacity: 0;
-        transform: translateY(16px);
+        transform: translateY(12px);
     }
 }
 

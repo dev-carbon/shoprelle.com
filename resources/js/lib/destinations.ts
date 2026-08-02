@@ -25,6 +25,26 @@ export const ISO_NUMERIC: Record<string, string> = {
 /** France, where every order is bought and every parcel leaves from. */
 export const ORIGIN_ID = '250';
 
+/**
+ * Which side a route bows to, for the destinations where geography gives a poor
+ * answer.
+ *
+ * By default an arc bows away from the hub on the destination's own side —
+ * west of Paris bows west, east of it bows east — which fans the routes evenly
+ * and keeps any two of them from crossing. That rule reads the longitude and
+ * nothing else, and longitude is a bad proxy for what a map looks like:
+ * Cameroon sits a few degrees east of Paris and between Gabon and Congo, so the
+ * rule sends the one open route out alone over Asia while every announced one
+ * sweeps the Atlantic.
+ *
+ * Which side of a frame an arc should take is a drawing decision, not a fact
+ * about a country, so it is stated rather than derived. A destination absent
+ * from this table simply follows the default.
+ */
+export const ROUTE_SIDE: Record<string, 'west' | 'east'> = {
+    CM: 'west',
+};
+
 /** The numeric ids for a list of alpha-2 codes, dropping any we cannot draw. */
 export function toNumericIds(codes: string[]): string[] {
     return codes.map((code) => ISO_NUMERIC[code]).filter(Boolean);

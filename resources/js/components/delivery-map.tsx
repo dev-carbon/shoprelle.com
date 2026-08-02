@@ -2,7 +2,7 @@ import { memo, useMemo, useState } from 'react';
 
 import atlas from '@/data/world-atlas.json';
 import { useInView } from '@/hooks/use-in-view';
-import { ISO_NUMERIC, ORIGIN_ID } from '@/lib/destinations';
+import { ISO_NUMERIC, ORIGIN_ID, ROUTE_SIDE } from '@/lib/destinations';
 import { cn } from '@/lib/utils';
 
 /**
@@ -51,11 +51,9 @@ const EDGE_MASK = [
 /**
  * Every landmass on Earth, as a single path built once at module scope.
  *
- * One path and no stroke at all, which is the whole of the restraint here: a
- * hundred and sixty-seven separately outlined countries is an atlas, and an
- * atlas is a reference work. Merged into one silhouette, the ground says
- * "land" and nothing else, leaving the only edges on the map to the places
- * Shoprelle actually delivers to.
+ * One path for a hundred and sixty-seven countries, which is what lets the
+ * ground read as a single silhouette: its parts are told apart by a hairline of
+ * the page's own colour, not by a hundred and sixty-seven drawn borders.
  *
  * The lit countries are drawn *over* this rather than cut out of it: overdrawing
  * five shapes costs nothing, and subtracting them would mean rebuilding the
@@ -106,11 +104,12 @@ const percent = ([x, y]: [number, number]) => ({
  * Which side it bows to is the destination's own: everything west of Paris
  * bows further west, everything east of it bows east. So the routes leave the
  * hub as a fan opening on both sides rather than as a bundle all leaning the
- * same way, and no two of them cross.
+ * same way, and no two of them cross. `ROUTE_SIDE` overrides that where the
+ * longitude gives an answer the frame disagrees with — see the note there.
  */
 const BOW = 0.4;
 
-const arc = (to: [number, number]): string => {
+const arc = (to: [number, number], override?: 'west' | 'east'): string => {
     const [x1, y1] = HUB_POINT;
     const [x2, y2] = to;
 
@@ -120,7 +119,7 @@ const arc = (to: [number, number]): string => {
         return `M ${round(x1)} ${round(y1)}`;
     }
 
-    const side = x2 < x1 ? 1 : -1;
+    const side = (override ?? (x2 < x1 ? 'west' : 'east')) === 'west' ? 1 : -1;
     const bow = span * BOW * side;
 
     const controlX = (x1 + x2) / 2 - ((y2 - y1) / span) * bow;
@@ -437,7 +436,14 @@ export function DeliveryMap({
             const point = id ? ANCHORS[id] : undefined;
 
             return point
-                ? [{ ...destination, id, point, route: arc(point) }]
+                ? [
+                      {
+                          ...destination,
+                          id,
+                          point,
+                          route: arc(point, ROUTE_SIDE[destination.code]),
+                      },
+                  ]
                 : [];
         });
     }, [countries, upcomingCountries]);
