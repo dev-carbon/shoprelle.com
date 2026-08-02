@@ -15,11 +15,13 @@ SUPERVISOR_DEST := /etc/supervisor/conf.d/shoprelle-worker.conf
 # deux autres sites du serveur. À corriger ici si le FPM installé diffère.
 PHP_FPM         := php8.5-fpm
 
-# Propriétaire des fichiers écrits par l'application. Les deux autres projets du
-# serveur ne s'accordent pas — halaye.com utilise www-data:webadmin et
-# elearning www-data:www-data — donc rien n'est deviné ici : à aligner sur ce
-# que fait tourner le pool FPM de ce vhost.
-WEB_USER        := www-data
+# Propriétaire des fichiers écrits par l'application.
+#
+# `carbon` possède, `www-data` est le groupe : avec un chmod 775, l'utilisateur
+# applicatif écrit en tant que propriétaire et le pool FPM comme le worker
+# Supervisor écrivent via le groupe. C'est aussi la crontab de cet utilisateur
+# que `install-cron` renseigne.
+WEB_USER        := carbon
 WEB_GROUP       := www-data
 
 help:
