@@ -6,9 +6,10 @@ courantes sont câblées dans le `Makefile` à la racine (`make help`).
 ## Cible
 
 - **Serveur web** : Nginx
-- **PHP** : 8.5 (FPM) — c'est la version que déclare ce projet, et ce n'est pas
-  celle des deux autres sites du serveur. Le socket dans la config nginx et la
-  variable `PHP_FPM` du Makefile doivent s'accorder.
+- **PHP** : 8.4 (FPM), socket `/run/php/php8.4-fpm.sock`. Le projet exige
+  `^8.3` : 8.4 convient. Le 8.5 mentionné dans le `CLAUDE.md` est la version de
+  développement local, pas celle de production. Le socket dans la config nginx
+  et la variable `PHP_FPM` du Makefile doivent rester accordés.
 - **Base** : SQLite (`database/database.sqlite`)
 - **File d'attente** : `database`, traitée par Supervisor
 - **Planificateur** : requis — voir plus bas
@@ -31,7 +32,7 @@ deploy/
 
 Trois points ne se recopient pas de `halaye.com` ni de `elearning.halaye.com` :
 
-1. **`client_max_body_size 24m`.** Les clients joignent des captures d'écran à
+1. **`client_max_body_size 100M`.** Les clients joignent des captures d'écran à
    leur demande — jusqu'à 5 Mo par fichier, trois par article. La valeur par
    défaut de nginx est de 1 Mo : sans cette ligne l'envoi échoue sur un 413
    avant même que Laravel ne voie la requête.
@@ -98,11 +99,15 @@ construit les assets, migre, régénère les caches et redémarre le worker.
 Deux valeurs ne sont pas devinables depuis le dépôt et sont à confirmer sur le
 serveur :
 
-- Le socket `php8.5-fpm.sock` dans la config nginx, si le serveur fait tourner
-  une autre version. Il doit s'accorder avec `PHP_FPM` dans le `Makefile`.
 - Que `www-data` appartienne bien au groupe `www-data` sur ce serveur : les
   fichiers sont possédés par `carbon` et c'est par le groupe, en 775, que le
   pool FPM et le worker Supervisor obtiennent le droit d'écrire.
+
+La config nginx de ce dossier reflète celle qui tourne déjà, à trois écarts
+près, chacun signalé dans le fichier par « AJOUT » ou « DURCI » : HTTP/2, la
+mise en cache définitive des assets `/build`, et le passage à FPM restreint au
+seul contrôleur frontal. Relire ces trois points avant le premier
+`make install-nginx`, puisque cette cible écrase le fichier du serveur.
 
 ## Installation de Node
 

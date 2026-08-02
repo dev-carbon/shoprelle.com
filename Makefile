@@ -11,9 +11,11 @@ NGINX_DEST      := /etc/nginx/sites-available/shoprelle.com
 SUPERVISOR_SRC  := deploy/supervisor/shoprelle-worker.conf
 SUPERVISOR_DEST := /etc/supervisor/conf.d/shoprelle-worker.conf
 
-# PHP 8.5 : c'est la version que déclare le projet, et elle n'est pas celle des
-# deux autres sites du serveur. À corriger ici si le FPM installé diffère.
-PHP_FPM         := php8.5-fpm
+# PHP 8.4 : la version installée sur le serveur, confirmée par la config nginx
+# en place. Le projet exige ^8.3, donc 8.4 convient — le 8.5 du CLAUDE.md est
+# la version de développement local, pas celle de production.
+# Doit rester accordé au socket fastcgi_pass de deploy/nginx/shoprelle.com.
+PHP_FPM         := php8.4-fpm
 
 # Propriétaire des fichiers écrits par l'application.
 #
