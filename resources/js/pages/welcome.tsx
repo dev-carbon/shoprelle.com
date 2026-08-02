@@ -537,10 +537,26 @@ export default function Welcome({
                     {/* The staff entrance lives in the footer only: the header
                         belongs to the visitor, and a door marked for somebody
                         else is one more thing for them to read past. */}
+                    {/* Le bouton n'est plus discret et n'est plus réservé au
+                        grand écran. C'est la seule action que le header
+                        propose, et sur un téléphone c'était précisément là
+                        qu'il disparaissait. Il porte l'ombre portée du bleu de
+                        marque : sur une barre presque blanche, une teinte
+                        pleine sans relief se lit comme une étiquette, pas comme
+                        un bouton. */}
                     <div className="flex items-center gap-2">
                         <ThemeSwitcher />
-                        <Button size="sm" asChild className="hidden sm:flex">
-                            <Link href={chat()}>Créer ma demande</Link>
+                        <Button
+                            asChild
+                            className="shadow-md shadow-primary/25 transition-shadow hover:shadow-lg hover:shadow-primary/30"
+                        >
+                            <Link href={chat()}>
+                                <span className="hidden sm:inline">
+                                    Créer ma demande
+                                </span>
+                                <span className="sm:hidden">Commander</span>
+                                <ArrowRight className="size-4" />
+                            </Link>
                         </Button>
                     </div>
                 </div>
@@ -563,16 +579,31 @@ export default function Welcome({
                         codes={countries.map((country) => country.code)}
                     />
 
-                    <div className="relative mx-auto w-full max-w-3xl px-4 pt-24 pb-16 text-center lg:pt-28">
+                    <div className="relative mx-auto w-full max-w-3xl px-4 pt-28 pb-20 text-center lg:pt-36 lg:pb-24">
                         <h1
                             className="mx-auto max-w-3xl animate-rise font-display text-hero font-black text-balance"
                             style={{ animationDelay: '40ms' }}
                         >
-                            Vos envies, enfin livrées chez vous.
+                            Vos envies,{' '}
+                            {/* L'or en aplat derrière le mot, jamais en encre :
+                                #FFC300 sur la page mesure 1,5:1 et ne peut pas
+                                porter un caractère. Posé dessous à 40 %, il
+                                laisse l'encre à plus de 12:1 et donne à la
+                                phrase le seul accent de marque que la palette
+                                autorise ici. Le léger dévers empêche le trait de
+                                ressembler à une erreur de rendu. */}
+                            <span className="relative inline-block">
+                                <span
+                                    aria-hidden
+                                    className="absolute inset-x-[-0.09em] bottom-[0.13em] h-[0.34em] -rotate-[0.7deg] rounded-[3px] bg-accent-brand/40"
+                                />
+                                <span className="relative">enfin livrées</span>
+                            </span>{' '}
+                            chez vous.
                         </h1>
 
                         <p
-                            className="mx-auto mt-6 max-w-xl animate-rise text-lg text-muted-foreground"
+                            className="mx-auto mt-7 max-w-xl animate-rise text-lg text-balance text-muted-foreground"
                             style={{ animationDelay: '150ms' }}
                         >
                             Un lien suffit pour commander sur vos plateformes
@@ -587,7 +618,7 @@ export default function Welcome({
                             this one is the first step of it. */}
                         <Form
                             {...link.form()}
-                            className="mx-auto mt-10 flex w-full max-w-2xl animate-rise flex-col gap-3 sm:flex-row"
+                            className="mx-auto mt-12 flex w-full max-w-2xl animate-rise flex-col gap-3 sm:flex-row"
                             style={{ animationDelay: '210ms' }}
                         >
                             {({ processing, errors }) => (
@@ -599,8 +630,11 @@ export default function Welcome({
                                         >
                                             Lien du produit
                                         </label>
-                                        <div className="flex items-center gap-2 rounded-xl border bg-card px-4 shadow-sm focus-within:border-primary focus-within:ring-[3px] focus-within:ring-ring/50">
-                                            <LinkIcon className="size-4 shrink-0 text-muted-foreground" />
+                                        {/* Plus haut et plus posé qu'un champ
+                                            de formulaire ordinaire : c'est
+                                            l'objet du hero, pas un réglage. */}
+                                        <div className="flex items-center gap-2.5 rounded-2xl border bg-card px-5 shadow-lg shadow-foreground/[0.06] transition-shadow focus-within:border-primary focus-within:ring-[3px] focus-within:ring-ring/40">
+                                            <LinkIcon className="size-5 shrink-0 text-muted-foreground" />
                                             <input
                                                 id="hero-url"
                                                 name="url"
@@ -609,7 +643,7 @@ export default function Welcome({
                                                 maxLength={2048}
                                                 autoComplete="off"
                                                 placeholder="https://www.shein.com/…"
-                                                className="h-12 w-full min-w-0 bg-transparent text-sm outline-none placeholder:text-muted-foreground"
+                                                className="h-14 w-full min-w-0 bg-transparent text-base outline-none placeholder:text-muted-foreground"
                                             />
                                         </div>
 
@@ -624,7 +658,7 @@ export default function Welcome({
                                         type="submit"
                                         size="lg"
                                         disabled={processing}
-                                        className="h-12 shrink-0 px-7 text-base"
+                                        className="h-14 shrink-0 rounded-2xl px-8 text-base shadow-lg shadow-primary/25 transition-shadow hover:shadow-xl hover:shadow-primary/30"
                                     >
                                         Commander
                                         <ArrowRight className="size-4" />
@@ -633,18 +667,34 @@ export default function Welcome({
                             )}
                         </Form>
 
-                        <p
-                            className="mt-4 animate-rise text-sm text-muted-foreground"
-                            style={{ animationDelay: '240ms' }}
+                        {/* Une ligne grise disait les trois choses d'un coup et
+                            ne s'en faisait lire aucune. Séparées, cochées, elles
+                            se parcourent — et chacune reprend un engagement que
+                            la page tient plus bas, aucune n'en ajoute. */}
+                        <ul
+                            className="mx-auto mt-8 flex animate-rise flex-wrap items-center justify-center gap-x-7 gap-y-3 text-sm font-medium"
+                            style={{ animationDelay: '260ms' }}
                         >
-                            Gratuit, sans inscription, en quelques messages.
-                        </p>
+                            {[
+                                'Gratuit, sans inscription',
+                                'Devis avant paiement',
+                                `Réponse ${contact.responseTime}`,
+                            ].map((promise) => (
+                                <li
+                                    key={promise}
+                                    className="flex items-center gap-2"
+                                >
+                                    <Check className="size-4 shrink-0 text-success" />
+                                    {promise}
+                                </li>
+                            ))}
+                        </ul>
                     </div>
 
                     {/* Wider than the copy above it: four cards in a row need
                         the room, and the timeline is the part of the hero doing
                         the explaining. */}
-                    <div className="relative mx-auto w-full max-w-7xl px-4">
+                    <div className="relative mx-auto w-full max-w-7xl px-4 pt-4">
                         <LinkToParcel
                             className="animate-rise"
                             style={{ animationDelay: '300ms' }}
