@@ -178,6 +178,38 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Search & Sharing
+    |--------------------------------------------------------------------------
+    |
+    | What a crawler and a link preview see. Rendered into the Blade layout, not
+    | through Inertia's <Head> — and that distinction is the whole point of this
+    | block. Inertia writes its head tags with JavaScript, and no unfurler runs
+    | JavaScript: not WhatsApp, not Telegram, not Facebook. Tags that only exist
+    | after hydration do not exist at all for the crawlers that matter, and this
+    | service is shared by pasting a link into a conversation.
+    |
+    | The description is written for a preview card, not for a page: about a
+    | hundred and sixty characters, the promise first, and no sentence that the
+    | page itself does not already make good on.
+    |
+    */
+
+    'seo' => [
+        'title' => 'Shoprelle — Un lien. Une commande. Une livraison.',
+
+        'description' => "Envoyez le lien d'un produit depuis Shein, Amazon, Zara ou n'importe quel site : nous l'achetons en France et le livrons chez vous. Sans compte, devis avant paiement.",
+
+        /*
+         * L'image d'aperçu, en 1200 × 630 — le format que Facebook, WhatsApp et
+         * Telegram attendent pour une grande carte. Servie depuis `public/`, et
+         * référencée en URL absolue : une URL relative n'est pas résolue par la
+         * plupart des robots d'aperçu.
+         */
+        'image' => '/og-image.png',
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Social Profiles
     |--------------------------------------------------------------------------
     |
@@ -185,11 +217,17 @@ return [
     | dropped rather than rendered, so the site never offers a visitor a profile
     | that is not there yet.
     |
+    | The two that exist carry their URL as a default rather than waiting on an
+    | environment variable. A profile address is a fact about the brand, not
+    | about the machine the code runs on, and a server where somebody forgot to
+    | set it would silently drop the icons — and, worse, drop the `sameAs` that
+    | tells search engines these accounts and this site are the same business.
+    |
     */
 
     'social' => [
-        'instagram' => env('SHOPRELLE_INSTAGRAM_URL'),
-        'facebook' => env('SHOPRELLE_FACEBOOK_URL'),
+        'instagram' => env('SHOPRELLE_INSTAGRAM_URL', 'https://www.instagram.com/_shoprelle_/'),
+        'facebook' => env('SHOPRELLE_FACEBOOK_URL', 'https://www.facebook.com/profile.php?id=61592908914788'),
         'tiktok' => env('SHOPRELLE_TIKTOK_URL'),
     ],
 

@@ -78,7 +78,11 @@ return [
     |
     */
 
-    'locale' => env('APP_LOCALE', 'en'),
+    // Le site est intégralement en français, et c'est cette valeur qui remplit
+    // l'attribut `lang` du document. Le défaut vit ici plutôt que dans le seul
+    // .env : un serveur où la variable a été oubliée annoncerait aux moteurs et
+    // aux lecteurs d'écran une page anglaise.
+    'locale' => env('APP_LOCALE', 'fr'),
 
     'fallback_locale' => env('APP_FALLBACK_LOCALE', 'en'),
 

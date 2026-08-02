@@ -1,2 +1,14 @@
+# Shoprelle — https://shoprelle.com
+
 User-agent: *
-Disallow:
+Allow: /
+
+# Le back-office et les pages de compte n'ont rien à faire dans un index :
+# elles exigent une session, et un moteur qui les explore ne récolte que des
+# redirections vers la page de connexion.
+Disallow: /admin
+Disallow: /dashboard
+Disallow: /settings
+Disallow: /telegram
+
+Sitemap: https://shoprelle.com/sitemap.xml

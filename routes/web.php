@@ -8,17 +8,21 @@ use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\PaymentController;
 use App\Http\Controllers\Admin\PurchaseRequestController;
 use App\Http\Controllers\Admin\PurchaseRequestStatusController;
-use App\Http\Controllers\Admin\ReviewController;
 use App\Http\Controllers\Admin\QuoteController;
+use App\Http\Controllers\Admin\ReviewController;
 use App\Http\Controllers\Admin\StatisticsController;
 use App\Http\Controllers\ChatbotController;
 use App\Http\Controllers\HomeController;
+use App\Http\Controllers\SitemapController;
 use App\Http\Controllers\Telegram\WebhookController as TelegramWebhookController;
 use App\Http\Middleware\EnsureUserIsAdmin;
 use App\Http\Middleware\VerifyTelegramWebhook;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', HomeController::class)->name('home');
+
+// Les pages publiques, pour les moteurs. Référencé depuis public/robots.txt.
+Route::get('/sitemap.xml', SitemapController::class)->name('sitemap');
 
 /*
 |--------------------------------------------------------------------------
