@@ -176,3 +176,31 @@ it('links only the social profiles that exist', function () {
             ->where('social', ['instagram' => 'https://instagram.com/shoprelle'])
         );
 });
+
+it('offers a WhatsApp link once a number is configured', function () {
+    config(['shoprelle.whatsapp.number' => '+237 6 12 34 56 78']);
+
+    // Le numéro s'écrit comme sur une carte de visite ; `wa.me` n'accepte que
+    // les chiffres. La normalisation appartient au contrôleur, pas à la
+    // personne qui remplit le .env.
+    $this->get(route('home'))
+        ->assertInertia(fn ($page) => $page
+            ->where('whatsappUrl', 'https://wa.me/237612345678?text='.rawurlencode(
+                config('shoprelle.whatsapp.greeting')
+            ))
+        );
+});
+
+it('offers no WhatsApp link for a number that cannot be dialled', function (?string $number) {
+    config(['shoprelle.whatsapp.number' => $number]);
+
+    // Un numéro national ne peut pas être réparé sans deviner un indicatif :
+    // mieux vaut aucun lien qu'un lien qui n'aboutit nulle part.
+    $this->get(route('home'))
+        ->assertInertia(fn ($page) => $page->where('whatsappUrl', null));
+})->with([
+    'non renseigné' => [null],
+    'vide' => [''],
+    'sans chiffres' => ['bientôt'],
+    'forme nationale' => ['06 12 34 56 78'],
+]);

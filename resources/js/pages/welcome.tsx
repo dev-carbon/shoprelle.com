@@ -17,7 +17,7 @@ import {
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { lazy, Suspense } from 'react';
-import type { ReactNode } from 'react';
+import type { ComponentType, ReactNode } from 'react';
 
 import AppLogoIcon from '@/components/app-logo-icon';
 import { BrandWordmark } from '@/components/brand-wordmark';
@@ -29,7 +29,7 @@ import {
 import { MarketplaceMarquee } from '@/components/marketplace-marquee';
 import { Reveal } from '@/components/reveal';
 import { ScrollProgress } from '@/components/scroll-progress';
-import { SOCIAL_ICONS } from '@/components/social-icons';
+import { SOCIAL_ICONS, WhatsAppIcon } from '@/components/social-icons';
 import { ThemeSwitcher } from '@/components/theme-switcher';
 import { Button } from '@/components/ui/button';
 import { WorldBackdrop } from '@/components/world-backdrop';
@@ -232,6 +232,7 @@ type NetworkStats = {
 type Props = {
     contact: { email: string; responseTime: string };
     telegramUrl: string | null;
+    whatsappUrl: string | null;
     countries: Destination[];
     /** Announced, not open — the assistant still refuses these. */
     upcomingCountries: Destination[];
@@ -320,7 +321,8 @@ function ChannelCard({
     href,
     external,
 }: {
-    icon: LucideIcon;
+    /* Assez large pour une Lucide comme pour un glyphe maison. */
+    icon: ComponentType<{ className?: string }>;
     name: string;
     description: string;
     badge: string;
@@ -430,6 +432,7 @@ const SOCIAL_NETWORKS: { key: SocialNetwork; label: string }[] = [
 export default function Welcome({
     contact,
     telegramUrl,
+    whatsappUrl,
     countries,
     upcomingCountries,
     stats,
@@ -1038,6 +1041,27 @@ export default function Welcome({
                                     external
                                 />
                             </Reveal>
+
+                            {/* WhatsApp n'est pas l'assistant, et la carte ne
+                                doit jamais le laisser croire : derrière ce
+                                lien il y a une personne, pas le robot. C'est
+                                la même promesse que le reste de la page — « une
+                                personne lit chaque demande » — mais elle se
+                                tient dans un fil que le client garde. */}
+                            <Reveal from="right" delay={280} className="h-full">
+                                <ChannelCard
+                                    icon={WhatsAppIcon}
+                                    name="WhatsApp"
+                                    badge={
+                                        whatsappUrl
+                                            ? 'Disponible maintenant'
+                                            : 'Bientôt disponible'
+                                    }
+                                    description="Écrivez-nous sur WhatsApp : une personne vous répond et vous accompagne jusqu'à la commande."
+                                    href={whatsappUrl ?? undefined}
+                                    external
+                                />
+                            </Reveal>
                         </div>
                     </div>
                 </section>
@@ -1368,6 +1392,18 @@ export default function Welcome({
                                     className="transition-colors hover:text-foreground"
                                 >
                                     Sur Telegram
+                                </a>
+                            </li>
+                        )}
+                        {whatsappUrl && (
+                            <li>
+                                <a
+                                    href={whatsappUrl}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="transition-colors hover:text-foreground"
+                                >
+                                    Sur WhatsApp
                                 </a>
                             </li>
                         )}

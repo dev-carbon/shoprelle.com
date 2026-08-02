@@ -22,6 +22,7 @@ class HomeController extends Controller
                 'responseTime' => config('shoprelle.contact.response_time'),
             ],
             'telegramUrl' => $this->telegramUrl(),
+            'whatsappUrl' => $this->whatsappUrl(),
             'countries' => $this->asList(config('shoprelle.countries')),
             'upcomingCountries' => $this->asList(config('shoprelle.upcoming_countries')),
             'stats' => $this->stats(),
@@ -95,6 +96,38 @@ class HomeController extends Controller
         }
 
         return (int) $value;
+    }
+
+    /**
+     * The link that opens a WhatsApp conversation, or null when there is none.
+     *
+     * `wa.me` only accepts digits — no `+`, no spaces, no leading zeros — so the
+     * number is normalised here rather than in the environment, where whoever
+     * fills it in will reasonably write it the way it is printed on a card.
+     *
+     * A `00` prefix is the same thing as `+` and has to go: `00237…` would be
+     * read as a number starting with two zeros and lead nowhere.
+     *
+     * What is left must not start with a zero either. An international number
+     * never does — so a leading zero means somebody wrote the national form,
+     * which cannot be repaired here without guessing a country code. No link is
+     * offered rather than one that silently dials nowhere.
+     */
+    private function whatsappUrl(): ?string
+    {
+        $digits = preg_replace('/\D+/', '', (string) config('shoprelle.whatsapp.number')) ?? '';
+
+        if (str_starts_with($digits, '00')) {
+            $digits = substr($digits, 2);
+        }
+
+        if ($digits === '' || str_starts_with($digits, '0')) {
+            return null;
+        }
+
+        return 'https://wa.me/'.$digits.'?text='.rawurlencode(
+            (string) config('shoprelle.whatsapp.greeting')
+        );
     }
 
     /**

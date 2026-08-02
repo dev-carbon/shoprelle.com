@@ -210,6 +210,33 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | WhatsApp
+    |--------------------------------------------------------------------------
+    |
+    | Un numéro, et rien d'autre : pas d'API, pas de webhook. Le lien `wa.me`
+    | ouvre une conversation avec une personne, qui répond depuis WhatsApp
+    | Business. Ce n'est donc pas l'assistant — la page le dit ainsi, et ne doit
+    | jamais laisser croire le contraire.
+    |
+    | Le numéro s'écrit comme on veut : indicatif international, espaces, tirets,
+    | `+` ou `00`. Le contrôleur ne garde que les chiffres, ce dont `wa.me` a
+    | besoin. Tant qu'il est vide, la carte s'affiche « Bientôt disponible » et
+    | n'est pas cliquable — même règle que Telegram.
+    |
+    */
+
+    'whatsapp' => [
+        'number' => env('SHOPRELLE_WHATSAPP_NUMBER'),
+
+        /*
+         * Le message pré-rempli. Il n'ouvre pas la conversation à la place du
+         * client : il lui évite la page blanche, et nous dit d'où il vient.
+         */
+        'greeting' => 'Bonjour Shoprelle, je voudrais commander un produit.',
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Social Profiles
     |--------------------------------------------------------------------------
     |
