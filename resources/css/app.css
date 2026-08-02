@@ -511,6 +511,23 @@
 }
 
 /*
+ * Ce qui cache un bloc avant qu'il ne soit atteint.
+ *
+ * En CSS et non dans le composant, parce que la page est rendue côté serveur :
+ * un composant qui déciderait de se cacher en lisant `IntersectionObserver` ou
+ * `matchMedia` produirait un premier rendu client différent du HTML qu'il
+ * hydrate, et React refuse de rattraper ce genre d'écart.
+ *
+ * `reveal-ready` est posée sur le document par le script en ligne du gabarit,
+ * avant le premier tracé, et seulement là où un observateur existe et où le
+ * mouvement n'a pas été refusé. Sans elle — pas de JavaScript, pas
+ * d'observateur, mouvement réduit — rien n'est jamais caché.
+ */
+.reveal-ready [data-reveal='pending'] {
+    opacity: 0;
+}
+
+/*
  * The four entrances.
  *
  * Same curve, same duration, same travel — only the direction changes. A page

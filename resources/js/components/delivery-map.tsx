@@ -1,7 +1,7 @@
 import { memo, useMemo, useState } from 'react';
 
 import atlas from '@/data/world-atlas.json';
-import { useInView } from '@/hooks/use-in-view';
+import { CAN_OBSERVE, useInView } from '@/hooks/use-in-view';
 import { ISO_NUMERIC, ORIGIN_ID, ROUTE_SIDE } from '@/lib/destinations';
 import { cn } from '@/lib/utils';
 
@@ -479,7 +479,12 @@ export function DeliveryMap({
 
     return (
         <div ref={ref} className={cn('relative select-none', className)}>
-            <Network destinations={destinations} drawn={inView} />
+            {/* Sans observateur, le réseau se dessine d'emblée : mieux vaut
+                une carte finie qu'une carte vide. */}
+            <Network
+                destinations={destinations}
+                drawn={inView || !CAN_OBSERVE}
+            />
 
             {/* The country under the cursor, redrawn on top rather than
                 restyled in place: the layer below is memoised, and reaching

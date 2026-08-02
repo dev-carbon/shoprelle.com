@@ -76,6 +76,19 @@
                         document.documentElement.classList.add('dark');
                     }
                 }
+
+                // Autorise le masquage des blocs qui n'ont pas encore été
+                // atteints. Posé ici, avant le premier tracé, plutôt que dans
+                // React : le composant doit rendre la même chose que le serveur,
+                // qui n'a ni observateur ni requête de média. Sans cette classe
+                // — pas de JavaScript, pas d'observateur, mouvement réduit —
+                // toute la page reste visible.
+                if (
+                    'IntersectionObserver' in window &&
+                    !window.matchMedia('(prefers-reduced-motion: reduce)').matches
+                ) {
+                    document.documentElement.classList.add('reveal-ready');
+                }
             })();
         </script>
 

@@ -13,6 +13,7 @@ import {
     Send,
     ShieldCheck,
     ShoppingBag,
+    ShoppingCart,
     X,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
@@ -27,9 +28,15 @@ import {
     MARKETPLACE_LOGOS,
 } from '@/components/marketplace-logos';
 import { MarketplaceMarquee } from '@/components/marketplace-marquee';
+import { OrderFab } from '@/components/order-fab';
+import { OrderMenu } from '@/components/order-menu';
 import { Reveal } from '@/components/reveal';
 import { ScrollProgress } from '@/components/scroll-progress';
-import { SOCIAL_ICONS, WhatsAppIcon } from '@/components/social-icons';
+import {
+    SOCIAL_ICONS,
+    WHATSAPP_GREEN,
+    WhatsAppIcon,
+} from '@/components/social-icons';
 import { ThemeSwitcher } from '@/components/theme-switcher';
 import { Button } from '@/components/ui/button';
 import { WorldBackdrop } from '@/components/world-backdrop';
@@ -184,17 +191,6 @@ const ASSURANCES: { icon: LucideIcon; title: string; description: string }[] = [
             'Votre référence suffit pour savoir où en est votre colis, sans compte.',
     },
 ];
-
-/**
- * Le vert du logo WhatsApp.
- *
- * Sa couleur, pas la nôtre — comme les marques des marketplaces plus haut sur
- * la page. Le glyphe reste blanc dessus, ce qui est le verrouillage officiel de
- * WhatsApp : mesuré, le blanc n'y est qu'à 1,98:1, mais la pastille ne porte
- * aucune information seule — le mot « WhatsApp » est écrit juste à côté, à
- * pleine encre. Elle sert à reconnaître, pas à lire.
- */
-const WHATSAPP_GREEN = '#25D366';
 
 const QUESTIONS: { question: string; answer: string }[] = [
     {
@@ -579,18 +575,24 @@ export default function Welcome({
                         un bouton. */}
                     <div className="flex items-center gap-2">
                         <ThemeSwitcher />
-                        <Button
-                            asChild
-                            className="shadow-md shadow-primary/25 transition-shadow hover:shadow-lg hover:shadow-primary/30"
-                        >
-                            <Link href={chat()}>
-                                <span className="hidden sm:inline">
-                                    Nouvelle commande
-                                </span>
-                                <span className="sm:hidden">Commander</span>
-                                <ArrowRight className="size-4" />
-                            </Link>
-                        </Button>
+
+                        {/* Le même menu que le bouton flottant : le
+                            header n'impose plus le chat web. Le libellé se
+                            raccourcit sous `sm`, où la barre est étroite. */}
+                        <OrderMenu
+                            chatHref={chat().url}
+                            telegramUrl={telegramUrl}
+                            whatsappUrl={whatsappUrl}
+                            trigger={
+                                <Button className="shadow-md shadow-primary/25 transition-shadow hover:shadow-lg hover:shadow-primary/30">
+                                    <span className="hidden sm:inline">
+                                        Nouvelle commande
+                                    </span>
+                                    <span className="sm:hidden">Commander</span>
+                                    <ShoppingCart className="size-4" />
+                                </Button>
+                            }
+                        />
                     </div>
                 </div>
             </header>
@@ -1467,6 +1469,12 @@ export default function Welcome({
 
                 <BrandWordmark />
             </footer>
+
+            <OrderFab
+                chatHref={chat().url}
+                telegramUrl={telegramUrl}
+                whatsappUrl={whatsappUrl}
+            />
         </div>
     );
 }
