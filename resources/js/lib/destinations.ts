@@ -49,3 +49,24 @@ export const ROUTE_SIDE: Record<string, 'west' | 'east'> = {
 export function toNumericIds(codes: string[]): string[] {
     return codes.map((code) => ISO_NUMERIC[code]).filter(Boolean);
 }
+
+/**
+ * Le drapeau d'un pays, dérivé de son code alpha-2.
+ *
+ * Un drapeau emoji est la paire d'« indicateurs régionaux » correspondant aux
+ * deux lettres du code — `CM` donne 🇨🇲 — donc il se calcule et n'a pas à être
+ * stocké. Aucune table à tenir à jour : ouvrir une destination reste une ligne
+ * dans `config/shoprelle.php`.
+ *
+ * ⚠️ Windows ne dessine pas les drapeaux : il affiche les deux lettres à la
+ * place. Le badge y devient « CM Cameroun » — moins joli, mais lisible, et
+ * jamais un carré vide. C'est pourquoi le nom du pays reste écrit à côté et
+ * que le drapeau ne porte, seul, aucune information.
+ */
+export function flagFor(code: string): string {
+    return String.fromCodePoint(
+        ...[...code.toUpperCase()].map(
+            (letter) => 0x1f1e6 + letter.charCodeAt(0) - 65,
+        ),
+    );
+}

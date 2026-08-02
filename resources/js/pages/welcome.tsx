@@ -35,6 +35,8 @@ import { Button } from '@/components/ui/button';
 import { WorldBackdrop } from '@/components/world-backdrop';
 import { useCountUp } from '@/hooks/use-count-up';
 import { useScrolled } from '@/hooks/use-scrolled';
+import delivered from '@/images/colis-livre.webp';
+import { flagFor } from '@/lib/destinations';
 import { cn } from '@/lib/utils';
 import { dashboard, login } from '@/routes';
 import { link, show as chat } from '@/routes/chat';
@@ -729,16 +731,43 @@ export default function Welcome({
                         className="pointer-events-none absolute inset-0 bg-[radial-gradient(70%_55%_at_50%_0%,var(--color-primary)_0%,transparent_70%)] opacity-[0.06]"
                     />
 
-                    <div className="relative mx-auto w-full max-w-7xl px-4">
-                        <Reveal className="mx-auto flex max-w-3xl flex-col items-center text-center">
+                    {/* La promesse et son aboutissement, côte à côte.
+
+                        Tout ce qui suit dans cette section est un schéma : des
+                        arcs, des chiffres, des pastilles. Une seule image de ce
+                        que tout cela produit — un colis dans les mains de
+                        quelqu'un, devant chez lui — dit ce qu'un réseau tracé ne
+                        dira jamais, et elle ouvre la section plutôt que de la
+                        clore.
+
+                        Chargée en `lazy`, dimensions déclarées : elle est bien
+                        au-delà du premier écran, et la place lui est réservée
+                        d'avance pour que rien ne saute à son arrivée. */}
+                    <div className="relative mx-auto grid w-full max-w-7xl items-center gap-10 px-4 lg:grid-cols-[minmax(0,6fr)_minmax(0,5fr)] lg:gap-16">
+                        <Reveal
+                            from="left"
+                            className="text-center lg:text-left"
+                        >
                             <h2 className="font-display text-title font-black text-balance">
                                 Vos envies voyagent jusqu'à vous.
                             </h2>
-                            <p className="mt-4 text-lg text-muted-foreground">
+                            <p className="mt-5 max-w-xl text-lg text-muted-foreground">
                                 Shoprelle vous ouvre l'accès aux plus grandes
                                 plateformes d'achat et organise l'acheminement
                                 de vos commandes jusqu'à votre destination.
                             </p>
+                        </Reveal>
+
+                        <Reveal from="right">
+                            <img
+                                src={delivered}
+                                alt="Une cliente reçoit son colis Shoprelle devant chez elle."
+                                width={1200}
+                                height={655}
+                                loading="lazy"
+                                decoding="async"
+                                className="aspect-[5/4] w-full rounded-2xl border object-cover shadow-lg shadow-foreground/[0.07]"
+                            />
                         </Reveal>
                     </div>
 
@@ -813,8 +842,11 @@ export default function Welcome({
                                             from="fade"
                                             key={country.code}
                                             delay={index * 55}
-                                            className="rounded-full border bg-card px-4 py-1.5 text-sm font-semibold shadow-sm"
+                                            className="flex items-center gap-2 rounded-full border bg-card px-4 py-1.5 text-sm font-semibold shadow-sm"
                                         >
+                                            <span aria-hidden>
+                                                {flagFor(country.code)}
+                                            </span>
                                             {country.name}
                                         </Reveal>
                                     ))}
@@ -839,8 +871,11 @@ export default function Welcome({
                                                     from="fade"
                                                     key={country.code}
                                                     delay={index * 55}
-                                                    className="rounded-full border border-dashed px-4 py-1.5 text-sm font-medium text-muted-foreground"
+                                                    className="flex items-center gap-2 rounded-full border border-dashed px-4 py-1.5 text-sm font-medium text-muted-foreground"
                                                 >
+                                                    <span aria-hidden>
+                                                        {flagFor(country.code)}
+                                                    </span>
                                                     {country.name}
                                                 </Reveal>
                                             ),
@@ -858,7 +893,10 @@ export default function Welcome({
                             that has to be deciphered is not reassuring. Given a
                             full line each they read at a glance. */}
                         <div className="mt-16 grid gap-10 border-t pt-14 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] lg:gap-14">
-                            <div className="lg:sticky lg:top-28 lg:self-start">
+                            <Reveal
+                                from="left"
+                                className="lg:sticky lg:top-28 lg:self-start"
+                            >
                                 <h3 className="font-display text-subtitle font-extrabold text-balance">
                                     Le même parcours, quelle que soit la
                                     destination.
@@ -867,7 +905,7 @@ export default function Welcome({
                                     Chaque commande suit les mêmes étapes, du
                                     panier français jusqu'à votre ville.
                                 </p>
-                            </div>
+                            </Reveal>
 
                             <ul className="flex flex-col">
                                 {ASSURANCES.map((assurance, index) => (

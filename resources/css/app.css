@@ -116,9 +116,15 @@
  * value it lands on 4.47:1 against the cream band, just under the threshold,
  * and the band is where half the page's links sit.
  *
- * The page stays a *warm* off-white rather than the cooler #F8FAFC: the cream
- * band is warm, and a cool page beneath a warm band reads as a mistake rather
- * than as a choice.
+ * The page is pure white, by explicit decision. The palette's own reasoning
+ * used to argue for a warm off-white — the cream band is warm, and a cooler
+ * page under it reads as a mistake rather than as a choice — but a white page
+ * is what was asked for, and the band is now the only warm surface rather than
+ * the warmest of several.
+ *
+ * One consequence, and it is deliberate: `--card` is white too, so a card no
+ * longer separates from the page by its fill. Its border and its shadow carry
+ * that on their own, which is what every surface here was already drawn with.
  *
  * Contrast was computed, not eyeballed: every text pair clears 4.5:1 and the
  * chart steps clear 3:1, in both modes. Chart hues are left alone — they are
@@ -126,7 +132,7 @@
  * toward the new primary would collide with the blue step already in the set.
  */
 :root {
-    --background: oklch(0.985 0.011 77);
+    --background: oklch(1 0 0);
     --foreground: oklch(0.187 0.043 240);
     --card: oklch(1 0 0);
     --card-foreground: oklch(0.187 0.043 240);
