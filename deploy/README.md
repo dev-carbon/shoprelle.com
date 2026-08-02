@@ -65,6 +65,60 @@ Le webhook Telegram est à rejouer **à chaque changement de domaine** : le bot
 n'écoute que l'URL qui lui a été déclarée. `make telegram-webhook-info` dit
 laquelle est enregistrée.
 
+## Brancher Telegram
+
+Le canal est entièrement codé — moteur, clavier, webhook, déduplication. Il ne
+manque que la configuration, et elle est intégralement côté serveur.
+
+### 1. Créer le bot
+
+Dans Telegram, écrire à **@BotFather** : `/newbot`, un nom affiché, puis un nom
+d'utilisateur qui doit finir par `bot`. BotFather renvoie le token.
+
+Le token ne doit transiter que par le `.env` du serveur : quiconque l'a peut
+lire et écrire toutes les conversations du bot.
+
+### 2. Renseigner le `.env` du serveur
+
+```dotenv
+APP_URL=https://shoprelle.com
+TELEGRAM_BOT_TOKEN=…            # donné par BotFather
+TELEGRAM_BOT_USERNAME=…         # avec ou sans @, le code retire l'arobase
+TELEGRAM_WEBHOOK_SECRET=…       # php -r 'echo bin2hex(random_bytes(24)), PHP_EOL;'
+```
+
+`APP_URL` n'est pas décoratif : c'est lui qui fabrique l'URL déclarée à
+Telegram. Restée sur `localhost`, la commande refuse — Telegram n'accepte que
+le HTTPS.
+
+Le secret n'est pas optionnel. L'endpoint est public et non authentifié ; ce
+secret, renvoyé par Telegram dans `X-Telegram-Bot-Api-Secret-Token`, est la
+seule chose entre le bot et qui devine l'URL. Sans lui le middleware répond 403
+à tout, plutôt que d'accepter n'importe quoi.
+
+### 3. Recharger la configuration, puis déclarer le webhook
+
+```bash
+php artisan optimize      # sinon le .env est ignoré, voir ci-dessous
+make telegram-webhook
+make telegram-webhook-info
+```
+
+⚠️ **`make deploy` met la configuration en cache.** Modifier le `.env` sans
+relancer `php artisan optimize` ne change rien : la commande répondra
+« TELEGRAM_BOT_TOKEN is not set » alors que la variable est bien là, et la carte
+Telegram de la page d'accueil restera en « Bientôt disponible ».
+
+### 4. Vérifier
+
+`make telegram-webhook-info` affiche le bot et l'état du webhook. Puis écrire
+`/start` au bot : il doit répondre. Côté site, la carte Telegram de la section
+« L'assistant » devient cliquable — elle n'apparaît comme lien que si le token
+**et** le nom d'utilisateur sont tous deux définis : le nom fabrique l'URL
+`t.me`, le token garantit que quelqu'un écoute derrière.
+
+Le webhook est à redéclarer à chaque changement de domaine.
+
 ## Vérifier que le planificateur tourne
 
 ```bash
