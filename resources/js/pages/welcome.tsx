@@ -644,10 +644,28 @@ export default function Welcome({
                     {/* Wider than the copy above it: four cards in a row need
                         the room, and the timeline is the part of the hero doing
                         the explaining. */}
-                    <div className="relative mx-auto w-full max-w-7xl px-4 pb-24 lg:pb-28">
+                    <div className="relative mx-auto w-full max-w-7xl px-4">
                         <LinkToParcel
                             className="animate-rise"
                             style={{ animationDelay: '300ms' }}
+                        />
+                    </div>
+
+                    {/* The platforms close the hero, with nothing said about
+                        them. They used to have a section and a paragraph of
+                        their own further down; but the marks are the argument —
+                        a visitor either recognises Shein and Amazon or does not,
+                        and no sentence next to them changes that. Here they
+                        answer "does this work with what I already use?" while
+                        the promise above is still on screen. */}
+                    <div
+                        className="relative mx-auto w-full max-w-7xl animate-rise px-4 pt-16 pb-20 lg:pb-24"
+                        style={{ animationDelay: '380ms' }}
+                    >
+                        <MarketplaceMarquee
+                            marketplaces={MARKETPLACES}
+                            logos={MARKETPLACE_LOGOS}
+                            colors={MARKETPLACE_COLORS}
                         />
                     </div>
                 </section>
@@ -696,6 +714,7 @@ export default function Welcome({
                         hundred pixels it stops being a band and starts being a
                         wall. */}
                     <Reveal
+                        from="fade"
                         delay={100}
                         className="relative mx-auto mt-14 w-full max-w-[1800px] lg:mt-16"
                     >
@@ -756,6 +775,7 @@ export default function Welcome({
                                     {countries.map((country, index) => (
                                         <Reveal
                                             as="li"
+                                            from="fade"
                                             key={country.code}
                                             delay={index * 55}
                                             className="rounded-full border bg-card px-4 py-1.5 text-sm font-semibold shadow-sm"
@@ -781,6 +801,7 @@ export default function Welcome({
                                             (country, index) => (
                                                 <Reveal
                                                     as="li"
+                                                    from="fade"
                                                     key={country.code}
                                                     delay={index * 55}
                                                     className="rounded-full border border-dashed px-4 py-1.5 text-sm font-medium text-muted-foreground"
@@ -817,6 +838,7 @@ export default function Welcome({
                                 {ASSURANCES.map((assurance, index) => (
                                     <Reveal
                                         as="li"
+                                        from="right"
                                         key={assurance.title}
                                         delay={index * 80}
                                         className="flex gap-5 border-b py-5 first:pt-0 last:border-b-0 last:pb-0"
@@ -837,40 +859,6 @@ export default function Welcome({
                                 ))}
                             </ul>
                         </div>
-                    </div>
-                </section>
-
-                {/* The marketplaces: the promise on the left, the platforms
-                    scrolling past on the right. */}
-                {/* Wider than the rest of the page, and weighted toward the
-                    tiles: the marquee is the point of the section, and it reads
-                    better the more brands are in view at once. */}
-                <section className="border-b py-20">
-                    <div className="mx-auto grid w-full max-w-7xl items-center gap-10 px-4 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] lg:gap-14">
-                        <Reveal>
-                            <h2 className="font-display text-title font-black text-balance">
-                                Quel que soit le site, nous l'achetons pour
-                                vous.
-                            </h2>
-                            <p className="mt-4 max-w-sm text-muted-foreground">
-                                Shein, Amazon, Zara, ou une boutique que nous ne
-                                connaissons pas encore : envoyez le lien, nous
-                                nous chargeons du reste.
-                            </p>
-                            <Button className="mt-7" asChild>
-                                <Link href={chat()}>
-                                    Créer ma demande
-                                    <ArrowRight className="size-4" />
-                                </Link>
-                            </Button>
-                        </Reveal>
-
-                        <MarketplaceMarquee
-                            marketplaces={MARKETPLACES}
-                            logos={MARKETPLACE_LOGOS}
-                            colors={MARKETPLACE_COLORS}
-                            className="lg:-mr-4"
-                        />
                     </div>
                 </section>
 
@@ -900,6 +888,7 @@ export default function Welcome({
                             {STEPS.map((step, index) => (
                                 <Reveal
                                     as="li"
+                                    from="right"
                                     key={step.title}
                                     delay={index * 110}
                                     className="group grid grid-cols-[auto_1fr] gap-x-5 sm:gap-x-8"
@@ -952,7 +941,7 @@ export default function Welcome({
                         </div>
 
                         <div className="grid gap-4 sm:grid-cols-2">
-                            <Reveal className="h-full">
+                            <Reveal from="right" className="h-full">
                                 <ChannelCard
                                     icon={MessagesSquare}
                                     name="Chat web"
@@ -962,7 +951,7 @@ export default function Welcome({
                                 />
                             </Reveal>
 
-                            <Reveal delay={140} className="h-full">
+                            <Reveal from="right" delay={140} className="h-full">
                                 <ChannelCard
                                     icon={Send}
                                     name="Telegram"
@@ -989,7 +978,10 @@ export default function Welcome({
                     className="border-b bg-surface-alt py-24 lg:py-32"
                 >
                     <div className="mx-auto grid w-full max-w-7xl gap-12 px-4 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] lg:gap-16">
-                        <Reveal className="lg:sticky lg:top-28 lg:self-start">
+                        <Reveal
+                            from="left"
+                            className="lg:sticky lg:top-28 lg:self-start"
+                        >
                             <h2 className="font-display text-title font-black text-balance">
                                 Pourquoi Shoprelle existe ?
                             </h2>
@@ -1008,7 +1000,10 @@ export default function Welcome({
                             without it. Every line on the right is something
                             claimed elsewhere on this page, not a new promise. */}
                         <div className="grid gap-4 sm:grid-cols-2">
-                            <Reveal className="rounded-2xl border border-dashed p-6 sm:p-7">
+                            <Reveal
+                                from="right"
+                                className="rounded-2xl border border-dashed p-6 sm:p-7"
+                            >
                                 <p className="font-display text-sm font-extrabold text-muted-foreground">
                                     Sans Shoprelle
                                 </p>
@@ -1026,6 +1021,7 @@ export default function Welcome({
                             </Reveal>
 
                             <Reveal
+                                from="right"
                                 delay={100}
                                 className="rounded-2xl border bg-card p-6 shadow-sm sm:p-7"
                             >
@@ -1140,7 +1136,7 @@ export default function Welcome({
                     className="border-b bg-surface-alt py-24 lg:py-32"
                 >
                     <div className="mx-auto grid w-full max-w-7xl gap-12 px-4 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] lg:gap-14">
-                        <Reveal>
+                        <Reveal from="left">
                             <h2 className="font-display text-title font-black text-balance">
                                 Nous contacter
                             </h2>
@@ -1151,7 +1147,11 @@ export default function Welcome({
                             </p>
                         </Reveal>
 
-                        <Reveal delay={140} className="flex flex-col gap-6">
+                        <Reveal
+                            from="right"
+                            delay={140}
+                            className="flex flex-col gap-6"
+                        >
                             <div>
                                 <p className="text-sm text-muted-foreground">
                                     Par email
@@ -1189,6 +1189,7 @@ export default function Welcome({
                     <div className="mx-auto w-full max-w-5xl px-4 py-28 text-center lg:py-36">
                         <Reveal
                             as="h2"
+                            from="fade"
                             className="font-display text-display font-black text-balance"
                         >
                             Le produit que vous cherchez est à un lien de

@@ -504,10 +504,53 @@
     }
 }
 
+/*
+ * The four entrances.
+ *
+ * Same curve, same duration, same travel — only the direction changes. A page
+ * where every block arrives from below reads as one long conveyor; giving each
+ * a direction that matches where it sits, columns arriving from their own side
+ * and headline statements simply resolving, makes the scroll feel composed
+ * rather than fed. The distances stay small on purpose: a concierge does not
+ * put on a show.
+ */
 @keyframes shoprelle-rise {
     from {
         opacity: 0;
         transform: translateY(12px);
+    }
+}
+
+@utility animate-rise-left {
+    animation: shoprelle-rise-left 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes shoprelle-rise-left {
+    from {
+        opacity: 0;
+        transform: translateX(-18px);
+    }
+}
+
+@utility animate-rise-right {
+    animation: shoprelle-rise-right 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes shoprelle-rise-right {
+    from {
+        opacity: 0;
+        transform: translateX(18px);
+    }
+}
+
+/* No travel at all: for the things that should resolve rather than arrive. */
+@utility animate-fade {
+    animation: shoprelle-fade 0.55s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes shoprelle-fade {
+    from {
+        opacity: 0;
     }
 }
 
@@ -613,6 +656,9 @@
     .animate-marquee,
     .animate-marquee-reverse,
     .animate-route,
+    .animate-rise-left,
+    .animate-rise-right,
+    .animate-fade,
     .route-parcel {
         animation: none;
     }

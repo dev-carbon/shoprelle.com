@@ -244,12 +244,28 @@ const Network = memo(function Network({
                 />
             </g>
 
-            <path
-                d={lit.served}
-                strokeWidth={0.6}
-                strokeLinejoin="round"
-                className="fill-primary stroke-primary"
-            />
+            <path d={lit.served} className="fill-primary" />
+
+            {/* The destinations, outlined in the brand gold.
+
+                The gold is the only other colour the palette allows, and it is
+                spent here rather than on the world's borders. Every country
+                edged in gold would be an atlas in fancy dress, and the eye
+                would have nowhere to land; on these five it does the opposite,
+                lifting them off a blue map that is otherwise all one hue —
+                and tying them to the gold hub they are fed from. */}
+            <g fill="none" strokeLinejoin="round">
+                <path
+                    d={lit.upcoming}
+                    strokeWidth={0.9}
+                    className="stroke-accent-brand/45"
+                />
+                <path
+                    d={lit.served}
+                    strokeWidth={1.5}
+                    className="stroke-accent-brand"
+                />
+            </g>
 
             {/* The network. Routes to open destinations get a soft underlay a
                 few units wide, which is the whole of the depth in this drawing:
@@ -420,6 +436,15 @@ export function DeliveryMap({
     // A late trigger on purpose: the routes draw over a second and a half, and
     // a network that finished animating above the fold was never watched.
     const { ref, inView } = useInView<HTMLDivElement>('0px 0px -25% 0px');
+
+    /**
+     * Nothing is labelled until it is asked for.
+     *
+     * A tooltip left open by default sits on top of the very country it names
+     * and of the routes converging on it, so the map has to be read around its
+     * own caption. The names are in text under the map regardless — this layer
+     * answers "which one is that?", and only when the question is put.
+     */
     const [active, setActive] = useState<string | null>(null);
 
     const destinations = useMemo<Placed[]>(() => {
