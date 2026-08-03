@@ -94,22 +94,64 @@ export const PHOTO_SLOTS: readonly PhotoSlot[] = [
 /**
  * ── Le quatrième emplacement, qui n'est pas une photographie ────────────────
  *
- * Une capture de la conversation, à côté des trois étapes. Il est à part des
- * trois autres parce que tout y diffère : il est vertical, il n'a pas à
- * respecter la règle de lumière et de cadrage ci-dessus — c'est un écran, pas
+ * La conversation elle-même, dans un téléphone, à côté des trois étapes. Il est
+ * à part des trois autres parce que tout y diffère : il est vertical, il n'a pas
+ * à respecter la règle de lumière et de cadrage ci-dessus — c'est un écran, pas
  * une scène — et il ne se pose pas dans la même bande.
  *
  * Il comble le seul endroit vide de la page : la colonne de gauche de « Trois
  * étapes, et c'est tout » ne porte qu'un titre et une phrase, en face d'une
  * frise qui tient toute la hauteur. Y mettre la conversation elle-même est ce
  * qui manquait — la section explique un échange sans jamais le montrer.
+ *
+ * ── Plusieurs écrans plutôt qu'un
+ *
+ * Une capture unique ne pouvait montrer qu'un moment de l'échange, et le
+ * choisir revenait à choisir ce qu'on ne montrerait pas. Le téléphone fait donc
+ * défiler la suite : `conversation-1.webp`, `-2`, `-3`… numérotés dans l'ordre
+ * du parcours. Le relevé est le même que pour les photos — ajouter un écran est
+ * un fichier de plus, en retirer un est un fichier de moins.
  */
 export const CONVERSATION_SLOT: PhotoSlot = {
-    name: 'conversation',
+    name: 'conversation-1',
     title: 'La conversation',
     caption: "Ce que voit un client, du premier lien jusqu'à sa référence.",
-    brief: "Capture d'écran du chat, au format téléphone (portrait, environ 9/19). Une conversation réelle, du lien collé jusqu'à la référence — et rien qui ressemble à un vrai nom ou à un vrai numéro : cette image est publique.",
+    brief: "Captures d'écran du chat, au format téléphone (portrait), nommées conversation-1.webp, conversation-2.webp… dans l'ordre du parcours. Une conversation réelle, du lien collé jusqu'à la référence — et rien qui ressemble à un vrai nom ou à un vrai numéro : ces images sont publiques.",
 };
+
+/**
+ * Ce que chaque écran montre, pour qui ne voit pas l'image.
+ *
+ * Indexé sur le numéro du fichier. Un écran sans description reste lisible —
+ * il hérite d'une formulation générique — mais il vaut mieux qu'il en ait une :
+ * c'est le seul texte que rencontre un lecteur d'écran.
+ */
+const CONVERSATION_ALTS: readonly string[] = [
+    "La fiche d'une chemise sur Bershka, à 29,99 €, telle qu'on la trouve avant de nous l'envoyer.",
+    'Le lien du produit collé dans la conversation, puis la couleur, la taille et la quantité demandées.',
+    'La fin de la demande : le pays et la ville de livraison, le numéro de téléphone, le nom, puis le récapitulatif.',
+];
+
+/**
+ * Les écrans de la conversation, dans l'ordre, avec leur description.
+ *
+ * Le tri est numérique et non alphabétique : rangé comme du texte, un dixième
+ * écran passerait devant le deuxième.
+ */
+export const conversationShots = (): { src: string; alt: string }[] =>
+    Object.entries(FILES)
+        .filter(([path]) => /\/conversation-\d+\.webp$/.test(path))
+        .map(([path, src]) => ({
+            rank: Number(path.match(/conversation-(\d+)\.webp$/)?.[1] ?? 0),
+            src,
+        }))
+        .sort((a, b) => a.rank - b.rank)
+        .map(({ rank, src }) => ({
+            src,
+            alt:
+                CONVERSATION_ALTS[rank - 1] ??
+                `Écran ${rank} de la conversation avec l'assistant Shoprelle.`,
+        }));
 
 /**
  * L'URL de la photo d'un emplacement, ou `null` si le fichier n'existe pas.

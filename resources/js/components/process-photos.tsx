@@ -1,5 +1,11 @@
 import { Reveal } from '@/components/reveal';
-import { CONVERSATION_SLOT, PHOTO_SLOTS, photoFor } from '@/lib/photos';
+import { useSlideshow } from '@/hooks/use-slideshow';
+import {
+    CONVERSATION_SLOT,
+    PHOTO_SLOTS,
+    conversationShots,
+    photoFor,
+} from '@/lib/photos';
 import type { PhotoSlot } from '@/lib/photos';
 import { cn } from '@/lib/utils';
 
@@ -60,10 +66,17 @@ function Brief({
  * blanc et `border` un bleu clair. Le cadre suit donc la bande sans que rien ici
  * ne sache qu'il est posé sur du bleu.
  */
-export function ConversationShot({ className }: { className?: string }) {
-    const src = photoFor(CONVERSATION_SLOT);
+/** Le temps qu'un écran reste avant que le suivant ne prenne sa place. */
+const SHOT_DURATION_MS = 4000;
 
-    if (!src && !import.meta.env.DEV) {
+export function ConversationShot({ className }: { className?: string }) {
+    const shots = conversationShots();
+    const { current, setCurrent, holdHandlers } = useSlideshow(
+        shots.length,
+        SHOT_DURATION_MS,
+    );
+
+    if (shots.length === 0 && !import.meta.env.DEV) {
         return null;
     }
 
@@ -73,27 +86,61 @@ export function ConversationShot({ className }: { className?: string }) {
             delay={120}
             className={cn('mx-auto w-full max-w-[17rem]', className)}
         >
-            {src ? (
-                <div className="rounded-[2.25rem] bg-card p-2 shadow-2xl shadow-black/25">
-                    {/* Aucune proportion imposée, et c'est délibéré : une
-                        capture d'écran est déjà exactement au format de
-                        l'appareil qui l'a prise. Lui en imposer une autre la
-                        ferait rogner de quelques pour cent sur les côtés — et
-                        quelques pour cent, sur une conversation, c'est le début
-                        des bulles. Le cadre prend donc la hauteur du fichier
-                        déposé, quel qu'il soit. */}
-                    <img
-                        src={src}
-                        alt="Une conversation avec l'assistant Shoprelle, du lien envoyé jusqu'à la référence de la demande."
-                        loading="lazy"
-                        decoding="async"
-                        className="block w-full rounded-[1.75rem]"
-                    />
+            {shots.length > 0 ? (
+                <div {...holdHandlers}>
+                    <div className="rounded-[2.25rem] bg-card p-2 shadow-2xl shadow-black/25">
+                        {/* La proportion est celle des captures elles-mêmes.
+                            Elle est imposée ici, alors qu'un écran unique
+                            prenait la hauteur de son fichier : plusieurs écrans
+                            qui se remplacent doivent occuper exactement la même
+                            place, sinon la page se soulève à chaque passage. */}
+                        <div className="relative aspect-[1003/2048] overflow-hidden rounded-[1.75rem]">
+                            {shots.map((shot, index) => (
+                                <img
+                                    key={shot.src}
+                                    src={shot.src}
+                                    alt={shot.alt}
+                                    // Le premier écran est celui qu'on voit
+                                    // arriver ; les suivants attendent leur
+                                    // tour et peuvent se charger plus tard.
+                                    loading={index === 0 ? 'eager' : 'lazy'}
+                                    decoding="async"
+                                    aria-hidden={index !== current}
+                                    className={cn(
+                                        'absolute inset-0 size-full object-cover transition-opacity duration-700 ease-out motion-reduce:transition-none',
+                                        index === current
+                                            ? 'opacity-100'
+                                            : 'opacity-0',
+                                    )}
+                                />
+                            ))}
+                        </div>
+                    </div>
+
+                    {shots.length > 1 && (
+                        <div className="mt-5 flex items-center justify-center gap-2">
+                            {shots.map((shot, index) => (
+                                <button
+                                    key={shot.src}
+                                    type="button"
+                                    onClick={() => setCurrent(index)}
+                                    aria-label={`Écran ${index + 1} sur ${shots.length}`}
+                                    aria-current={index === current}
+                                    className={cn(
+                                        'h-1.5 rounded-full transition-all duration-300 outline-none focus-visible:ring-2 focus-visible:ring-ring/60',
+                                        index === current
+                                            ? 'w-6 bg-foreground'
+                                            : 'w-1.5 bg-foreground/30 hover:bg-foreground/50',
+                                    )}
+                                />
+                            ))}
+                        </div>
+                    )}
                 </div>
             ) : (
                 <Brief
                     slot={CONVERSATION_SLOT}
-                    label="Capture du chat"
+                    label="Captures du chat"
                     className="aspect-[9/19] rounded-[2.25rem]"
                 />
             )}

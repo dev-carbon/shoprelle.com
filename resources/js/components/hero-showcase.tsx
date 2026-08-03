@@ -1,10 +1,33 @@
 import { BadgeCheck, Check } from 'lucide-react';
 import type { ComponentProps } from 'react';
 
+import { useSlideshow } from '@/hooks/use-slideshow';
 import delivered from '@/images/colis-livre.webp';
+import ordering from '@/images/commande-telephone.webp';
 import jacket from '@/images/products/veste-matelassee.webp';
 import { flagFor } from '@/lib/destinations';
 import { cn } from '@/lib/utils';
+
+/** Le temps qu'une photo reste avant que l'autre ne prenne sa place. */
+const PHOTO_DURATION_MS = 5000;
+
+/**
+ * Les deux bouts du service, dans l'ordre où on veut les croire.
+ *
+ * Le colis reçu d'abord, parce que c'est la preuve et que c'est elle qui doit
+ * être peinte en premier ; la commande passée ensuite, qui montre le geste
+ * qu'on demande au visiteur. L'inverse aurait ouvert la page sur une promesse.
+ */
+const PHOTOS = [
+    {
+        src: delivered,
+        alt: 'Une cliente reçoit son colis Shoprelle devant chez elle, à Douala.',
+    },
+    {
+        src: ordering,
+        alt: 'Une cliente passe sa demande depuis son téléphone, chez elle, à côté de ses colis Shoprelle.',
+    },
+] as const;
 
 /**
  * ── La preuve, en haut de page ──────────────────────────────────────────────
@@ -41,6 +64,11 @@ export function HeroShowcase({
     /** Deux ou trois codes alpha-2, pour les drapeaux de la vignette basse. */
     destinationCodes: string[];
 } & Omit<ComponentProps<'div'>, 'children'>) {
+    const { current, setCurrent, holdHandlers } = useSlideshow(
+        PHOTOS.length,
+        PHOTO_DURATION_MS,
+    );
+
     return (
         // `isolate` n'est pas cosmétique : le halo est en `-z-10`, et sans
         // contexte d'empilement déclaré ici il passerait derrière le fond de la
@@ -57,24 +85,39 @@ export function HeroShowcase({
                 className="pointer-events-none absolute -inset-6 -z-10 animate-drift rounded-[3rem] bg-[radial-gradient(60%_60%_at_65%_35%,var(--color-accent-brand)_0%,transparent_70%)] opacity-40 blur-2xl"
             />
 
-            <figure className="relative">
+            <figure className="relative" {...holdHandlers}>
                 {/* Verticale sur grand écran, panoramique en dessous : dans une
                     colonne de hero une image large s'écrase, et sur un
                     téléphone une image haute pousse le champ hors de l'écran.
                     Le cadrage centré garde le visage et le carton dans les deux
-                    proportions. */}
-                <img
-                    src={delivered}
-                    alt="Une cliente reçoit son colis Shoprelle devant chez elle, à Douala."
-                    width={1200}
-                    height={655}
-                    fetchPriority="high"
-                    decoding="async"
-                    // L'ombre est épinglée en noir plutôt que prise sur l'encre
-                    // de la page : en thème sombre, celle-ci est la crème, et
-                    // la photo se serait retrouvée entourée d'un halo clair.
-                    className="aspect-[16/10] w-full rounded-3xl object-cover shadow-2xl shadow-black/25 lg:aspect-[4/5]"
-                />
+                    proportions.
+
+                    L'ombre est épinglée en noir plutôt que prise sur l'encre de
+                    la page : en thème sombre, celle-ci est la crème, et la photo
+                    se serait retrouvée entourée d'un halo clair. */}
+                <div className="relative aspect-[16/10] w-full overflow-hidden rounded-3xl shadow-2xl shadow-black/25 lg:aspect-[4/5]">
+                    {PHOTOS.map((photo, index) => (
+                        <img
+                            key={photo.src}
+                            src={photo.src}
+                            alt={photo.alt}
+                            width={1200}
+                            height={655}
+                            // La première photo est ce que le navigateur peint
+                            // en haut de page : elle garde sa priorité et son
+                            // chargement immédiat. La seconde ne se montre
+                            // qu'au bout de cinq secondes et peut attendre.
+                            fetchPriority={index === 0 ? 'high' : 'low'}
+                            loading={index === 0 ? 'eager' : 'lazy'}
+                            decoding="async"
+                            aria-hidden={index !== current}
+                            className={cn(
+                                'absolute inset-0 size-full object-cover transition-opacity duration-1000 ease-out motion-reduce:transition-none',
+                                index === current ? 'opacity-100' : 'opacity-0',
+                            )}
+                        />
+                    ))}
+                </div>
 
                 {/* Un liseré intérieur plutôt qu'une bordure : sur une photo,
                     un trait posé à l'extérieur du cadre se voit comme un cadre,
@@ -84,6 +127,28 @@ export function HeroShowcase({
                     aria-hidden
                     className="pointer-events-none absolute inset-0 rounded-3xl ring-1 ring-white/15 ring-inset"
                 />
+
+                {/* Les puces, dans l'angle resté libre — les deux vignettes
+                    occupent l'autre diagonale. Elles ne sont pas décoratives :
+                    une image qui change toute seule doit pouvoir être arrêtée
+                    et reprise par qui n'utilise pas la souris. */}
+                <div className="absolute bottom-7 left-4 flex items-center gap-2 sm:left-5">
+                    {PHOTOS.map((photo, index) => (
+                        <button
+                            key={photo.src}
+                            type="button"
+                            onClick={() => setCurrent(index)}
+                            aria-label={`Photo ${index + 1} sur ${PHOTOS.length}`}
+                            aria-current={index === current}
+                            className={cn(
+                                'h-1.5 rounded-full shadow-sm shadow-black/30 transition-all duration-300 outline-none focus-visible:ring-2 focus-visible:ring-white/80',
+                                index === current
+                                    ? 'w-6 bg-white'
+                                    : 'w-1.5 bg-white/50 hover:bg-white/80',
+                            )}
+                        />
+                    ))}
+                </div>
 
                 {/* La vignette du devis — illustrative, et cachée aux lecteurs
                     d'écran pour cette raison. Elle chevauche le bord gauche de
@@ -124,7 +189,7 @@ export function HeroShowcase({
                         </p>
                         <p
                             aria-hidden
-                            className="mt-0.5 text-sm leading-none tracking-widest"
+                            className="mt-1 text-lg leading-none tracking-widest"
                         >
                             {destinationCodes.map((code) => (
                                 <span key={code}>{flagFor(code)}</span>
