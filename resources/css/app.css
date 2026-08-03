@@ -815,6 +815,32 @@
 }
 
 /*
+ * Le temps qui reste avant l'étape suivante, dessiné.
+ *
+ * La durée écrite ici est un repli : le composant en pose une en ligne, parce
+ * qu'il est le seul à savoir combien de temps il tient une étape à l'écran, et
+ * un style en ligne l'emporte sur la feuille. Le raccourci `animation` est donc
+ * sans danger, et c'est ce qu'il faut employer — la même règle écrite en
+ * propriétés détaillées ne survit pas au passage de Tailwind.
+ *
+ * C'est aussi l'horloge du composant : la fin de cette animation est ce qui
+ * déclenche l'étape suivante. Voir la note dans `link-to-parcel.tsx`.
+ */
+@utility animate-dwell {
+    transform-origin: left;
+    animation: shoprelle-dwell 4s linear both;
+}
+
+@keyframes shoprelle-dwell {
+    from {
+        transform: scaleX(0);
+    }
+    to {
+        transform: scaleX(1);
+    }
+}
+
+/*
  * Les pays desservis, qui respirent.
  *
  * Très lent, et l'opacité ne descend jamais au-delà de la moitié : un

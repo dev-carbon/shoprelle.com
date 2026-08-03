@@ -24,10 +24,16 @@ import { cn } from '@/lib/utils';
  *     ne dit plus « devis clair », elle montre le devis, ligne par ligne, avec
  *     le transport séparé du produit. C'est l'engagement central du service, et
  *     il tenait dans une vignette de la taille d'un timbre.
- *   — on peut s'arrêter. La barre avance seule, mais le survol la suspend et un
- *     clic va où l'on veut. Une démonstration qu'on ne peut pas retenir est une
- *     démonstration qu'on ne relit pas.
+ *   — ça défile tout seul, et on peut quand même s'en mêler. Le survol suspend,
+ *     un clic va où l'on veut, les flèches aussi. Rien ne s'arrête jamais
+ *     définitivement : une démonstration qui se fige au premier clic demande
+ *     ensuite un bouton pour la relancer, et c'est un réglage de plus dans un
+ *     bloc qui n'a rien à régler.
  *   — c'est deux fois moins haut. Le hero avait besoin de cet air-là.
+ *
+ * La jauge sous les onglets est à la fois ce qui montre le chemin restant
+ * jusqu'à la dernière étape et l'horloge qui les fait défiler. C'est le point de
+ * conception de ce fichier, et il est expliqué là où elle est rendue.
  *
  * Les chiffres sont des exemples et le disent : la légende « Exemple de
  * parcours » est visible, pas seulement annoncée aux lecteurs d'écran. Le bloc
@@ -36,8 +42,16 @@ import { cn } from '@/lib/utils';
  * piège au clavier.
  */
 
-/** Combien de temps une étape reste à l'écran avant que la suivante prenne. */
-const DWELL = 5200;
+/**
+ * Combien de temps une étape reste à l'écran avant que la suivante prenne.
+ *
+ * Descendue de 5,2 à 3,4 secondes : à l'ancienne cadence le cycle complet
+ * durait vingt et une secondes, ce que personne n'attend sur une page
+ * d'accueil, et une étape déjà lue restait trop longtemps sous les yeux. Le
+ * parcours entier tient maintenant sous quatorze secondes, et chaque scène a
+ * encore de quoi être lue — le devis, qui est la plus dense, fait trois lignes.
+ */
+const DWELL = 3400;
 
 const PROGRESS = 70;
 
@@ -271,48 +285,27 @@ export function LinkToParcel({ className, ...props }: ComponentProps<'div'>) {
     const [active, setActive] = useState(0);
 
     /**
-     * Deux façons d'arrêter la boucle, et elles ne sont pas la même.
+     * Le survol, et rien d'autre.
+     *
+     * La boucle ne s'arrête plus jamais pour de bon. C'était le cas avant, avec
+     * un bouton pour la relancer ; les deux sont partis ensemble, et c'est le
+     * bon échange — un parcours qui s'arrête définitivement au premier clic
+     * oblige à en fournir la commande inverse, et cette commande était un
+     * réglage de plus à comprendre pour un bloc qui n'a rien à régler. Un clic
+     * va simplement à l'étape demandée, et le compte à rebours repart de là.
      *
      * Le survol suspend : on regarde une étape de plus près, on n'a rien
-     * demandé, et l'avance reprend là où elle en était quand le curseur s'en
-     * va. Le clic, lui, arrête pour de bon — quelqu'un qui vient de choisir une
-     * étape ne veut pas qu'on la lui reprenne cinq secondes plus tard, et c'est
-     * exactement le reproche que l'on fait aux carrousels.
+     * demandé, et l'avance reprend là où elle en était quand le curseur s'en va.
      */
     const [hovered, setHovered] = useState(false);
-    const [takenOver, setTakenOver] = useState(false);
 
     const tabs = useRef<(HTMLButtonElement | null)[]>([]);
 
-    /**
-     * ── Une seule horloge ───────────────────────────────────────────────────
-     *
-     * L'étape suivante est déclenchée par la fin de l'animation de la barre, et
-     * non par un `setTimeout` en parallèle. Deux horloges pour une même durée
-     * finissent toujours par diverger : il suffit de suspendre l'une — ce que
-     * fait le survol — pour que la barre affiche un reste de temps que le
-     * minuteur ne respecte pas. Ici, la barre *est* le minuteur.
-     *
-     * Trois conséquences, et les trois sont gratuites :
-     *
-     *   — le survol suspend réellement. `animation-play-state: paused` gèle la
-     *     barre là où elle en est, et l'événement de fin arrive d'autant plus
-     *     tard. Rien à mesurer, rien à mémoriser.
-     *   — sous `prefers-reduced-motion`, la feuille de style annule
-     *     `animate-dwell` : aucune animation, donc aucun événement de fin, donc
-     *     aucune avance automatique. Le réglage est respecté sans qu'une seule
-     *     ligne ici n'interroge `matchMedia` — et sans le risque d'hydratation
-     *     que poserait une requête de média lue au premier rendu.
-     *   — un onglet en arrière-plan, dont le navigateur ralentit les
-     *     animations, ne fait pas défiler le parcours dans le vide.
-     */
+    /** L'étape suivante. Appelée par la jauge, qui est l'horloge — voir plus bas. */
     const advance = () => setActive((current) => (current + 1) % STAGES.length);
 
-    /** Prendre la main : on va où l'on demande, et la boucle s'arrête. */
-    const select = (index: number) => {
-        setTakenOver(true);
-        setActive(index);
-    };
+    /** Aller à une étape. Le compte à rebours repart de zéro sur celle-là. */
+    const select = (index: number) => setActive(index);
 
     const onKeyDown = (event: React.KeyboardEvent) => {
         const step =
@@ -342,70 +335,16 @@ export function LinkToParcel({ className, ...props }: ComponentProps<'div'>) {
                 className,
             )}
         >
-            <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-3">
-                {/* Visible, et pas seulement annoncé : tout ce qui suit est un
-                    exemple, et un devis qui a l'air vrai sur une page de vente
-                    est la seule chose que ce site ne peut pas se permettre. */}
-                <p className="text-xs text-muted-foreground">
-                    Exemple de parcours
-                </p>
-
-                {/*
-                 * ── Le voyant ───────────────────────────────────────────────
-                 *
-                 * Deux choses en une, et les deux manquaient.
-                 *
-                 * Il dit que ça défile tout seul. Le parcours avançait déjà de
-                 * lui-même, mais rien ne l'annonçait : on tombait sur quatre
-                 * onglets, on croyait devoir cliquer, et l'avance suivante
-                 * ressemblait alors à une page qui bouge sans qu'on l'ait
-                 * demandé. Un point qui bat et deux mots règlent ça avant que la
-                 * question se pose.
-                 *
-                 * Et il rend la main. Un clic sur une étape arrête la boucle
-                 * pour de bon — c'est ce qu'il faut — mais il n'existait aucun
-                 * moyen de la relancer, ce qui fait d'un arrêt volontaire un
-                 * cul-de-sac. Ce bouton est ce moyen.
-                 */}
-                <button
-                    type="button"
-                    onClick={() => setTakenOver((stopped) => !stopped)}
-                    aria-pressed={!takenOver}
-                    className="flex cursor-pointer items-center gap-2.5 rounded-full border px-3.5 py-2 text-xs font-semibold transition-colors hover:bg-accent focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
-                >
-                    <span className="relative flex size-2.5 shrink-0">
-                        {/* Le battement suit ce qui se passe vraiment, donc il
-                            s'arrête aussi au survol — le curseur sur le bloc
-                            suspend la barre, et un voyant qui continuerait de
-                            clignoter pendant ce temps mentirait. Le libellé, lui,
-                            ne bouge qu'au clic : un mot qui change dès qu'on
-                            approche la souris est un mot qu'on n'arrive pas à
-                            lire. */}
-                        {!takenOver && !hovered && (
-                            <span
-                                aria-hidden
-                                className="absolute inline-flex size-full animate-ping rounded-full bg-primary/70"
-                            />
-                        )}
-                        <span
-                            className={cn(
-                                'relative size-2.5 rounded-full',
-                                takenOver
-                                    ? 'bg-muted-foreground/40'
-                                    : 'bg-primary',
-                            )}
-                        />
-                    </span>
-
-                    {takenOver ? 'Défilement en pause' : 'Défilement auto'}
-                </button>
-            </div>
+            {/* Visible, et pas seulement annoncé : tout ce qui suit est un
+                exemple, et un devis qui a l'air vrai sur une page de vente est
+                la seule chose que ce site ne peut pas se permettre. */}
+            <p className="text-xs text-muted-foreground">Exemple de parcours</p>
 
             <ol
                 role="tablist"
                 aria-label="Les étapes d'une commande"
                 onKeyDown={onKeyDown}
-                className="mt-7 grid grid-cols-2 gap-x-4 gap-y-6 sm:grid-cols-4 sm:gap-x-6"
+                className="mt-7 grid grid-cols-2 gap-x-4 gap-y-4 sm:grid-cols-4 sm:gap-x-6"
             >
                 {STAGES.map((item, index) => {
                     const done = index < active;
@@ -453,46 +392,81 @@ export function LinkToParcel({ className, ...props }: ComponentProps<'div'>) {
                                         {item.label}
                                     </span>
                                 </span>
-
-                                {/* La barre de l'étape. Celle en cours se
-                                    remplit en temps réel sur la durée
-                                    d'affichage, ce qui dit combien de temps il
-                                    reste sans qu'aucun chiffre soit écrit. */}
-                                <span className="mt-3 block h-1.5 overflow-hidden rounded-full bg-border">
-                                    <span
-                                        // Remontée par sa clé à chaque
-                                        // changement d'étape : React remplace
-                                        // l'élément au lieu de le mettre à
-                                        // jour, ce qui rejoue l'animation sans
-                                        // qu'aucun état ne la pilote.
-                                        key={active}
-                                        onAnimationEnd={advance}
-                                        style={
-                                            current && !takenOver
-                                                ? {
-                                                      animationDuration: `${DWELL}ms`,
-                                                  }
-                                                : undefined
-                                        }
-                                        className={cn(
-                                            'block h-full w-full origin-left rounded-full bg-primary',
-                                            current && !takenOver
-                                                ? cn(
-                                                      'animate-dwell',
-                                                      hovered &&
-                                                          '[animation-play-state:paused]',
-                                                  )
-                                                : done || current
-                                                  ? 'scale-x-100'
-                                                  : 'scale-x-0',
-                                        )}
-                                    />
-                                </span>
                             </button>
                         </li>
                     );
                 })}
             </ol>
+
+            {/*
+             * ── La jauge, d'un bout à l'autre du parcours ────────────────────
+             *
+             * Une seule piste sur toute la largeur, découpée en quatre. C'est
+             * le remplacement des quatre barres qui vivaient chacune sous son
+             * libellé : elles disaient le temps restant de l'étape en cours, et
+             * rien du chemin qu'il restait à faire. Quatre jauges qui se
+             * remplissent l'une après l'autre ne se lisent pas comme une
+             * progression ; une seule qui avance de gauche à droite, si.
+             *
+             * C'est aussi l'horloge du composant. La fin de l'animation du
+             * segment en cours est ce qui déclenche l'étape suivante — pas un
+             * `setTimeout` en parallèle. Deux horloges pour une même durée
+             * finissent toujours par diverger : il suffit d'en suspendre une —
+             * ce que fait le survol — pour que la jauge affiche un reste de
+             * temps que le minuteur ne respecte pas. Ici, la jauge *est* le
+             * minuteur, et trois choses en découlent gratuitement :
+             *
+             *   — le survol suspend réellement. `animation-play-state: paused`
+             *     gèle le segment là où il en est, et l'événement de fin arrive
+             *     d'autant plus tard. Rien à mesurer, rien à mémoriser.
+             *   — sous `prefers-reduced-motion`, la feuille de style annule
+             *     `animate-dwell` : aucune animation, donc aucun événement de
+             *     fin, donc aucune avance automatique. Le réglage est respecté
+             *     sans qu'une ligne ici n'interroge `matchMedia`, et sans le
+             *     risque d'hydratation qu'une requête de média lue au premier
+             *     rendu ferait courir.
+             *   — un onglet en arrière-plan, dont le navigateur ralentit les
+             *     animations, ne fait pas défiler le parcours dans le vide.
+             *
+             * Muette pour les lecteurs d'écran : elle ne dit que ce que l'onglet
+             * sélectionné dit déjà, et le ferait en continu.
+             */}
+            <div aria-hidden className="mt-7 flex gap-1.5">
+                {STAGES.map((item, index) => (
+                    <span
+                        key={item.label}
+                        className="h-1.5 flex-1 overflow-hidden rounded-full bg-border"
+                    >
+                        <span
+                            // Remontée par sa clé à chaque changement d'étape :
+                            // React remplace l'élément au lieu de le mettre à
+                            // jour, ce qui rejoue l'animation sans qu'aucun état
+                            // ne la pilote.
+                            key={active}
+                            onAnimationEnd={
+                                index === active ? advance : undefined
+                            }
+                            style={
+                                index === active
+                                    ? { animationDuration: `${DWELL}ms` }
+                                    : undefined
+                            }
+                            className={cn(
+                                'block h-full w-full origin-left rounded-full bg-primary',
+                                index === active
+                                    ? cn(
+                                          'animate-dwell',
+                                          hovered &&
+                                              '[animation-play-state:paused]',
+                                      )
+                                    : index < active
+                                      ? 'scale-x-100'
+                                      : 'scale-x-0',
+                            )}
+                        />
+                    </span>
+                ))}
+            </div>
 
             {/* La scène. Elle aussi remontée par sa clé, pour que chaque étape
                 entre au lieu de se substituer à la précédente sans transition. */}
