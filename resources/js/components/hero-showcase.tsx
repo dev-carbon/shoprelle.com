@@ -9,7 +9,7 @@ import { flagFor } from '@/lib/destinations';
 import { cn } from '@/lib/utils';
 
 /** Le temps qu'une photo reste avant que l'autre ne prenne sa place. */
-const PHOTO_DURATION_MS = 5000;
+const PHOTO_DURATION_MS = 3000;
 
 /**
  * Les deux bouts du service, dans l'ordre où on veut les croire.
@@ -105,14 +105,15 @@ export function HeroShowcase({
                             height={655}
                             // La première photo est ce que le navigateur peint
                             // en haut de page : elle garde sa priorité et son
-                            // chargement immédiat. La seconde ne se montre
-                            // qu'au bout de cinq secondes et peut attendre.
+                            // chargement immédiat. La seconde passe après, et
+                            // la relève est assez rapide pour qu'elle soit
+                            // chargée d'emblée plutôt qu'à la demande.
                             fetchPriority={index === 0 ? 'high' : 'low'}
-                            loading={index === 0 ? 'eager' : 'lazy'}
+                            loading="eager"
                             decoding="async"
                             aria-hidden={index !== current}
                             className={cn(
-                                'absolute inset-0 size-full object-cover transition-opacity duration-1000 ease-out motion-reduce:transition-none',
+                                'absolute inset-0 size-full object-cover transition-opacity duration-700 ease-out motion-reduce:transition-none',
                                 index === current ? 'opacity-100' : 'opacity-0',
                             )}
                         />
