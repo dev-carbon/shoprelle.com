@@ -72,6 +72,12 @@ class PurchaseRequestStatusService
 
         DB::transaction(function () use ($request, $quote): void {
             $request->forceFill($quote->toAttributes())->save();
+
+            // The lines and the total they add up to must never disagree, so
+            // they are written together or not at all.
+            foreach ($request->items as $item) {
+                $item->update(['quoted_amount' => $quote->lineAmounts[$item->id] ?? null]);
+            }
         });
 
         return $this->transition(

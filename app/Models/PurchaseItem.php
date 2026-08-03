@@ -30,6 +30,7 @@ use Illuminate\Support\Carbon;
  * @property string|null $variant
  * @property string|null $declared_price
  * @property string|null $declared_currency
+ * @property string|null $quoted_amount
  * @property string|null $comment
  * @property int $position
  * @property Carbon|null $created_at
@@ -48,6 +49,7 @@ use Illuminate\Support\Carbon;
     'variant',
     'declared_price',
     'declared_currency',
+    'quoted_amount',
     'comment',
     'position',
 ])]
@@ -65,6 +67,7 @@ class PurchaseItem extends Model
             'marketplace' => Marketplace::class,
             'quantity' => 'integer',
             'declared_price' => 'decimal:2',
+            'quoted_amount' => 'decimal:2',
             'position' => 'integer',
         ];
     }

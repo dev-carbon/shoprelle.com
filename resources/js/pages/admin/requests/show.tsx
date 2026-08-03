@@ -7,6 +7,7 @@ import {
     ReceiptText,
     Wallet,
 } from 'lucide-react';
+import { useState } from 'react';
 
 import InputError from '@/components/input-error';
 import { StatusBadge } from '@/components/status-badge';
@@ -334,6 +335,25 @@ function QuoteCard({
     quoteCurrency: string;
     costCurrency: string;
 }) {
+    /** What each line is billed at, keyed by item id, as typed. */
+    const [lines, setLines] = useState<Record<number, string>>(() =>
+        Object.fromEntries(
+            request.items.map((item) => [item.id, item.quoted_amount ?? '']),
+        ),
+    );
+    const [shipping, setShipping] = useState(
+        request.quote?.shipping_amount ?? '',
+    );
+    const [currency, setCurrency] = useState(
+        request.quote?.currency ?? quoteCurrency,
+    );
+
+    const itemsTotal = request.items.reduce(
+        (total, item) => total + (Number(lines[item.id]) || 0),
+        0,
+    );
+    const total = itemsTotal + (Number(shipping) || 0);
+
     return (
         <Card>
             <CardHeader>
@@ -342,7 +362,8 @@ function QuoteCard({
                     Devis
                 </CardTitle>
                 <CardDescription>
-                    Produits et livraison sont chiffrés séparément.
+                    Chaque produit est chiffré à part ; la livraison s'ajoute à
+                    leur somme.
                 </CardDescription>
             </CardHeader>
 
@@ -382,25 +403,92 @@ function QuoteCard({
                 >
                     {({ processing, errors }) => (
                         <>
-                            <div className="grid grid-cols-2 gap-2">
-                                <div className="space-y-1.5">
-                                    <Label htmlFor="items_amount">
-                                        Produits
-                                    </Label>
-                                    <Input
-                                        id="items_amount"
-                                        name="items_amount"
-                                        type="number"
-                                        step="0.01"
-                                        min="0"
-                                        required
-                                        defaultValue={
-                                            request.quote?.items_amount ?? ''
-                                        }
-                                    />
-                                    <InputError message={errors.items_amount} />
-                                </div>
+                            <div className="space-y-2">
+                                <p className="text-sm font-medium">
+                                    Chiffrage des articles
+                                </p>
 
+                                {request.items.map((item, index) => (
+                                    <div
+                                        key={item.id}
+                                        className="rounded-lg border p-2.5"
+                                    >
+                                        <div className="flex items-start gap-2">
+                                            <div className="min-w-0 flex-1">
+                                                <Label
+                                                    htmlFor={`item-${item.id}`}
+                                                    className="block truncate"
+                                                >
+                                                    {item.product_name ??
+                                                        `Produit n°${index + 1}`}
+                                                </Label>
+                                                <p className="mt-0.5 text-xs text-muted-foreground">
+                                                    {item.marketplace_label} · ×
+                                                    {item.quantity}
+                                                    {item.declared_price &&
+                                                        ` · déclaré ${item.declared_price} ${item.declared_currency ?? ''}`}
+                                                </p>
+                                            </div>
+
+                                            <Input
+                                                id={`item-${item.id}`}
+                                                name={`items[${item.id}]`}
+                                                type="number"
+                                                step="0.01"
+                                                min="0"
+                                                required
+                                                className="w-28 shrink-0"
+                                                value={lines[item.id] ?? ''}
+                                                onChange={(event) =>
+                                                    setLines((current) => ({
+                                                        ...current,
+                                                        [item.id]:
+                                                            event.target.value,
+                                                    }))
+                                                }
+                                            />
+                                        </div>
+                                        <InputError
+                                            className="mt-1"
+                                            message={
+                                                errors[
+                                                    `items.${item.id}` as keyof typeof errors
+                                                ]
+                                            }
+                                        />
+                                    </div>
+                                ))}
+
+                                {request.items.length === 0 && (
+                                    <p className="rounded-lg border border-dashed p-3 text-sm text-muted-foreground">
+                                        Cette demande ne contient aucun produit
+                                        : il n'y a rien à chiffrer.
+                                    </p>
+                                )}
+
+                                <InputError message={errors.items} />
+                            </div>
+
+                            <dl className="space-y-1.5 rounded-lg bg-muted/50 p-3 text-sm">
+                                <div className="flex items-baseline justify-between">
+                                    <dt className="text-muted-foreground">
+                                        Produits
+                                    </dt>
+                                    <dd className="font-medium">
+                                        {formatAmount(itemsTotal)} {currency}
+                                    </dd>
+                                </div>
+                                <div className="flex items-baseline justify-between">
+                                    <dt className="text-muted-foreground">
+                                        Total avec livraison
+                                    </dt>
+                                    <dd className="font-semibold">
+                                        {formatAmount(total)} {currency}
+                                    </dd>
+                                </div>
+                            </dl>
+
+                            <div className="grid grid-cols-2 gap-2">
                                 <div className="space-y-1.5">
                                     <Label htmlFor="shipping_amount">
                                         Livraison
@@ -412,28 +500,30 @@ function QuoteCard({
                                         step="0.01"
                                         min="0"
                                         required
-                                        defaultValue={
-                                            request.quote?.shipping_amount ?? ''
+                                        value={shipping}
+                                        onChange={(event) =>
+                                            setShipping(event.target.value)
                                         }
                                     />
                                     <InputError
                                         message={errors.shipping_amount}
                                     />
                                 </div>
-                            </div>
 
-                            <div className="space-y-1.5">
-                                <Label htmlFor="currency">Devise</Label>
-                                <Input
-                                    id="currency"
-                                    name="currency"
-                                    maxLength={3}
-                                    required
-                                    defaultValue={
-                                        request.quote?.currency ?? quoteCurrency
-                                    }
-                                />
-                                <InputError message={errors.currency} />
+                                <div className="space-y-1.5">
+                                    <Label htmlFor="currency">Devise</Label>
+                                    <Input
+                                        id="currency"
+                                        name="currency"
+                                        maxLength={3}
+                                        required
+                                        value={currency}
+                                        onChange={(event) =>
+                                            setCurrency(event.target.value)
+                                        }
+                                    />
+                                    <InputError message={errors.currency} />
+                                </div>
                             </div>
 
                             {/* Folded away because it is optional and never
@@ -938,6 +1028,13 @@ function localDateTimeInput(): string {
         `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}` +
         `T${pad(now.getHours())}:${pad(now.getMinutes())}`
     );
+}
+
+function formatAmount(value: number): string {
+    return value.toLocaleString('fr-FR', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+    });
 }
 
 function formatDateTime(value: string | null): string {

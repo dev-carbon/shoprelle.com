@@ -93,6 +93,7 @@ class PurchaseRequestDetailResource extends JsonResource
                 'variant' => $item->variant,
                 'declared_price' => $item->declared_price,
                 'declared_currency' => $item->declared_currency,
+                'quoted_amount' => $item->quoted_amount,
                 'comment' => $item->comment,
                 'attachments' => $item->attachments->map($this->attachment(...))->all(),
             ])->all(),

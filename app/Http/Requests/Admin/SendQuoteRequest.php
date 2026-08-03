@@ -3,8 +3,10 @@
 namespace App\Http\Requests\Admin;
 
 use App\DataTransferObjects\QuoteData;
+use App\Models\PurchaseRequest;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Validator;
 
 class SendQuoteRequest extends FormRequest
 {
@@ -21,7 +23,10 @@ class SendQuoteRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'items_amount' => ['required', 'numeric', 'min:0', 'max:99999999'],
+            // One amount per requested product, keyed by item id. The keys
+            // themselves are checked in `after`, where the request is at hand.
+            'items' => ['required', 'array'],
+            'items.*' => ['required', 'numeric', 'min:0', 'max:99999999'],
             'shipping_amount' => ['required', 'numeric', 'min:0', 'max:99999999'],
             'currency' => ['required', 'string', 'size:3', 'alpha'],
             'notes' => ['nullable', 'string', 'max:2000'],
@@ -35,12 +40,42 @@ class SendQuoteRequest extends FormRequest
     }
 
     /**
+     * A quote priced line by line only adds up if every line of the request is
+     * priced, and no stray line sneaks in from another request.
+     *
+     * @return array<int, callable>
+     */
+    public function after(): array
+    {
+        return [
+            function (Validator $validator): void {
+                if ($validator->errors()->hasAny(['items', 'items.*'])) {
+                    return;
+                }
+
+                /** @var PurchaseRequest $purchaseRequest */
+                $purchaseRequest = $this->route('purchaseRequest');
+
+                $expected = $purchaseRequest->items->modelKeys();
+                $submitted = array_map(intval(...), array_keys((array) $this->input('items')));
+
+                sort($expected);
+                sort($submitted);
+
+                if ($expected !== $submitted) {
+                    $validator->errors()->add('items', 'Chaque produit de la demande doit être chiffré.');
+                }
+            },
+        ];
+    }
+
+    /**
      * @return array<string, string>
      */
     public function attributes(): array
     {
         return [
-            'items_amount' => 'montant des produits',
+            'items' => 'chiffrage des produits',
             'shipping_amount' => 'montant de la livraison',
             'currency' => 'devise',
             'cost_amount' => "coût d'achat",
@@ -54,7 +89,7 @@ class SendQuoteRequest extends FormRequest
         $costCurrency = $this->string('cost_currency')->trim();
 
         return QuoteData::fromArray([
-            'items_amount' => $this->input('items_amount'),
+            'items' => (array) $this->input('items'),
             'shipping_amount' => $this->input('shipping_amount'),
             'currency' => strtoupper((string) $this->string('currency')),
             'notes' => $this->input('notes'),

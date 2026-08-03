@@ -144,6 +144,7 @@ it('ignores a malformed date filter instead of failing', function () {
 it('shows a request with its items, history and notes', function () {
     $request = PurchaseRequest::factory()->create();
     PurchaseItem::factory()->count(2)->for($request)->create();
+    $request->items()->first()->update(['quoted_amount' => '20000']);
     $request->statusHistories()->create([
         'to_status' => PurchaseRequestStatus::New,
         'comment' => 'Demande créée par le client.',
@@ -160,6 +161,9 @@ it('shows a request with its items, history and notes', function () {
             ->component('admin/requests/show')
             ->where('request.reference', $request->reference)
             ->has('request.items', 2)
+            // The form pre-fills each line with what it was last priced at.
+            ->where('request.items.0.quoted_amount', '20000.00')
+            ->where('request.items.1.quoted_amount', null)
             ->has('request.status_history', 1)
             ->where('request.notes.0.body', 'Vérifier la disponibilité.')
             ->has('availableTransitions')
@@ -226,18 +230,34 @@ it('notifies the other administrators of a status change but not its author', fu
     Notification::assertNotSentTo($this->admin, PurchaseRequestStatusChanged::class);
 });
 
+/**
+ * A request with two products to price, and the payload that prices both.
+ *
+ * @return array{0: PurchaseRequest, 1: array<string, mixed>}
+ */
+function quotableRequest(array $payload = []): array
+{
+    $request = PurchaseRequest::factory()->status(PurchaseRequestStatus::Pending)->create();
+    [$first, $second] = PurchaseItem::factory()->count(2)->for($request)->create();
+
+    return [$request, array_merge([
+        'items' => [$first->id => '20000', $second->id => '25000'],
+        'shipping_amount' => '15000',
+        'currency' => 'XAF',
+    ], $payload)];
+}
+
 it('records a quote and marks the request as quoted in one step', function () {
     Notification::fake();
 
-    $request = PurchaseRequest::factory()->status(PurchaseRequestStatus::Pending)->create();
+    [$request, $payload] = quotableRequest([
+        'shipping_amount' => '15000.50',
+        'currency' => 'xaf',
+        'notes' => 'Délai estimé : 3 semaines.',
+    ]);
 
     $this->actingAs($this->admin)
-        ->post(route('admin.requests.quote.store', $request), [
-            'items_amount' => '45000',
-            'shipping_amount' => '15000.50',
-            'currency' => 'xaf',
-            'notes' => 'Délai estimé : 3 semaines.',
-        ])
+        ->post(route('admin.requests.quote.store', $request), $payload)
         ->assertRedirect();
 
     $request->refresh();
@@ -251,12 +271,75 @@ it('records a quote and marks the request as quoted in one step', function () {
         ->and($request->quote_sent_at)->not->toBeNull();
 });
 
+it('prices each product on its own line and bills their sum', function () {
+    Notification::fake();
+
+    [$request, $payload] = quotableRequest();
+
+    $this->actingAs($this->admin)
+        ->post(route('admin.requests.quote.store', $request), $payload)
+        ->assertRedirect();
+
+    expect($request->refresh()->quote_items_amount)->toBe('45000.00')
+        ->and($request->items->pluck('quoted_amount', 'id')->all())
+        ->toBe(array_map(fn (string $amount): string => number_format((float) $amount, 2, '.', ''), $payload['items']));
+});
+
+it('revises the line prices rather than stacking them when a quote is sent again', function () {
+    Notification::fake();
+
+    [$request, $payload] = quotableRequest();
+
+    $this->actingAs($this->admin)
+        ->post(route('admin.requests.quote.store', $request), $payload);
+
+    // The customer refused: the request goes back to pending and is re-quoted
+    // cheaper. The lines must reflect the new prices, not the old ones.
+    $request->refresh()->update(['status' => PurchaseRequestStatus::Pending]);
+
+    $this->actingAs($this->admin)
+        ->post(route('admin.requests.quote.store', $request), array_merge($payload, [
+            'items' => array_map(fn (): string => '10000', $payload['items']),
+        ]))
+        ->assertRedirect();
+
+    expect($request->refresh()->quote_items_amount)->toBe('20000.00')
+        ->and($request->items->pluck('quoted_amount')->all())->toBe(['10000.00', '10000.00']);
+});
+
+it('refuses a quote that leaves a product unpriced', function () {
+    [$request, $payload] = quotableRequest();
+
+    $this->actingAs($this->admin)
+        ->post(route('admin.requests.quote.store', $request), array_merge($payload, [
+            'items' => array_slice($payload['items'], 0, 1, preserve_keys: true),
+        ]))
+        ->assertSessionHasErrors('items');
+
+    expect($request->refresh()->quote_sent_at)->toBeNull();
+});
+
+it('refuses a quote priced against a product from another request', function () {
+    [$request, $payload] = quotableRequest();
+    $stray = PurchaseItem::factory()->create();
+
+    $this->actingAs($this->admin)
+        ->post(route('admin.requests.quote.store', $request), array_merge($payload, [
+            'items' => $payload['items'] + [$stray->id => '5000'],
+        ]))
+        ->assertSessionHasErrors('items');
+
+    expect($request->refresh()->quote_sent_at)->toBeNull()
+        ->and($stray->refresh()->quoted_amount)->toBeNull();
+});
+
 it('refuses a quote on a request that cannot be quoted', function () {
     $request = PurchaseRequest::factory()->status(PurchaseRequestStatus::Delivered)->create();
+    $item = PurchaseItem::factory()->for($request)->create();
 
     $this->actingAs($this->admin)
         ->post(route('admin.requests.quote.store', $request), [
-            'items_amount' => '100',
+            'items' => [$item->id => '100'],
             'shipping_amount' => '10',
             'currency' => 'XAF',
         ])
@@ -268,17 +351,14 @@ it('refuses a quote on a request that cannot be quoted', function () {
 it('records the purchase cost and rate so the margin survives the exchange rate moving', function () {
     Notification::fake();
 
-    $request = PurchaseRequest::factory()->status(PurchaseRequestStatus::Pending)->create();
+    [$request, $payload] = quotableRequest([
+        'cost_amount' => '75',
+        'cost_currency' => 'eur',
+        'exchange_rate' => '655.957',
+    ]);
 
     $this->actingAs($this->admin)
-        ->post(route('admin.requests.quote.store', $request), [
-            'items_amount' => '45000',
-            'shipping_amount' => '15000',
-            'currency' => 'XAF',
-            'cost_amount' => '75',
-            'cost_currency' => 'eur',
-            'exchange_rate' => '655.957',
-        ])
+        ->post(route('admin.requests.quote.store', $request), $payload)
         ->assertRedirect();
 
     $request->refresh();
@@ -293,14 +373,10 @@ it('records the purchase cost and rate so the margin survives the exchange rate 
 it('leaves the margin unknown rather than guessing when the cost is omitted', function () {
     Notification::fake();
 
-    $request = PurchaseRequest::factory()->status(PurchaseRequestStatus::Pending)->create();
+    [$request, $payload] = quotableRequest();
 
     $this->actingAs($this->admin)
-        ->post(route('admin.requests.quote.store', $request), [
-            'items_amount' => '45000',
-            'shipping_amount' => '15000',
-            'currency' => 'XAF',
-        ])
+        ->post(route('admin.requests.quote.store', $request), $payload)
         ->assertRedirect();
 
     $request->refresh();
@@ -311,30 +387,26 @@ it('leaves the margin unknown rather than guessing when the cost is omitted', fu
 });
 
 it('requires an exchange rate alongside a purchase cost', function () {
-    $request = PurchaseRequest::factory()->status(PurchaseRequestStatus::Pending)->create();
+    [$request, $payload] = quotableRequest(['cost_amount' => '75']);
 
     $this->actingAs($this->admin)
-        ->post(route('admin.requests.quote.store', $request), [
-            'items_amount' => '45000',
-            'shipping_amount' => '15000',
-            'currency' => 'XAF',
-            'cost_amount' => '75',
-        ])
+        ->post(route('admin.requests.quote.store', $request), $payload)
         ->assertSessionHasErrors(['cost_currency', 'exchange_rate']);
 
     expect($request->refresh()->quote_sent_at)->toBeNull();
 });
 
 it('validates the quote amounts', function () {
-    $request = PurchaseRequest::factory()->status(PurchaseRequestStatus::Pending)->create();
+    [$request, $payload] = quotableRequest();
+    $itemId = array_key_first($payload['items']);
 
     $this->actingAs($this->admin)
-        ->post(route('admin.requests.quote.store', $request), [
-            'items_amount' => '-5',
+        ->post(route('admin.requests.quote.store', $request), array_merge($payload, [
+            'items' => [$itemId => '-5'] + $payload['items'],
             'shipping_amount' => 'gratuit',
             'currency' => 'EUROS',
-        ])
-        ->assertSessionHasErrors(['items_amount', 'shipping_amount', 'currency']);
+        ]))
+        ->assertSessionHasErrors(["items.{$itemId}", 'shipping_amount', 'currency']);
 });
 
 it('adds an internal note attributed to its author', function () {

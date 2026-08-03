@@ -5,8 +5,9 @@ namespace App\DataTransferObjects;
 /**
  * The figures an administrator sends to a customer for a purchase request.
  *
- * Shipping is quoted separately from the goods so that the automatic weight
- * based calculation can later replace only that part.
+ * The goods are priced line by line, one amount per requested product, and the
+ * quote charges their sum. Shipping is quoted separately so that the automatic
+ * weight based calculation can later replace only that part.
  *
  * The cost side is optional and never leaves the back office: it is what the
  * goods are expected to cost abroad, in the currency they are bought in, plus
@@ -15,8 +16,11 @@ namespace App\DataTransferObjects;
  */
 final readonly class QuoteData
 {
+    /**
+     * @param  array<int, string>  $lineAmounts  what each line is billed at, keyed by purchase item id
+     */
     public function __construct(
-        public string $itemsAmount,
+        public array $lineAmounts,
         public string $shippingAmount,
         public string $currency,
         public ?string $notes = null,
@@ -26,12 +30,18 @@ final readonly class QuoteData
     ) {}
 
     /**
-     * @param  array{items_amount: mixed, shipping_amount: mixed, currency?: string|null, notes?: string|null, cost_amount?: mixed, cost_currency?: string|null, exchange_rate?: mixed}  $attributes
+     * @param  array{items: array<int|string, mixed>, shipping_amount: mixed, currency?: string|null, notes?: string|null, cost_amount?: mixed, cost_currency?: string|null, exchange_rate?: mixed}  $attributes
      */
     public static function fromArray(array $attributes): self
     {
+        $lineAmounts = [];
+
+        foreach ($attributes['items'] as $itemId => $amount) {
+            $lineAmounts[(int) $itemId] = number_format((float) $amount, 2, '.', '');
+        }
+
         return new self(
-            itemsAmount: number_format((float) $attributes['items_amount'], 2, '.', ''),
+            lineAmounts: $lineAmounts,
             shippingAmount: number_format((float) $attributes['shipping_amount'], 2, '.', ''),
             currency: $attributes['currency'] ?? config('shoprelle.quote_currency'),
             notes: isset($attributes['notes']) ? trim((string) $attributes['notes']) ?: null : null,
@@ -41,9 +51,17 @@ final readonly class QuoteData
         );
     }
 
+    /**
+     * What the goods cost the customer: every priced line added up.
+     */
+    public function itemsAmount(): string
+    {
+        return number_format(array_sum(array_map(floatval(...), $this->lineAmounts)), 2, '.', '');
+    }
+
     public function totalAmount(): string
     {
-        return number_format((float) $this->itemsAmount + (float) $this->shippingAmount, 2, '.', '');
+        return number_format((float) $this->itemsAmount() + (float) $this->shippingAmount, 2, '.', '');
     }
 
     /**
@@ -69,7 +87,7 @@ final readonly class QuoteData
         $hasCost = $this->costAmount !== null;
 
         return [
-            'quote_items_amount' => $this->itemsAmount,
+            'quote_items_amount' => $this->itemsAmount(),
             'quote_shipping_amount' => $this->shippingAmount,
             'quote_total_amount' => $this->totalAmount(),
             'quote_currency' => $this->currency,

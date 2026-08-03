@@ -134,6 +134,7 @@ export type PurchaseItem = {
     variant: string | null;
     declared_price: string | null;
     declared_currency: string | null;
+    quoted_amount: string | null;
     comment: string | null;
     attachments: Attachment[];
 };
