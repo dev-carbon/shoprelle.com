@@ -3,6 +3,7 @@
 namespace App\Repositories\Contracts;
 
 use App\DataTransferObjects\PurchaseRequestFilters;
+use App\Models\Customer;
 use App\Models\PurchaseRequest;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Collection;
@@ -25,6 +26,21 @@ interface PurchaseRequestRepository
      * @return Collection<int, PurchaseRequest>
      */
     public function listForPhone(string $phone, int $limit = 10): Collection;
+
+    /**
+     * Every request a customer has placed, for the customer's own screen.
+     *
+     * @return Collection<int, PurchaseRequest>
+     */
+    public function listForCustomer(Customer $customer): Collection;
+
+    /**
+     * One of a customer's requests, with everything their own screen shows.
+     *
+     * Scoped to the customer rather than looked up and checked afterwards: a
+     * reference belonging to somebody else must not come back at all.
+     */
+    public function findForCustomer(Customer $customer, string $reference): ?PurchaseRequest;
 
     /**
      * Paginate requests for the back office, eager loading everything the list

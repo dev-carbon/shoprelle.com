@@ -6,9 +6,9 @@ use App\Chatbot\Contracts\ConversationStore;
 use App\DataTransferObjects\ReviewData;
 use App\Exceptions\ConversationException;
 use App\Models\Customer;
-use App\Repositories\Contracts\CustomerRepository;
 use App\Repositories\Contracts\PurchaseRequestRepository;
 use App\Services\AttachmentService;
+use App\Services\CustomerAccessService;
 use App\Services\PurchaseRequestService;
 use App\Services\ReviewService;
 use Illuminate\Http\UploadedFile;
@@ -25,15 +25,6 @@ use Illuminate\Support\Facades\RateLimiter;
 class ConversationManager
 {
     /**
-     * How many access codes may be tried against one phone number, and over
-     * what window. The chatbot route itself allows sixty requests a minute,
-     * which is far too generous for guessing a credential.
-     */
-    private const CODE_ATTEMPTS = 5;
-
-    private const CODE_DECAY_SECONDS = 3600;
-
-    /**
      * How many reviews one conversation may leave, and over what window. The
      * assistant is open to anybody, so the only thing standing between it and a
      * flood of ratings is this.
@@ -48,8 +39,8 @@ class ConversationManager
         private PurchaseRequestService $requests,
         private PurchaseRequestRepository $repository,
         private AttachmentService $attachments,
-        private CustomerRepository $customers,
         private ReviewService $reviews,
+        private CustomerAccessService $access,
     ) {}
 
     /**
@@ -295,34 +286,24 @@ class ConversationManager
     /**
      * List a customer's requests, but only once the access code checks out.
      *
-     * Attempts are counted per phone number rather than per session or IP: the
-     * session is thrown away by clearing a cookie, and the number is the thing
-     * actually being attacked. Five tries an hour turns a six-character code
-     * into something no amount of patience gets through.
+     * The attempt budget belongs to {@see CustomerAccessService} and is shared
+     * with the "mes demandes" page, which asks the very same question.
      */
     private function resolveMyOrders(ConversationState $state, string $input): ConversationState
     {
         $phone = (string) ($state->tracking['phone'] ?? '');
 
-        $limiter = 'my-orders:'.sha1($phone);
-
-        if (RateLimiter::tooManyAttempts($limiter, self::CODE_ATTEMPTS)) {
+        if ($this->access->hasTooManyAttempts($phone)) {
             return $this->engine->reject($state, $input, sprintf(
                 'Trop de tentatives. Réessayez dans %d minutes, ou écrivez-nous à %s.',
-                (int) ceil(RateLimiter::availableIn($limiter) / 60),
+                $this->access->minutesUntilRetry($phone),
                 config('shoprelle.contact.email'),
             ));
         }
 
-        $customer = $this->customers->findByPhone($phone);
-
-        if ($customer === null || ! $customer->matchesAccessCode($input)) {
-            RateLimiter::hit($limiter, self::CODE_DECAY_SECONDS);
-
+        if ($this->access->attempt($phone, $input) === null) {
             return $this->engine->presentOrders($state, $input, []);
         }
-
-        RateLimiter::clear($limiter);
 
         // The code checked out, so this conversation has proven the number is
         // its own. Anything asked later in the session can rely on it.

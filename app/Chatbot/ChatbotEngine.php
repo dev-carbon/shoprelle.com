@@ -4,8 +4,8 @@ namespace App\Chatbot;
 
 use App\DataTransferObjects\PendingAttachmentData;
 use App\Enums\Marketplace;
-use App\Models\Review;
 use App\Exceptions\ConversationException;
+use App\Models\Review;
 
 /**
  * The Shoprelle conversation, as a pure state machine.
@@ -202,8 +202,9 @@ class ChatbotEngine
 
         if ($accessCode !== null) {
             $state->pushBotMessage(sprintf(
-                "🔐 Voici votre code d'accès : %s\nIl ouvre la liste de toutes vos demandes. Notez-le maintenant : nous ne pouvons pas vous le renvoyer.",
+                "🔐 Voici votre code d'accès : %s\nAvec votre numéro, il ouvre la liste de toutes vos demandes et vos devis sur %s. Notez-le maintenant : nous ne pouvons pas vous le renvoyer.",
                 $accessCode,
+                route('orders.index'),
             ));
         }
 
@@ -882,7 +883,7 @@ class ChatbotEngine
     {
         return preg_match('/^[A-Za-z0-9]{3}[ -]?[A-Za-z0-9]{3}$/', trim($input)) === 1
             ? null
-            : "Ce code ne semble pas valide. Il ressemble à K4M-9PZ et vous a été donné à la fin de votre première demande.";
+            : 'Ce code ne semble pas valide. Il ressemble à K4M-9PZ et vous a été donné à la fin de votre première demande.';
     }
 
     private function validateRating(string $input): ?string

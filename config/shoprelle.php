@@ -160,6 +160,22 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Customer Area
+    |--------------------------------------------------------------------------
+    |
+    | "Mes demandes", where a customer reads their own quotes. There is no
+    | account and no password: the session simply remembers which customer
+    | proved themselves with their access code, and forgets it like any other
+    | session. Nothing here may be guessed from a phone number alone.
+    |
+    */
+
+    'customer_area' => [
+        'session_key' => 'shoprelle.customer',
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Contact
     |--------------------------------------------------------------------------
     |

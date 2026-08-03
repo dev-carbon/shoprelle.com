@@ -5,11 +5,11 @@ namespace App\Providers;
 use App\Chatbot\ChannelConversationStore;
 use App\Chatbot\Contracts\ConversationStore;
 use App\Models\Customer;
-use App\Models\Review;
 use App\Models\PurchaseRequest;
+use App\Models\Review;
 use App\Policies\CustomerPolicy;
-use App\Policies\ReviewPolicy;
 use App\Policies\PurchaseRequestPolicy;
+use App\Policies\ReviewPolicy;
 use App\Repositories\Contracts\CustomerRepository;
 use App\Repositories\Contracts\PurchaseRequestRepository;
 use App\Repositories\Eloquent\EloquentCustomerRepository;
@@ -68,6 +68,14 @@ class DomainServiceProvider extends ServiceProvider
         RateLimiter::for('chatbot-upload', fn (Request $request) => [
             Limit::perMinute(10)->by('upload-ip:'.$request->ip()),
             Limit::perHour(60)->by('upload-ip-hour:'.$request->ip()),
+        ]);
+
+        // The per-number budget lives in CustomerAccessService and is what
+        // actually guards the code. This one only stops a single machine from
+        // sweeping many numbers at once.
+        RateLimiter::for('customer-access', fn (Request $request) => [
+            Limit::perMinute(5)->by('customer-access-ip:'.$request->ip()),
+            Limit::perHour(30)->by('customer-access-ip-hour:'.$request->ip()),
         ]);
 
         // Telegram delivers every customer's updates from its own servers, so

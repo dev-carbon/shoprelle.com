@@ -13,6 +13,8 @@ use App\Http\Controllers\Admin\ReviewApprovalController;
 use App\Http\Controllers\Admin\ReviewController;
 use App\Http\Controllers\Admin\StatisticsController;
 use App\Http\Controllers\ChatbotController;
+use App\Http\Controllers\CustomerAccessController;
+use App\Http\Controllers\CustomerRequestController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\SitemapController;
 use App\Http\Controllers\Telegram\WebhookController as TelegramWebhookController;
@@ -54,6 +56,29 @@ Route::prefix('demande')->name('chat.')->group(function () {
     Route::post('confirmer', [ChatbotController::class, 'confirm'])
         ->middleware('throttle:chatbot-submit')
         ->name('confirm');
+});
+
+/*
+|--------------------------------------------------------------------------
+| Customer Area
+|--------------------------------------------------------------------------
+|
+| "Mes demandes": a customer reads their own quotes after proving themselves
+| with their phone number and the access code handed out on their first
+| request. One address whether they are identified or not — it is what they
+| bookmark, and it has to keep working once the session has expired.
+|
+*/
+
+Route::prefix('mes-demandes')->name('orders.')->group(function () {
+    Route::get('/', [CustomerRequestController::class, 'index'])->name('index');
+    Route::get('{reference}', [CustomerRequestController::class, 'show'])->name('show');
+
+    Route::post('acces', [CustomerAccessController::class, 'store'])
+        ->middleware('throttle:customer-access')
+        ->name('access.store');
+
+    Route::post('deconnexion', [CustomerAccessController::class, 'destroy'])->name('access.destroy');
 });
 
 /*

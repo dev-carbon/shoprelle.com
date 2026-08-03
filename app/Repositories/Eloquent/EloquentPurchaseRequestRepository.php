@@ -4,6 +4,7 @@ namespace App\Repositories\Eloquent;
 
 use App\DataTransferObjects\PurchaseRequestFilters;
 use App\Enums\PurchaseRequestStatus;
+use App\Models\Customer;
 use App\Models\PurchaseRequest;
 use App\Repositories\Contracts\PurchaseRequestRepository;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
@@ -34,6 +35,22 @@ class EloquentPurchaseRequestRepository implements PurchaseRequestRepository
             ->latest()
             ->limit($limit)
             ->get();
+    }
+
+    public function listForCustomer(Customer $customer): Collection
+    {
+        return $customer->purchaseRequests()
+            ->withCount('items')
+            ->latest()
+            ->get();
+    }
+
+    public function findForCustomer(Customer $customer, string $reference): ?PurchaseRequest
+    {
+        return $customer->purchaseRequests()
+            ->with(['items', 'payments'])
+            ->where('reference', $reference)
+            ->first();
     }
 
     public function paginateForAdmin(PurchaseRequestFilters $filters, int $perPage = 15): LengthAwarePaginator
