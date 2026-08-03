@@ -92,6 +92,26 @@ export const PHOTO_SLOTS: readonly PhotoSlot[] = [
 ] as const;
 
 /**
+ * ── Le quatrième emplacement, qui n'est pas une photographie ────────────────
+ *
+ * Une capture de la conversation, à côté des trois étapes. Il est à part des
+ * trois autres parce que tout y diffère : il est vertical, il n'a pas à
+ * respecter la règle de lumière et de cadrage ci-dessus — c'est un écran, pas
+ * une scène — et il ne se pose pas dans la même bande.
+ *
+ * Il comble le seul endroit vide de la page : la colonne de gauche de « Trois
+ * étapes, et c'est tout » ne porte qu'un titre et une phrase, en face d'une
+ * frise qui tient toute la hauteur. Y mettre la conversation elle-même est ce
+ * qui manquait — la section explique un échange sans jamais le montrer.
+ */
+export const CONVERSATION_SLOT: PhotoSlot = {
+    name: 'conversation',
+    title: 'La conversation',
+    caption: "Ce que voit un client, du premier lien jusqu'à sa référence.",
+    brief: "Capture d'écran du chat, au format téléphone (portrait, environ 9/19). Une conversation réelle, du lien collé jusqu'à la référence — et rien qui ressemble à un vrai nom ou à un vrai numéro : cette image est publique.",
+};
+
+/**
  * L'URL de la photo d'un emplacement, ou `null` si le fichier n'existe pas.
  */
 export const photoFor = (slot: PhotoSlot): string | null =>

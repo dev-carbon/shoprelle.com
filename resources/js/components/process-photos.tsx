@@ -1,5 +1,5 @@
 import { Reveal } from '@/components/reveal';
-import { PHOTO_SLOTS, photoFor } from '@/lib/photos';
+import { CONVERSATION_SLOT, PHOTO_SLOTS, photoFor } from '@/lib/photos';
 import type { PhotoSlot } from '@/lib/photos';
 import { cn } from '@/lib/utils';
 
@@ -21,17 +21,76 @@ import { cn } from '@/lib/utils';
  */
 
 /** Le cadre vide, avec sa consigne. Développement seulement. */
-function Brief({ slot, index }: { slot: PhotoSlot; index: number }) {
+function Brief({
+    slot,
+    label,
+    className,
+}: {
+    slot: PhotoSlot;
+    label: string;
+    className?: string;
+}) {
     return (
-        <div className="flex aspect-[4/5] flex-col justify-end rounded-3xl border-2 border-dashed border-primary/40 bg-primary/[0.04] p-6">
+        <div
+            className={cn(
+                'flex flex-col justify-end rounded-3xl border-2 border-dashed border-primary/40 bg-primary/[0.04] p-6',
+                className,
+            )}
+        >
             <p className="font-display text-eyebrow font-extrabold text-primary uppercase">
-                Emplacement {index + 1} · à fournir
+                {label} · à fournir
             </p>
             <p className="mt-3 font-mono text-xs break-all text-muted-foreground">
                 resources/js/images/photos/{slot.name}.webp
             </p>
             <p className="mt-4 text-sm text-muted-foreground">{slot.brief}</p>
         </div>
+    );
+}
+
+/**
+ * La conversation, dans un téléphone, à côté des trois étapes.
+ *
+ * Le cadre est allusif et non une reproduction d'appareil : deux ou trois
+ * pixels de marge autour de la capture et un grand rayon suffisent à dire
+ * « téléphone ». Un vrai châssis, avec son encoche et son reflet, aurait daté la
+ * page le jour où le modèle dessiné aura cinq ans.
+ *
+ * Il vit sur la bande bleue, où les jetons sont redéclarés : `card` y est le
+ * blanc et `border` un bleu clair. Le cadre suit donc la bande sans que rien ici
+ * ne sache qu'il est posé sur du bleu.
+ */
+export function ConversationShot({ className }: { className?: string }) {
+    const src = photoFor(CONVERSATION_SLOT);
+
+    if (!src && !import.meta.env.DEV) {
+        return null;
+    }
+
+    return (
+        <Reveal
+            from="scale"
+            delay={120}
+            className={cn('mx-auto w-full max-w-[17rem]', className)}
+        >
+            {src ? (
+                <div className="rounded-[2.25rem] bg-card p-2 shadow-2xl shadow-black/25">
+                    <img
+                        src={src}
+                        alt="Une conversation avec l'assistant Shoprelle, du lien envoyé jusqu'à la référence de la demande."
+                        loading="lazy"
+                        decoding="async"
+                        className="aspect-[9/19] w-full rounded-[1.75rem] object-cover object-top"
+                    />
+                </div>
+            ) : (
+                <Brief
+                    slot={CONVERSATION_SLOT}
+                    label="Capture du chat"
+                    className="aspect-[9/19] rounded-[2.25rem]"
+                />
+            )}
+        </Reveal>
     );
 }
 
@@ -97,7 +156,11 @@ export function ProcessPhotos({ className }: { className?: string }) {
                             />
                         </div>
                     ) : (
-                        <Brief slot={slot} index={index} />
+                        <Brief
+                            slot={slot}
+                            label={`Emplacement ${index + 1}`}
+                            className="aspect-[4/5]"
+                        />
                     )}
 
                     <figcaption className="mt-7">

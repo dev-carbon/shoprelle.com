@@ -342,17 +342,63 @@ export function LinkToParcel({ className, ...props }: ComponentProps<'div'>) {
                 className,
             )}
         >
-            <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-2">
-                <p className="font-display text-eyebrow font-extrabold text-primary uppercase">
-                    Du lien au colis
-                </p>
-
+            <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-3">
                 {/* Visible, et pas seulement annoncé : tout ce qui suit est un
                     exemple, et un devis qui a l'air vrai sur une page de vente
                     est la seule chose que ce site ne peut pas se permettre. */}
                 <p className="text-xs text-muted-foreground">
                     Exemple de parcours
                 </p>
+
+                {/*
+                 * ── Le voyant ───────────────────────────────────────────────
+                 *
+                 * Deux choses en une, et les deux manquaient.
+                 *
+                 * Il dit que ça défile tout seul. Le parcours avançait déjà de
+                 * lui-même, mais rien ne l'annonçait : on tombait sur quatre
+                 * onglets, on croyait devoir cliquer, et l'avance suivante
+                 * ressemblait alors à une page qui bouge sans qu'on l'ait
+                 * demandé. Un point qui bat et deux mots règlent ça avant que la
+                 * question se pose.
+                 *
+                 * Et il rend la main. Un clic sur une étape arrête la boucle
+                 * pour de bon — c'est ce qu'il faut — mais il n'existait aucun
+                 * moyen de la relancer, ce qui fait d'un arrêt volontaire un
+                 * cul-de-sac. Ce bouton est ce moyen.
+                 */}
+                <button
+                    type="button"
+                    onClick={() => setTakenOver((stopped) => !stopped)}
+                    aria-pressed={!takenOver}
+                    className="flex cursor-pointer items-center gap-2.5 rounded-full border px-3.5 py-2 text-xs font-semibold transition-colors hover:bg-accent focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+                >
+                    <span className="relative flex size-2.5 shrink-0">
+                        {/* Le battement suit ce qui se passe vraiment, donc il
+                            s'arrête aussi au survol — le curseur sur le bloc
+                            suspend la barre, et un voyant qui continuerait de
+                            clignoter pendant ce temps mentirait. Le libellé, lui,
+                            ne bouge qu'au clic : un mot qui change dès qu'on
+                            approche la souris est un mot qu'on n'arrive pas à
+                            lire. */}
+                        {!takenOver && !hovered && (
+                            <span
+                                aria-hidden
+                                className="absolute inline-flex size-full animate-ping rounded-full bg-primary/70"
+                            />
+                        )}
+                        <span
+                            className={cn(
+                                'relative size-2.5 rounded-full',
+                                takenOver
+                                    ? 'bg-muted-foreground/40'
+                                    : 'bg-primary',
+                            )}
+                        />
+                    </span>
+
+                    {takenOver ? 'Défilement en pause' : 'Défilement auto'}
+                </button>
             </div>
 
             <ol
@@ -412,7 +458,7 @@ export function LinkToParcel({ className, ...props }: ComponentProps<'div'>) {
                                     remplit en temps réel sur la durée
                                     d'affichage, ce qui dit combien de temps il
                                     reste sans qu'aucun chiffre soit écrit. */}
-                                <span className="mt-3 block h-1 overflow-hidden rounded-full bg-border">
+                                <span className="mt-3 block h-1.5 overflow-hidden rounded-full bg-border">
                                     <span
                                         // Remontée par sa clé à chaque
                                         // changement d'étape : React remplace

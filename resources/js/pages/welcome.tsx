@@ -31,7 +31,7 @@ import {
 import { MarketplaceMarquee } from '@/components/marketplace-marquee';
 import { OrderFab } from '@/components/order-fab';
 import { OrderMenu } from '@/components/order-menu';
-import { ProcessPhotos } from '@/components/process-photos';
+import { ConversationShot, ProcessPhotos } from '@/components/process-photos';
 import { Reveal } from '@/components/reveal';
 import { ReviewCarousel } from '@/components/review-carousel';
 import type { Review } from '@/components/review-carousel';
@@ -792,32 +792,59 @@ export default function Welcome({
                         />
                     </div>
 
-                    {/* Wider than the copy above it: four cards in a row need
-                        the room, and the timeline is the part of the hero doing
-                        the explaining. */}
+                    {/* Les plateformes viennent maintenant avant le parcours, et
+                        non après.
+
+                        Rien n'est dit à leur sujet : les marques sont
+                        l'argument, un visiteur reconnaît Shein et Amazon ou ne
+                        les reconnaît pas, et aucune phrase à côté n'y change
+                        quoi que ce soit. Elles répondent à « est-ce que ça
+                        marche avec ce que j'utilise déjà ? » — question qui
+                        vient avant « comment ça se passe ? », et à laquelle il
+                        vaut mieux avoir répondu avant de raconter un parcours
+                        que personne ne lira s'il ne le concerne pas. */}
                     <div
                         className={cn(SHELL, 'relative mt-20 animate-rise')}
                         style={{ animationDelay: '340ms' }}
-                    >
-                        <LinkToParcel />
-                    </div>
-
-                    {/* The platforms close the hero, with nothing said about
-                        them. They used to have a section and a paragraph of
-                        their own further down; but the marks are the argument —
-                        a visitor either recognises Shein and Amazon or does not,
-                        and no sentence next to them changes that. Here they
-                        answer "does this work with what I already use?" while
-                        the promise above is still on screen. */}
-                    <div
-                        className={cn(SHELL, 'relative mt-20 animate-rise')}
-                        style={{ animationDelay: '420ms' }}
                     >
                         <MarketplaceMarquee
                             marketplaces={MARKETPLACES}
                             logos={MARKETPLACE_LOGOS}
                             colors={MARKETPLACE_COLORS}
                         />
+                    </div>
+
+                    {/* Le parcours ferme le hero, et il a maintenant un titre.
+
+                        Sans lui, on tombait sur un panneau muni de quatre
+                        onglets sans savoir ce qu'on regardait — et un bloc qu'il
+                        faut d'abord identifier est un bloc qu'on saute. Le titre
+                        dit ce que le panneau va montrer, et le panneau le
+                        montre. */}
+                    <div className={cn(SHELL, 'relative mt-24 lg:mt-28')}>
+                        <Reveal
+                            from="blur"
+                            className="mx-auto flex max-w-2xl flex-col items-center text-center"
+                        >
+                            <Eyebrow>Du lien au colis</Eyebrow>
+
+                            <h2 className="mt-7 font-display text-title font-black">
+                                Ce qui se passe une fois le lien envoyé
+                            </h2>
+                            <p className="mt-6 text-lead text-muted-foreground">
+                                Quatre étapes, et vous n'en pilotez qu'une : la
+                                première. Le reste, c'est nous.
+                            </p>
+                        </Reveal>
+
+                        {/* En `Reveal` et non en `animate-rise` posé d'emblée :
+                            depuis que le bandeau des marques est passé devant,
+                            ce panneau est sous la ligne de flottaison sur la
+                            plupart des écrans, et une entrée jouée avant d'être
+                            vue n'a jamais été jouée. */}
+                        <Reveal delay={80} className="mt-14">
+                            <LinkToParcel />
+                        </Reveal>
                     </div>
                 </section>
 
@@ -1049,7 +1076,13 @@ export default function Welcome({
                             'grid gap-14 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] lg:gap-20',
                         )}
                     >
-                        <div className="lg:sticky lg:top-32 lg:self-start">
+                        {/* Cette colonne n'est plus collante. Elle l'était
+                            quand elle ne portait que deux phrases en face d'une
+                            frise haute ; avec la capture en dessous elle
+                            dépasse la hauteur d'écran, et un bloc collant plus
+                            haut que la fenêtre a un bas que l'on n'atteint
+                            jamais. */}
+                        <div>
                             <Eyebrow>Comment ça marche</Eyebrow>
 
                             <h2 className="mt-7 font-display text-title font-black">
@@ -1059,6 +1092,17 @@ export default function Welcome({
                                 Pas de formulaire interminable, pas de compte :
                                 une conversation.
                             </p>
+
+                            {/* La conversation elle-même, en dessous.
+
+                                C'était le seul endroit vide de la page : une
+                                colonne portant deux phrases, en face d'une frise
+                                qui tient toute la hauteur. Et c'était surtout la
+                                section qui promet « une conversation » sans en
+                                montrer une seule. Une capture d'écran répond aux
+                                deux, et elle ne s'affiche que si le fichier
+                                existe — voir `lib/photos.ts`. */}
+                            <ConversationShot className="mt-12 lg:mx-0" />
                         </div>
 
                         {/* A rail rather than three cards: the steps happen in

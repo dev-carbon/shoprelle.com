@@ -860,6 +860,7 @@
 
 @media (prefers-reduced-motion: reduce) {
     .animate-ripple,
+    .animate-ping,
     .animate-shuttle,
     .animate-dwell,
     .animate-glow,
