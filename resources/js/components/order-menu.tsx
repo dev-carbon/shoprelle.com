@@ -44,7 +44,12 @@ function Channel({
                                 : 'bg-primary text-primary-foreground',
                         )}
                     >
-                        <Icon className="size-4" />
+                        {/* `text-current` n'est pas décoratif : DropdownMenuItem
+                            porte `[&_svg:not([class*='text-'])]:text-muted-foreground`,
+                            qui repeint en gris toute icône n'ayant pas de classe
+                            `text-`. La nommer suffit à sortir de la règle, et
+                            l'icône reprend alors la couleur de sa pastille. */}
+                        <Icon className="size-4 text-current" />
                     </span>
 
                     <span className="min-w-0">
