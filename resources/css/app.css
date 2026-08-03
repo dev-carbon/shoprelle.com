@@ -522,64 +522,6 @@
 }
 
 /*
- * ── The hero's looping story ────────────────────────────────────────────────
- *
- * The four cards light up one after another and then reset, so the service
- * explains itself before anybody reads a word. One shared cycle, and each card
- * enters at its own `animation-delay` — no timers, no library, and the whole
- * thing stops dead under `prefers-reduced-motion`, where the cards simply sit
- * at their untouched state: nothing here sets an opacity outside the keyframes.
- */
-@utility animate-stage {
-    animation: shoprelle-stage 14s cubic-bezier(0.16, 1, 0.3, 1) infinite both;
-}
-
-@keyframes shoprelle-stage {
-    0% {
-        opacity: 0.35;
-        transform: translateY(10px);
-    }
-    5% {
-        opacity: 1;
-        transform: translateY(0);
-    }
-    /* Held for most of the cycle: the four stages are meant to be read, and a
-       card that fades the moment it has finished arriving was never read. */
-    82% {
-        opacity: 1;
-        transform: translateY(0);
-    }
-    92%,
-    100% {
-        opacity: 0.35;
-        transform: translateY(10px);
-    }
-}
-
-/* The parcel's progress, drawn as it happens rather than sitting finished. */
-@utility animate-stage-fill {
-    transform-origin: left;
-    animation: shoprelle-stage-fill 14s cubic-bezier(0.16, 1, 0.3, 1) infinite
-        both;
-}
-
-@keyframes shoprelle-stage-fill {
-    0% {
-        transform: scaleX(0);
-    }
-    18% {
-        transform: scaleX(1);
-    }
-    82% {
-        transform: scaleX(1);
-    }
-    92%,
-    100% {
-        transform: scaleX(0);
-    }
-}
-
-/*
  * The delivery truck, nudging forward. Three pixels and no more: it is there to
  * say the parcel is moving, not to be watched.
  */
@@ -873,6 +815,28 @@
 }
 
 /*
+ * Les pays desservis, qui respirent.
+ *
+ * Très lent, et l'opacité ne descend jamais au-delà de la moitié : un
+ * clignotement dirait « alerte », alors que ce halo dit « en service ». Il ne
+ * porte aucune information — les mêmes pays sont nommés en toutes lettres sous
+ * la carte — et un visiteur qui ne le remarque jamais n'a rien manqué.
+ */
+@utility animate-glow {
+    animation: shoprelle-glow 5s ease-in-out infinite;
+}
+
+@keyframes shoprelle-glow {
+    0%,
+    100% {
+        opacity: 0.5;
+    }
+    50% {
+        opacity: 0.9;
+    }
+}
+
+/*
  * The marketplace ticker. Each track holds its list twice, so shifting it by
  * half its width lands exactly back on the start and the loop is seamless. The
  * reverse variant runs the same distance the other way, for the second row.
@@ -897,8 +861,8 @@
 @media (prefers-reduced-motion: reduce) {
     .animate-ripple,
     .animate-shuttle,
-    .animate-stage,
-    .animate-stage-fill,
+    .animate-dwell,
+    .animate-glow,
     .animate-enter,
     .animate-rise,
     .animate-marquee,

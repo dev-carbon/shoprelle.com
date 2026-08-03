@@ -31,6 +31,7 @@ import {
 import { MarketplaceMarquee } from '@/components/marketplace-marquee';
 import { OrderFab } from '@/components/order-fab';
 import { OrderMenu } from '@/components/order-menu';
+import { ProcessPhotos } from '@/components/process-photos';
 import { Reveal } from '@/components/reveal';
 import { ReviewCarousel } from '@/components/review-carousel';
 import type { Review } from '@/components/review-carousel';
@@ -46,6 +47,7 @@ import { WorldBackdrop } from '@/components/world-backdrop';
 import { useCountUp } from '@/hooks/use-count-up';
 import { useScrolled } from '@/hooks/use-scrolled';
 import { flagFor } from '@/lib/destinations';
+import { SHOW_PROCESS_PHOTOS } from '@/lib/photos';
 import { cn } from '@/lib/utils';
 import { dashboard, login } from '@/routes';
 import { link, show as chat } from '@/routes/chat';
@@ -613,19 +615,22 @@ export default function Welcome({
                     <div className="flex items-center gap-2">
                         <ThemeSwitcher />
 
-                        {/* Le même menu que le bouton flottant : le
-                            header n'impose plus le chat web. Le libellé se
-                            raccourcit sous `sm`, où la barre est étroite. */}
+                        {/* Le même menu que le bouton flottant : le header
+                            n'impose plus le chat web.
+
+                            Masqué sur téléphone, où le bouton flottant prend le
+                            relais. Les deux se partagent l'écran au lieu de se
+                            doubler : sur un grand écran la barre est toujours
+                            là, donc le flottant n'a rien à y faire ; sur un
+                            téléphone la barre est trop étroite pour porter une
+                            action à côté du reste, donc c'est l'inverse. */}
                         <OrderMenu
                             chatHref={chat().url}
                             telegramUrl={telegramUrl}
                             whatsappUrl={whatsappUrl}
                             trigger={
-                                <Button className="h-10 rounded-full px-5 shadow-md shadow-primary/25 transition-shadow hover:shadow-lg hover:shadow-primary/30">
-                                    <span className="hidden sm:inline">
-                                        Nouvelle commande
-                                    </span>
-                                    <span className="sm:hidden">Commander</span>
+                                <Button className="hidden h-10 rounded-full px-5 shadow-md shadow-primary/25 transition-shadow hover:shadow-lg hover:shadow-primary/30 sm:inline-flex">
+                                    Commander
                                     <ShoppingCart className="size-4" />
                                 </Button>
                             }
@@ -1097,6 +1102,42 @@ export default function Welcome({
                         </ol>
                     </div>
                 </section>
+
+                {/* Les mêmes trois étapes, mais photographiées.
+
+                    Elle est ici et pas ailleurs : la section juste au-dessus
+                    vient de dire ce qui se passe, celle-ci montre que ça se
+                    passe. Séparées par une autre section, les deux ne se
+                    seraient jamais rencontrées.
+
+                    Toute la bande disparaît tant qu'aucune photo n'est
+                    déposée — voir `lib/photos.ts`. */}
+                {SHOW_PROCESS_PHOTOS && (
+                    <section className={cn('border-b', BAND)}>
+                        <div
+                            className={cn(SHELL, 'flex flex-col items-center')}
+                        >
+                            <Reveal
+                                from="blur"
+                                className="flex max-w-2xl flex-col items-center text-center"
+                            >
+                                <Eyebrow>En vrai</Eyebrow>
+
+                                <h2 className="mt-7 font-display text-title font-black">
+                                    Ce que ça donne, concrètement
+                                </h2>
+                                <p className="mt-6 text-lead text-muted-foreground">
+                                    Les trois mêmes étapes, photographiées. Rien
+                                    de mis en scène : c'est le travail tel qu'il
+                                    se fait, de la commande passée en France au
+                                    colis remis chez vous.
+                                </p>
+                            </Reveal>
+
+                            <ProcessPhotos className="mt-16 w-full" />
+                        </div>
+                    </section>
+                )}
 
                 {/* The assistant is the product, so it gets a section of its own
                     rather than a line in the steps: the visitor's real question

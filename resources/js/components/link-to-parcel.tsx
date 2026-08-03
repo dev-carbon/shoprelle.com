@@ -1,4 +1,5 @@
-import { Check, MessageCircle, Truck } from 'lucide-react';
+import { Check, Link as LinkIcon, MapPin, Truck } from 'lucide-react';
+import { useRef, useState } from 'react';
 import type { ComponentProps, ReactNode } from 'react';
 
 import {
@@ -9,238 +10,470 @@ import jacket from '@/images/products/veste-matelassee.webp';
 import { cn } from '@/lib/utils';
 
 /**
- * A pasted link turning into a parcel, as a timeline.
+ * ── Du lien au colis, comme un parcours que l'on peut prendre en main ───────
  *
- * This is the promise of the product, so the hero states it rather than
- * describing it. The assistant appears as one step of four and not as the
- * subject: what a visitor is buying is the transformation, and a screenshot of
- * a chat window only shows the machinery.
+ * C'était quatre cartes alignées qui s'allumaient l'une après l'autre en
+ * boucle. Le problème n'était pas l'animation, il était la forme : quatre
+ * colonnes de la largeur d'un quart d'écran, quatre récits tassés, et rien à
+ * faire sinon regarder. On lisait la première, la quatrième était déjà passée.
  *
- * Entirely decorative — every figure in it is an illustration, not a real
- * order — so the whole block is hidden from screen readers and cannot be
- * selected.
+ * C'est maintenant une seule scène, large, avec une barre d'étapes au-dessus.
+ * Trois choses en découlent, et ce sont les trois raisons du changement :
+ *
+ *   — chaque étape a la place de se montrer pour de bon. L'étape « Commande »
+ *     ne dit plus « devis clair », elle montre le devis, ligne par ligne, avec
+ *     le transport séparé du produit. C'est l'engagement central du service, et
+ *     il tenait dans une vignette de la taille d'un timbre.
+ *   — on peut s'arrêter. La barre avance seule, mais le survol la suspend et un
+ *     clic va où l'on veut. Une démonstration qu'on ne peut pas retenir est une
+ *     démonstration qu'on ne relit pas.
+ *   — c'est deux fois moins haut. Le hero avait besoin de cet air-là.
+ *
+ * Les chiffres sont des exemples et le disent : la légende « Exemple de
+ * parcours » est visible, pas seulement annoncée aux lecteurs d'écran. Le bloc
+ * n'est plus caché à ces derniers — il l'était quand il n'y avait rien à y
+ * faire ; maintenant qu'il y a des boutons, le cacher reviendrait à poser un
+ * piège au clavier.
  */
+
+/** Combien de temps une étape reste à l'écran avant que la suivante prenne. */
+const DWELL = 5200;
+
 const PROGRESS = 70;
 
 /**
- * How far apart the four cards light up, inside one loop of the story.
+ * Le panneau de la scène : le fond en retrait de la carte, sur lequel se pose
+ * l'artefact de l'étape.
  *
- * The cycle itself lives in the stylesheet; only the offsets are here, because
- * they are what the reading order is made of.
+ * `muted` et non `background` : sur le thème clair, la page et les cartes sont
+ * toutes deux du blanc pur, et un panneau `bg-background` posé sur une carte
+ * blanche n'existait que par sa bordure. Le crème très pâle du `muted` le
+ * creuse pour de bon, et en thème sombre il l'éclaircit — ce qui est la
+ * convention inverse et la bonne dans les deux cas.
  */
-const STEP_DELAY = 2.2;
-
-const stageStyle = (step: number, offset = 0) => ({
-    animationDelay: `${(step - 1) * STEP_DELAY + offset}s`,
-});
-
-function Card({
-    step,
-    label,
-    highlight,
-    children,
-}: {
-    step: number;
-    label: string;
-    highlight?: boolean;
-    children: ReactNode;
-}) {
+function Stage({ children, className }: ComponentProps<'div'>) {
     return (
         <div
-            style={stageStyle(step)}
             className={cn(
-                'flex h-full animate-stage flex-col rounded-3xl border p-5 text-left transition-colors sm:p-6',
-                highlight
-                    ? 'border-transparent bg-accent-brand text-accent-brand-foreground shadow-lg shadow-accent-brand/30'
-                    : 'bg-card shadow-sm',
+                'rounded-3xl border bg-muted/60 p-6 sm:p-7',
+                className,
             )}
         >
-            <p className="flex items-center gap-2.5">
-                <span
-                    className={cn(
-                        'flex size-6 shrink-0 items-center justify-center rounded-full text-[11px] font-black tabular-nums',
-                        highlight
-                            ? 'bg-accent-brand-foreground text-accent-brand'
-                            : 'bg-accent-brand text-accent-brand-foreground',
-                    )}
-                >
-                    {step}
-                </span>
-                <span className="font-display text-eyebrow font-extrabold uppercase">
-                    {label}
-                </span>
-            </p>
-
-            <div className="mt-5 flex flex-1 flex-col">{children}</div>
+            {children}
         </div>
     );
 }
 
-/**
- * A confirmation line, pinned to the bottom of a card so all four agree.
- */
-function Confirmation({
-    step,
-    children,
-    tone = 'success',
+/** Une ligne du devis. Le total est la seule qui pèse. */
+function QuoteLine({
+    label,
+    amount,
+    total,
 }: {
-    step: number;
-    children: ReactNode;
-    tone?: 'success' | 'muted';
+    label: string;
+    amount: string;
+    total?: boolean;
 }) {
     return (
-        <p
-            // Half a second behind its card: the tick is the answer, and an
-            // answer that lands with the question is not an answer.
-            style={stageStyle(step, 0.9)}
-            // Pushed to the bottom rather than spaced from the content: the
-            // four cards are equal height, and footers that float at whatever
-            // height their card's content ends is what makes a row of cards
-            // look accidental.
+        <div
             className={cn(
-                'mt-auto flex animate-stage items-center gap-1.5 pt-4 text-xs font-semibold',
-                tone === 'success' ? 'text-success' : 'text-muted-foreground',
+                'flex items-baseline justify-between gap-4',
+                total && 'border-t pt-3',
             )}
         >
-            {children}
-        </p>
+            <span
+                className={cn(
+                    'text-sm',
+                    total
+                        ? 'font-display font-extrabold'
+                        : 'text-muted-foreground',
+                )}
+            >
+                {label}
+            </span>
+            <span
+                className={cn(
+                    'tabular-nums',
+                    total
+                        ? 'font-display text-lg font-black'
+                        : 'text-sm font-medium',
+                )}
+            >
+                {amount}
+                <span className="ml-1 text-xs font-bold text-muted-foreground">
+                    XAF
+                </span>
+            </span>
+        </div>
     );
 }
 
-export function LinkToParcel({ className, ...props }: ComponentProps<'div'>) {
-    return (
-        <div aria-hidden {...props} className={cn('select-none', className)}>
-            <ol className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4 lg:gap-6">
-                <li>
-                    <Card step={1} label="Lien">
-                        {/* The platform's own mark, in the platform's own
-                            colour, on white — the same treatment as the tiles
-                            further down the page. */}
+type StageDefinition = {
+    label: string;
+    title: string;
+    caption: string;
+    confirmation: string;
+    visual: ReactNode;
+};
+
+const STAGES: StageDefinition[] = [
+    {
+        label: 'Lien',
+        title: 'Vous collez le lien',
+        caption:
+            "L'assistant reconnaît la plateforme et retrouve le produit. Vous n'avez rien d'autre à saisir.",
+        confirmation: 'Produit détecté',
+        visual: (
+            <Stage>
+                {/* Le champ tel qu'il est en haut de page, pour que la
+                    démonstration commence exactement là où le visiteur est. */}
+                <div className="flex items-center gap-3 rounded-2xl border bg-card px-4 py-3.5">
+                    <LinkIcon className="size-4 shrink-0 text-muted-foreground" />
+                    <p className="truncate font-mono text-sm text-muted-foreground">
+                        temu.com/women-jacket-p-8842
+                    </p>
+                </div>
+
+                <div className="mt-5 flex items-center gap-3">
+                    {/* La marque dans sa couleur, sur blanc : même règle que
+                        les tuiles du bandeau. */}
+                    <span
+                        className="flex h-11 shrink-0 items-center rounded-xl border border-black/[0.07] bg-surface-tile px-3.5"
+                        style={{ color: MARKETPLACE_COLORS.Temu }}
+                    >
+                        {MARKETPLACE_LOGOS.Temu}
+                    </span>
+
+                    <p className="text-sm text-muted-foreground">
+                        Plateforme reconnue automatiquement
+                    </p>
+                </div>
+            </Stage>
+        ),
+    },
+    {
+        label: 'Détails',
+        title: 'Trois questions, pas un formulaire',
+        caption:
+            'La couleur, la taille, la quantité. Vous répondez en un mot, ou vous choisissez dans la liste proposée.',
+        confirmation: 'Détails enregistrés',
+        visual: (
+            <Stage className="space-y-4">
+                {[
+                    { question: 'Quelle couleur ?', answer: 'Noir' },
+                    { question: 'Quelle taille ?', answer: 'XL' },
+                    { question: 'Combien ?', answer: '×1' },
+                ].map((exchange) => (
+                    <div
+                        key={exchange.question}
+                        className="flex items-center justify-between gap-4"
+                    >
+                        <p className="rounded-2xl rounded-tl-md border bg-card px-4 py-2 text-sm">
+                            {exchange.question}
+                        </p>
+                        <p className="rounded-2xl rounded-tr-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground">
+                            {exchange.answer}
+                        </p>
+                    </div>
+                ))}
+            </Stage>
+        ),
+    },
+    {
+        label: 'Devis',
+        title: 'Le prix, détaillé avant de payer',
+        caption:
+            'Le produit et le transport au poids réel, séparés. Vous validez, ou vous ne validez pas — rien n’est acheté avant.',
+        confirmation: 'Devis envoyé pour validation',
+        visual: (
+            <Stage>
+                <div className="flex items-center gap-4">
+                    <img
+                        src={jacket}
+                        alt=""
+                        width={56}
+                        height={56}
+                        loading="lazy"
+                        decoding="async"
+                        className="size-14 shrink-0 rounded-xl border object-cover"
+                    />
+
+                    <div className="min-w-0">
+                        <p className="truncate font-display font-extrabold">
+                            Veste matelassée
+                        </p>
+                        <p className="mt-0.5 truncate text-sm text-muted-foreground">
+                            Noir · XL · ×1
+                        </p>
+                    </div>
+                </div>
+
+                <div className="mt-6 space-y-3">
+                    <QuoteLine label="Produit" amount="19 500" />
+                    <QuoteLine label="Transport (0,9 kg)" amount="5 000" />
+                    <QuoteLine label="Total" amount="24 500" total />
+                </div>
+            </Stage>
+        ),
+    },
+    {
+        label: 'Livraison',
+        title: 'Votre colis, suivi par sa référence',
+        caption:
+            'Une référence suffit pour savoir où il en est, à tout moment, sans compte ni mot de passe.',
+        confirmation: 'En route vers Douala',
+        visual: (
+            <Stage>
+                <div className="flex items-center justify-between gap-4">
+                    <p className="flex items-center gap-2 font-display font-extrabold">
+                        <MapPin className="size-4 shrink-0 text-primary" />
+                        Douala
+                    </p>
+                    <p className="rounded-full bg-accent-brand px-3 py-1 font-mono text-xs font-bold text-accent-brand-foreground">
+                        SHP-2608-4KJ9X2
+                    </p>
+                </div>
+
+                <div className="mt-6 flex items-center gap-3">
+                    <Truck className="size-5 shrink-0 animate-shuttle text-primary" />
+
+                    {/* La piste est en `border` et non en `muted` : le panneau
+                        qui la porte est déjà `muted`, et une piste de la même
+                        teinte que son fond n'est pas une piste. */}
+                    <div className="relative h-2 flex-1 rounded-full bg-border">
+                        <div
+                            className="h-full rounded-full bg-primary"
+                            style={{ width: `${PROGRESS}%` }}
+                        />
+                        {/* La tête du remplissage, marquée : une barre qui
+                            s'arrête net se lit comme inachevée, une barre avec
+                            une tête se lit comme en train de voyager. */}
                         <span
-                            className="flex h-11 w-fit items-center rounded-lg border border-black/[0.07] bg-surface-tile px-3"
-                            style={{ color: MARKETPLACE_COLORS.Temu }}
-                        >
-                            {MARKETPLACE_LOGOS.Temu}
-                        </span>
+                            className="absolute top-1/2 size-4 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-primary bg-background"
+                            style={{ left: `${PROGRESS}%` }}
+                        />
+                    </div>
 
-                        <p className="mt-3 truncate font-mono text-xs text-muted-foreground">
-                            women-jacket-p-8842
-                        </p>
+                    <span className="shrink-0 font-display text-sm font-black tabular-nums">
+                        {PROGRESS} %
+                    </span>
+                </div>
 
-                        <Confirmation step={1}>
-                            <Check className="size-3.5" />
-                            Produit détecté
-                        </Confirmation>
-                    </Card>
-                </li>
+                <p className="mt-5 text-sm text-muted-foreground">
+                    Expédié le 12 juillet · arrivée estimée sous 5 jours
+                </p>
+            </Stage>
+        ),
+    },
+];
 
-                <li>
-                    <Card step={2} label="Détails">
-                        <ul className="flex flex-wrap gap-1.5">
-                            {['Noir', 'XL', '×1'].map((value) => (
-                                <li
-                                    key={value}
-                                    className="rounded-full border bg-background px-3 py-1 text-xs font-semibold"
-                                >
-                                    {value}
-                                </li>
-                            ))}
-                        </ul>
+export function LinkToParcel({ className, ...props }: ComponentProps<'div'>) {
+    const [active, setActive] = useState(0);
 
-                        <Confirmation step={2} tone="muted">
-                            <MessageCircle className="size-3.5" />
-                            Détails enregistrés
-                        </Confirmation>
-                    </Card>
-                </li>
+    /**
+     * Deux façons d'arrêter la boucle, et elles ne sont pas la même.
+     *
+     * Le survol suspend : on regarde une étape de plus près, on n'a rien
+     * demandé, et l'avance reprend là où elle en était quand le curseur s'en
+     * va. Le clic, lui, arrête pour de bon — quelqu'un qui vient de choisir une
+     * étape ne veut pas qu'on la lui reprenne cinq secondes plus tard, et c'est
+     * exactement le reproche que l'on fait aux carrousels.
+     */
+    const [hovered, setHovered] = useState(false);
+    const [takenOver, setTakenOver] = useState(false);
 
-                <li>
-                    <Card step={3} label="Commande">
-                        <div className="flex items-start gap-3">
-                            {/* Eager and sized: it sits in the hero, so lazy
-                                loading would only guarantee it arrives late,
-                                and the explicit dimensions keep the card from
-                                jumping once it does. */}
-                            <img
-                                src={jacket}
-                                alt=""
-                                width={56}
-                                height={56}
-                                className="size-14 shrink-0 rounded-lg border object-cover"
-                            />
+    const tabs = useRef<(HTMLButtonElement | null)[]>([]);
 
-                            <div className="min-w-0 flex-1">
-                                <p className="truncate font-display text-sm font-extrabold">
-                                    Veste matelassée
-                                </p>
-                                <p className="mt-0.5 truncate text-xs text-muted-foreground">
-                                    Noir · XL · ×1
-                                </p>
-                            </div>
-                        </div>
+    /**
+     * ── Une seule horloge ───────────────────────────────────────────────────
+     *
+     * L'étape suivante est déclenchée par la fin de l'animation de la barre, et
+     * non par un `setTimeout` en parallèle. Deux horloges pour une même durée
+     * finissent toujours par diverger : il suffit de suspendre l'une — ce que
+     * fait le survol — pour que la barre affiche un reste de temps que le
+     * minuteur ne respecte pas. Ici, la barre *est* le minuteur.
+     *
+     * Trois conséquences, et les trois sont gratuites :
+     *
+     *   — le survol suspend réellement. `animation-play-state: paused` gèle la
+     *     barre là où elle en est, et l'événement de fin arrive d'autant plus
+     *     tard. Rien à mesurer, rien à mémoriser.
+     *   — sous `prefers-reduced-motion`, la feuille de style annule
+     *     `animate-dwell` : aucune animation, donc aucun événement de fin, donc
+     *     aucune avance automatique. Le réglage est respecté sans qu'une seule
+     *     ligne ici n'interroge `matchMedia` — et sans le risque d'hydratation
+     *     que poserait une requête de média lue au premier rendu.
+     *   — un onglet en arrière-plan, dont le navigateur ralentit les
+     *     animations, ne fait pas défiler le parcours dans le vide.
+     */
+    const advance = () => setActive((current) => (current + 1) % STAGES.length);
 
-                        <p className="mt-3 font-display text-xl font-black tracking-tight tabular-nums">
-                            24 500
-                            <span className="ml-1 align-middle text-xs font-bold text-muted-foreground">
-                                XAF
-                            </span>
-                        </p>
+    /** Prendre la main : on va où l'on demande, et la boucle s'arrête. */
+    const select = (index: number) => {
+        setTakenOver(true);
+        setActive(index);
+    };
 
-                        <Confirmation step={3}>
-                            <Check className="size-3.5" />
-                            Commande validée
-                        </Confirmation>
-                    </Card>
-                </li>
+    const onKeyDown = (event: React.KeyboardEvent) => {
+        const step =
+            event.key === 'ArrowRight' ? 1 : event.key === 'ArrowLeft' ? -1 : 0;
 
-                {/* The arrival, and the only card that is filled: three white
-                    cards leading to a gold one is what makes the eye finish the
-                    journey instead of stopping halfway. */}
-                <li>
-                    <Card step={4} label="Livraison" highlight>
-                        <p className="font-display text-base font-extrabold text-balance">
-                            📦 En route vers Douala
-                        </p>
+        if (step === 0) {
+            return;
+        }
 
-                        <p className="mt-1.5 text-xs text-accent-brand-foreground/70">
-                            Expédié le 12 juillet
-                        </p>
-                        <p className="truncate font-mono text-xs text-accent-brand-foreground/70">
-                            SHP-2608-4KJ9X2
-                        </p>
+        event.preventDefault();
 
-                        <div className="mt-auto pt-4">
-                            <div className="flex items-center gap-2.5">
-                                <Truck className="size-4 shrink-0 animate-shuttle" />
+        const next = (active + step + STAGES.length) % STAGES.length;
 
-                                <div className="relative h-1.5 flex-1 rounded-full bg-accent-brand-foreground/20">
-                                    <div
-                                        className="h-full animate-stage-fill rounded-full bg-accent-brand-foreground"
-                                        style={{
-                                            width: `${PROGRESS}%`,
-                                            ...stageStyle(4, 0.3),
-                                        }}
-                                    />
-                                    {/* The head of the fill, marked: a bar that
-                                        just stops reads as unfinished, a bar
-                                        with a head reads as travelling. */}
+        select(next);
+        tabs.current[next]?.focus();
+    };
+
+    const stage = STAGES[active];
+
+    return (
+        <div
+            {...props}
+            onMouseEnter={() => setHovered(true)}
+            onMouseLeave={() => setHovered(false)}
+            className={cn(
+                'rounded-4xl border bg-card p-5 shadow-xl shadow-foreground/[0.06] sm:p-8 lg:p-10',
+                className,
+            )}
+        >
+            <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-2">
+                <p className="font-display text-eyebrow font-extrabold text-primary uppercase">
+                    Du lien au colis
+                </p>
+
+                {/* Visible, et pas seulement annoncé : tout ce qui suit est un
+                    exemple, et un devis qui a l'air vrai sur une page de vente
+                    est la seule chose que ce site ne peut pas se permettre. */}
+                <p className="text-xs text-muted-foreground">
+                    Exemple de parcours
+                </p>
+            </div>
+
+            <ol
+                role="tablist"
+                aria-label="Les étapes d'une commande"
+                onKeyDown={onKeyDown}
+                className="mt-7 grid grid-cols-2 gap-x-4 gap-y-6 sm:grid-cols-4 sm:gap-x-6"
+            >
+                {STAGES.map((item, index) => {
+                    const done = index < active;
+                    const current = index === active;
+
+                    return (
+                        <li key={item.label}>
+                            <button
+                                type="button"
+                                role="tab"
+                                id={`stage-tab-${index}`}
+                                aria-selected={current}
+                                aria-controls={`stage-panel-${index}`}
+                                tabIndex={current ? 0 : -1}
+                                ref={(node) => {
+                                    tabs.current[index] = node;
+                                }}
+                                onClick={() => select(index)}
+                                className="w-full cursor-pointer text-left focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ring"
+                            >
+                                <span className="flex items-center gap-2.5">
                                     <span
-                                        className="absolute top-1/2 size-3 -translate-x-1/2 -translate-y-1/2 animate-stage rounded-full border-2 border-accent-brand bg-accent-brand-foreground"
-                                        style={{
-                                            left: `${PROGRESS}%`,
-                                            ...stageStyle(4, 1),
-                                        }}
-                                    />
-                                </div>
+                                        className={cn(
+                                            'flex size-6 shrink-0 items-center justify-center rounded-full text-[11px] font-black tabular-nums transition-colors',
+                                            done || current
+                                                ? 'bg-primary text-primary-foreground'
+                                                : 'bg-muted text-muted-foreground',
+                                        )}
+                                    >
+                                        {done ? (
+                                            <Check className="size-3.5" />
+                                        ) : (
+                                            index + 1
+                                        )}
+                                    </span>
 
-                                <span className="shrink-0 text-xs font-black tabular-nums">
-                                    {PROGRESS}%
+                                    <span
+                                        className={cn(
+                                            'truncate font-display text-eyebrow font-extrabold uppercase transition-colors',
+                                            current
+                                                ? 'text-foreground'
+                                                : 'text-muted-foreground',
+                                        )}
+                                    >
+                                        {item.label}
+                                    </span>
                                 </span>
-                            </div>
-                        </div>
-                    </Card>
-                </li>
+
+                                {/* La barre de l'étape. Celle en cours se
+                                    remplit en temps réel sur la durée
+                                    d'affichage, ce qui dit combien de temps il
+                                    reste sans qu'aucun chiffre soit écrit. */}
+                                <span className="mt-3 block h-1 overflow-hidden rounded-full bg-border">
+                                    <span
+                                        // Remontée par sa clé à chaque
+                                        // changement d'étape : React remplace
+                                        // l'élément au lieu de le mettre à
+                                        // jour, ce qui rejoue l'animation sans
+                                        // qu'aucun état ne la pilote.
+                                        key={active}
+                                        onAnimationEnd={advance}
+                                        style={
+                                            current && !takenOver
+                                                ? {
+                                                      animationDuration: `${DWELL}ms`,
+                                                  }
+                                                : undefined
+                                        }
+                                        className={cn(
+                                            'block h-full w-full origin-left rounded-full bg-primary',
+                                            current && !takenOver
+                                                ? cn(
+                                                      'animate-dwell',
+                                                      hovered &&
+                                                          '[animation-play-state:paused]',
+                                                  )
+                                                : done || current
+                                                  ? 'scale-x-100'
+                                                  : 'scale-x-0',
+                                        )}
+                                    />
+                                </span>
+                            </button>
+                        </li>
+                    );
+                })}
             </ol>
+
+            {/* La scène. Elle aussi remontée par sa clé, pour que chaque étape
+                entre au lieu de se substituer à la précédente sans transition. */}
+            <div
+                key={active}
+                role="tabpanel"
+                id={`stage-panel-${active}`}
+                aria-labelledby={`stage-tab-${active}`}
+                className="mt-9 grid animate-rise gap-8 lg:grid-cols-2 lg:items-center lg:gap-14"
+            >
+                <div>
+                    <p className="font-display text-subtitle font-extrabold">
+                        {stage.title}
+                    </p>
+
+                    <p className="mt-4 max-w-md text-body text-muted-foreground">
+                        {stage.caption}
+                    </p>
+
+                    <p className="mt-7 inline-flex items-center gap-2 rounded-full bg-success/10 px-4 py-2 text-sm font-semibold text-success">
+                        <Check className="size-4 shrink-0" />
+                        {stage.confirmation}
+                    </p>
+                </div>
+
+                {stage.visual}
+            </div>
         </div>
     );
 }

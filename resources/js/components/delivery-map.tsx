@@ -21,7 +21,6 @@ import { cn } from '@/lib/utils';
 const {
     view: VIEW,
     hub: HUB_POINT,
-    graticule: GRATICULE,
     anchors: ANCHORS,
     shapes: SHAPES,
 } = atlas as unknown as {
@@ -33,6 +32,26 @@ const {
 };
 
 const VIEW_BOX = VIEW.join(' ');
+
+/**
+ * Le méridien-parallèle a disparu du dessin, et c'est le premier des trois
+ * changements qui séparent cette carte de la précédente.
+ *
+ * Un quadrillage de méridiens dit « atlas scolaire » avant de dire quoi que ce
+ * soit d'autre. Il était là pour signifier « le globe » ; mais la projection le
+ * dit déjà — l'Équateur se voit à la forme de l'Afrique, pas à un trait posé
+ * dessus — et il coûtait une trame bleue de plus sous un réseau qui est
+ * lui-même bleu. La donnée reste dans l'atlas, personne ne la dessine.
+ *
+ * Les deux autres changements sont dans le `<defs>` en dessous : le sol prend
+ * un dégradé au lieu d'un aplat, et les pays desservis émettent de la lumière.
+ */
+
+/** Où se trouve le hub dans le cadre, en fractions — pour l'atmosphère. */
+const HUB_FRACTION = {
+    x: (HUB_POINT[0] - VIEW[0]) / VIEW[2],
+    y: (HUB_POINT[1] - VIEW[1]) / VIEW[3],
+};
 
 /**
  * The frame, dissolved rather than cut.
@@ -166,19 +185,88 @@ const Network = memo(function Network({
                 WebkitMaskComposite: 'source-in',
             }}
         >
-            {/* The graticule, under everything.
+            <defs>
+                {/*
+                 * L'atmosphère : une seule source de lumière, posée sur le hub.
+                 *
+                 * C'est ce qui fait qu'une carte plate n'est pas une carte
+                 * morte. Rien à y lire — c'est un fond, à une opacité où l'on
+                 * ne saurait pas dire s'il est là — mais il donne au dessin un
+                 * point d'où la lumière vient, et tout le réseau part de ce
+                 * point-là. Le hasard fait bien les choses : c'est aussi d'où
+                 * partent les colis.
+                 */}
+                <radialGradient
+                    id="shoprelle-map-atmosphere"
+                    className="text-primary"
+                    cx={HUB_FRACTION.x}
+                    cy={HUB_FRACTION.y}
+                    r={0.75}
+                >
+                    <stop
+                        offset="0%"
+                        stopColor="currentColor"
+                        stopOpacity={0.14}
+                    />
+                    <stop
+                        offset="100%"
+                        stopColor="currentColor"
+                        stopOpacity={0}
+                    />
+                </radialGradient>
 
-                Meridians and parallels every twenty and fifteen degrees, which
-                is sparse enough to stay a texture rather than become a mesh.
-                Drawn in the brand blue rather than in a neutral, and held down
-                near the floor of what is visible: it has to say "globe" without
-                ever being mistaken for a route, and the routes are the same
-                colour four times over. */}
-            <path
-                d={GRATICULE}
-                fill="none"
-                strokeWidth={0.4}
-                className="stroke-primary/20"
+                {/* Le sol, en dégradé du haut vers le bas plutôt qu'en aplat.
+                    Neuf points d'opacité d'écart, ce qui ne se voit pas et se
+                    ressent : l'aplat donnait au monde l'air d'un autocollant. */}
+                <linearGradient
+                    id="shoprelle-map-land"
+                    className="text-muted-foreground"
+                    x1="0"
+                    y1="0"
+                    x2="0"
+                    y2="1"
+                >
+                    <stop
+                        offset="0%"
+                        stopColor="currentColor"
+                        stopOpacity={0.19}
+                    />
+                    <stop
+                        offset="100%"
+                        stopColor="currentColor"
+                        stopOpacity={0.1}
+                    />
+                </linearGradient>
+
+                {/*
+                 * Le halo des pays desservis.
+                 *
+                 * C'est le seul filtre de la carte, et il est appliqué à une
+                 * poignée de formes qui ne bougent jamais : le navigateur le
+                 * calcule une fois et le garde en cache. La pulsation est posée
+                 * sur un groupe *au-dessus* du filtre, et joue sur l'opacité
+                 * seule — animer quoi que ce soit à l'intérieur du filtre le
+                 * ferait recalculer à chaque image, ce qui est la façon la plus
+                 * sûre de rendre une carte saccadée.
+                 */}
+                <filter
+                    id="shoprelle-map-glow"
+                    x="-25%"
+                    y="-25%"
+                    width="150%"
+                    height="150%"
+                    colorInterpolationFilters="sRGB"
+                >
+                    <feGaussianBlur stdDeviation={2.4} />
+                </filter>
+            </defs>
+
+            <rect
+                x={VIEW[0]}
+                y={VIEW[1]}
+                width={VIEW[2]}
+                height={VIEW[3]}
+                fill="url(#shoprelle-map-atmosphere)"
             />
 
             {/* Four tiers, each a single flat fill.
@@ -196,11 +284,12 @@ const Network = memo(function Network({
                 show through as darker seams. Stroking each tier in its own
                 colour closes those gaps; flattening the group before fading it
                 is what stops the repair from being visible. */}
-            <g className="text-muted-foreground" opacity={0.15}>
+            <g className="text-muted-foreground">
                 <path
                     d={LAND}
-                    fill="currentColor"
+                    fill="url(#shoprelle-map-land)"
                     stroke="currentColor"
+                    strokeOpacity={0.15}
                     strokeWidth={0.6}
                     strokeLinejoin="round"
                 />
@@ -244,6 +333,18 @@ const Network = memo(function Network({
                 />
             </g>
 
+            {/* Les pays desservis émettent de la lumière : le halo d'abord, la
+                forme nette par-dessus. C'est ce qui remplace le contour or de
+                la version précédente, et ce qui fait la différence entre une
+                carte où cinq pays sont coloriés et une carte où cinq pays sont
+                allumés. La pulsation est très lente et n'atteint jamais zéro —
+                un clignotement dirait « alerte », pas « en service ». */}
+            <g className="animate-glow">
+                <g filter="url(#shoprelle-map-glow)">
+                    <path d={lit.served} className="fill-primary" />
+                </g>
+            </g>
+
             <path d={lit.served} className="fill-primary" />
 
             {/* The destinations, outlined in the brand gold.
@@ -257,12 +358,15 @@ const Network = memo(function Network({
             <g fill="none" strokeLinejoin="round">
                 <path
                     d={lit.upcoming}
-                    strokeWidth={0.9}
-                    className="stroke-accent-brand/45"
+                    strokeWidth={0.8}
+                    className="stroke-accent-brand/40"
                 />
+                {/* Plus fin qu'avant : le halo bleu fait désormais le travail
+                    de détachement, et un contour épais par-dessus une forme qui
+                    rayonne se voit comme un cerne. */}
                 <path
                     d={lit.served}
-                    strokeWidth={1.5}
+                    strokeWidth={1.1}
                     className="stroke-accent-brand"
                 />
             </g>
@@ -274,20 +378,31 @@ const Network = memo(function Network({
             <g fill="none" strokeLinecap="round">
                 {destinations.map((destination, index) => (
                     <g key={destination.code}>
-                        {destination.served && (
-                            <path
-                                d={destination.route}
-                                pathLength={1}
-                                strokeWidth={4}
-                                strokeDasharray={1}
-                                strokeDashoffset={drawn ? undefined : 1}
-                                style={{ animationDelay: `${index * 140}ms` }}
-                                className={cn(
-                                    'stroke-primary/15',
-                                    drawn && 'animate-route',
-                                )}
-                            />
-                        )}
+                        {/* Deux sous-couches au lieu d'une, larges et très
+                            pâles. C'est toute la profondeur de ce dessin : une
+                            ombre floutée à cette échelle ne donne pas du relief
+                            à un trait d'un point et demi, elle le rend flou. */}
+                        {destination.served &&
+                            [
+                                { width: 8, tone: 'stroke-primary/8' },
+                                { width: 4, tone: 'stroke-primary/18' },
+                            ].map((layer) => (
+                                <path
+                                    key={layer.width}
+                                    d={destination.route}
+                                    pathLength={1}
+                                    strokeWidth={layer.width}
+                                    strokeDasharray={1}
+                                    strokeDashoffset={drawn ? undefined : 1}
+                                    style={{
+                                        animationDelay: `${index * 140}ms`,
+                                    }}
+                                    className={cn(
+                                        layer.tone,
+                                        drawn && 'animate-route',
+                                    )}
+                                />
+                            ))}
 
                         {/* `pathLength="1"` rescales the dash maths to a single
                             unit, so one keyframe draws a short hop and a long
@@ -323,17 +438,35 @@ const Network = memo(function Network({
             {drawn &&
                 destinations
                     .filter((destination) => destination.served)
-                    .map((destination, index) => (
-                        <circle
-                            key={destination.code}
-                            r={2.6}
-                            style={{
-                                offsetPath: `path('${destination.route}')`,
-                                animationDelay: `${1200 + index * 900}ms`,
-                            }}
-                            className="route-parcel fill-primary"
-                        />
-                    ))}
+                    .map((destination, index) => {
+                        const travel = {
+                            offsetPath: `path('${destination.route}')`,
+                            animationDelay: `${1200 + index * 900}ms`,
+                        };
+
+                        return (
+                            // Deux disques sur exactement le même parcours, le
+                            // même retard et la même durée : un large et flou
+                            // sous un petit et net. C'est ce qui fait un point
+                            // de lumière plutôt qu'une puce qui glisse — et
+                            // c'est fait de deux cercles, sans une image de
+                            // plus à charger ni un filtre à recalculer, la
+                            // teinte de la traîne étant simplement le bleu à
+                            // une opacité où il ne se lit plus.
+                            <g key={destination.code}>
+                                <circle
+                                    r={7}
+                                    style={travel}
+                                    className="route-parcel fill-primary/25"
+                                />
+                                <circle
+                                    r={2.4}
+                                    style={travel}
+                                    className="route-parcel fill-primary"
+                                />
+                            </g>
+                        );
+                    })}
         </svg>
     );
 });
@@ -520,6 +653,12 @@ export function DeliveryMap({
                     aria-hidden
                     className="absolute flex size-8 -translate-x-1/2 -translate-y-1/2 items-center justify-center"
                 >
+                    {/* Une lueur fixe sous les ondes, pour que le hub soit
+                        aussi la source de lumière que l'atmosphère du fond
+                        laisse entendre. Elle ne pulse pas : c'est le point qui
+                        ne bouge jamais de cette carte. */}
+                    <span className="absolute size-8 rounded-full bg-accent-brand/25 blur-md" />
+
                     {[0, 1.5].map((delay) => (
                         <span
                             key={delay}
@@ -536,7 +675,7 @@ export function DeliveryMap({
                     words. */}
                 <span
                     aria-hidden
-                    className="absolute top-1/2 left-0 ml-4 hidden -translate-y-1/2 rounded-full border bg-card px-2.5 py-1 font-display text-[11px] font-extrabold whitespace-nowrap shadow-sm sm:inline-block"
+                    className="absolute top-1/2 left-0 ml-4 hidden -translate-y-1/2 rounded-full border bg-card/85 px-3 py-1.5 font-display text-[11px] font-extrabold whitespace-nowrap shadow-md backdrop-blur-sm sm:inline-block"
                 >
                     Hub · France
                 </span>
@@ -568,7 +707,7 @@ export function DeliveryMap({
                     style={percent(highlighted.point)}
                     className="pointer-events-none absolute z-10 -translate-x-1/2 -translate-y-full pb-4"
                 >
-                    <div className="min-w-40 animate-enter rounded-xl border bg-popover px-4 py-3 text-center shadow-lg">
+                    <div className="min-w-44 animate-enter rounded-2xl border bg-popover/90 px-5 py-4 text-center shadow-xl backdrop-blur-md">
                         <p className="font-display text-sm font-extrabold whitespace-nowrap text-popover-foreground">
                             {highlighted.name}
                         </p>
