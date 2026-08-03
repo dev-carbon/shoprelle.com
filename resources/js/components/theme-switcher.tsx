@@ -10,13 +10,18 @@ import { cn } from '@/lib/utils';
  * the visitor who has never chosen — everyone starts on `système` — still gets
  * the opposite of what is on screen from the first click, instead of a click
  * that appears to do nothing. `système` itself stays available in Réglages.
+ *
+ * The icon shows where the click leads, not where one already is: a sun on a
+ * dark page, a moon on a light one. A control that pictures the state you can
+ * see is a control that says nothing — and it contradicted its own label, which
+ * has always announced the destination.
  */
 export function ThemeSwitcher({ className }: { className?: string }) {
     const { resolvedAppearance, updateAppearance } = useAppearance();
 
     const isDark = resolvedAppearance === 'dark';
     const next = isDark ? 'light' : 'dark';
-    const Icon = isDark ? Moon : Sun;
+    const Icon = isDark ? Sun : Moon;
 
     return (
         <button

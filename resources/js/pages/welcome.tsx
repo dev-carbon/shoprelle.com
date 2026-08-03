@@ -1020,7 +1020,14 @@ export default function Welcome({
                                             delay={index * 55}
                                             className="flex items-center gap-2 rounded-full border bg-card px-4 py-2 text-sm font-semibold shadow-sm"
                                         >
-                                            <span aria-hidden>
+                                            {/* Le drapeau porte plus que sa
+                                                taille de texte : c'est lui
+                                                qu'on reconnaît avant de lire le
+                                                nom du pays. */}
+                                            <span
+                                                aria-hidden
+                                                className="text-xl leading-none"
+                                            >
                                                 {flagFor(country.code)}
                                             </span>
                                             {country.name}
@@ -1049,7 +1056,10 @@ export default function Welcome({
                                                     delay={index * 55}
                                                     className="flex items-center gap-2 rounded-full border border-dashed px-4 py-2 text-sm font-medium text-muted-foreground"
                                                 >
-                                                    <span aria-hidden>
+                                                    <span
+                                                        aria-hidden
+                                                        className="text-xl leading-none"
+                                                    >
                                                         {flagFor(country.code)}
                                                     </span>
                                                     {country.name}
