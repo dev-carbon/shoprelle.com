@@ -323,8 +323,6 @@ export function LinkToParcel({ className, ...props }: ComponentProps<'div'>) {
         tabs.current[next]?.focus();
     };
 
-    const stage = STAGES[active];
-
     return (
         <div
             {...props}
@@ -468,31 +466,67 @@ export function LinkToParcel({ className, ...props }: ComponentProps<'div'>) {
                 ))}
             </div>
 
-            {/* La scène. Elle aussi remontée par sa clé, pour que chaque étape
-                entre au lieu de se substituer à la précédente sans transition. */}
-            <div
-                key={active}
-                role="tabpanel"
-                id={`stage-panel-${active}`}
-                aria-labelledby={`stage-tab-${active}`}
-                className="mt-9 grid animate-rise gap-8 lg:grid-cols-2 lg:items-center lg:gap-14"
-            >
-                <div>
-                    <p className="font-display text-subtitle font-extrabold">
-                        {stage.title}
-                    </p>
+            {/*
+             * ── Les quatre scènes, empilées ─────────────────────────────────
+             *
+             * Une seule était montée à la fois, et la page sautait à chaque
+             * changement : le devis fait trois lignes de plus que la détection
+             * du lien, la carte se contractait puis se rouvrait, et tout ce qui
+             * suit dans la page remontait de quelques dizaines de pixels avant
+             * de redescendre.
+             *
+             * Une hauteur fixe aurait marché, mais il aurait fallu la deviner —
+             * et la redeviner à chaque changement de texte, de palier
+             * d'affichage ou de taille de police choisie par le visiteur.
+             *
+             * Les quatre occupent donc la même cellule de grille, `col-start-1
+             * row-start-1`. La grille se dimensionne sur la plus haute, une fois
+             * pour toutes, et le bloc ne bouge plus jamais — quel que soit
+             * l'écran, et sans qu'aucun nombre ne soit écrit nulle part.
+             *
+             * D'où `invisible` plutôt que `hidden` : `visibility: hidden` retire
+             * l'élément du parcours au clavier et de ce que lit un lecteur
+             * d'écran, mais lui laisse sa place. `display: none` la lui
+             * reprendrait, et la grille se remettrait à mesurer la seule scène
+             * visible — c'est-à-dire exactement le problème de départ.
+             *
+             * L'entrée devient un fondu au lieu d'une arrivée par le bas. Ce
+             * n'est pas seulement plus doux : des éléments qui restent montés se
+             * transitionnent, là où une arrivée demandait de les remonter par
+             * leur clé à chaque étape.
+             */}
+            <div className="mt-9 grid">
+                {STAGES.map((item, index) => (
+                    <div
+                        key={item.label}
+                        role="tabpanel"
+                        id={`stage-panel-${index}`}
+                        aria-labelledby={`stage-tab-${index}`}
+                        className={cn(
+                            'col-start-1 row-start-1 grid gap-8 transition-[opacity,visibility] duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] motion-reduce:transition-none lg:grid-cols-2 lg:items-center lg:gap-14',
+                            index === active
+                                ? 'visible opacity-100'
+                                : 'invisible opacity-0',
+                        )}
+                    >
+                        <div>
+                            <p className="font-display text-subtitle font-extrabold">
+                                {item.title}
+                            </p>
 
-                    <p className="mt-4 max-w-md text-body text-muted-foreground">
-                        {stage.caption}
-                    </p>
+                            <p className="mt-4 max-w-md text-body text-muted-foreground">
+                                {item.caption}
+                            </p>
 
-                    <p className="mt-7 inline-flex items-center gap-2 rounded-full bg-success/10 px-4 py-2 text-sm font-semibold text-success">
-                        <Check className="size-4 shrink-0" />
-                        {stage.confirmation}
-                    </p>
-                </div>
+                            <p className="mt-7 inline-flex items-center gap-2 rounded-full bg-success/10 px-4 py-2 text-sm font-semibold text-success">
+                                <Check className="size-4 shrink-0" />
+                                {item.confirmation}
+                            </p>
+                        </div>
 
-                {stage.visual}
+                        {item.visual}
+                    </div>
+                ))}
             </div>
         </div>
     );
