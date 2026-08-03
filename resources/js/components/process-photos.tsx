@@ -75,12 +75,19 @@ export function ConversationShot({ className }: { className?: string }) {
         >
             {src ? (
                 <div className="rounded-[2.25rem] bg-card p-2 shadow-2xl shadow-black/25">
+                    {/* Aucune proportion imposée, et c'est délibéré : une
+                        capture d'écran est déjà exactement au format de
+                        l'appareil qui l'a prise. Lui en imposer une autre la
+                        ferait rogner de quelques pour cent sur les côtés — et
+                        quelques pour cent, sur une conversation, c'est le début
+                        des bulles. Le cadre prend donc la hauteur du fichier
+                        déposé, quel qu'il soit. */}
                     <img
                         src={src}
                         alt="Une conversation avec l'assistant Shoprelle, du lien envoyé jusqu'à la référence de la demande."
                         loading="lazy"
                         decoding="async"
-                        className="aspect-[9/19] w-full rounded-[1.75rem] object-cover object-top"
+                        className="block w-full rounded-[1.75rem]"
                     />
                 </div>
             ) : (
