@@ -12,12 +12,14 @@ final readonly class PurchaseRequestData
 {
     /**
      * @param  list<PurchaseItemData>  $items
+     * @param  string|null  $channelIdentifier  who to answer on that channel, when it can be answered
      */
     public function __construct(
         public CustomerData $customer,
         public array $items,
         public string $channel = 'web',
         public ?string $comment = null,
+        public ?string $channelIdentifier = null,
     ) {}
 
     /**

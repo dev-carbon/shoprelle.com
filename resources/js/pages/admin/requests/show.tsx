@@ -5,6 +5,7 @@ import {
     MessageSquarePlus,
     Paperclip,
     ReceiptText,
+    Send,
     Wallet,
 } from 'lucide-react';
 import { useState } from 'react';
@@ -620,6 +621,16 @@ function QuoteCard({
                                     ? 'Mettre à jour le devis'
                                     : 'Envoyer le devis'}
                             </Button>
+
+                            {/* Said plainly, because the button does not say
+                                it: only some channels can be written back to. */}
+                            <p className="flex items-start gap-1.5 text-xs text-muted-foreground">
+                                <Send className="mt-0.5 size-3.5 shrink-0" />
+                                {request.reaches_customer
+                                    ? `Le client recevra le devis sur ${request.channel_label}.`
+                                    : `Aucun envoi automatique depuis ${request.channel_label} : transmettez le devis au ${request.customer.phone}.`}
+                            </p>
+
                             <InputError message={errors.status} />
                         </>
                     )}

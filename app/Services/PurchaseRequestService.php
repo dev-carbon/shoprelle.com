@@ -51,6 +51,7 @@ class PurchaseRequestService
                 'country' => $data->country(),
                 'city' => $data->city(),
                 'channel' => $data->channel,
+                'channel_identifier' => $data->channelIdentifier,
                 'customer_comment' => $data->comment,
             ]);
 

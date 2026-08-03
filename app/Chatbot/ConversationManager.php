@@ -180,7 +180,9 @@ class ConversationManager
             throw new ConversationException('La demande n\'est pas encore complète.');
         }
 
-        $request = $this->requests->submit($state->toPurchaseRequestData());
+        $request = $this->requests->submit(
+            $state->toPurchaseRequestData(Channel::identifierOf($key)),
+        );
 
         $accessCode = $request->customer->plainAccessCode;
 

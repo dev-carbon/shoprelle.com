@@ -29,6 +29,9 @@ class PurchaseRequestDetailResource extends JsonResource
             'status_color' => $this->status->color(),
             'channel' => $this->channel,
             'channel_label' => Channel::tryFrom($this->channel)?->label() ?? $this->channel,
+            // Whether sending a quote actually reaches the customer, or only
+            // records it for an administrator to pass on by hand.
+            'reaches_customer' => $this->routeNotificationForTelegram() !== null,
             'customer_comment' => $this->customer_comment,
             'created_at' => $this->created_at?->toIso8601String(),
             'updated_at' => $this->updated_at?->toIso8601String(),

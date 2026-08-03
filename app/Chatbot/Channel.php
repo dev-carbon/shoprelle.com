@@ -35,6 +35,18 @@ enum Channel: string
         return self::tryFrom((string) $prefix) ?? self::Web;
     }
 
+    /**
+     * Who the conversation key designates on its channel — a Telegram chat id,
+     * say. Null for the web, whose single key names nobody: the visitor is only
+     * ever identified by the session the conversation is stored in.
+     */
+    public static function identifierOf(string $key): ?string
+    {
+        $identifier = explode(':', $key, 2)[1] ?? '';
+
+        return $identifier === '' || $identifier === 'default' ? null : $identifier;
+    }
+
     public function label(): string
     {
         return match ($this) {

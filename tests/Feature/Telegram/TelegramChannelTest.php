@@ -221,6 +221,8 @@ it('carries a whole request from the menu to a persisted purchase request', func
     $request = PurchaseRequest::query()->with(['customer', 'items'])->sole();
 
     expect($request->channel)->toBe(Channel::Telegram->value)
+        // Kept so the quote can be posted back into this very conversation.
+        ->and($request->channel_identifier)->toBe((string) CHAT_ID)
         ->and($request->status)->toBe(PurchaseRequestStatus::New)
         ->and($request->customer->full_name)->toBe('Awa Ndiaye')
         ->and($request->customer->phone)->toBe('+237612345678')

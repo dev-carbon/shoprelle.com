@@ -2,7 +2,9 @@
 
 namespace App\Models;
 
+use App\Chatbot\Channel;
 use App\Enums\PurchaseRequestStatus;
+use App\Notifications\Contracts\RoutesTelegram;
 use Database\Factories\PurchaseRequestFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Builder;
@@ -11,6 +13,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Notifications\RoutesNotifications;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Str;
 
@@ -24,6 +27,7 @@ use Illuminate\Support\Str;
  * @property string $country
  * @property string $city
  * @property string $channel
+ * @property string|null $channel_identifier
  * @property string|null $customer_comment
  * @property string|null $quote_items_amount
  * @property string|null $quote_shipping_amount
@@ -50,6 +54,7 @@ use Illuminate\Support\Str;
     'country',
     'city',
     'channel',
+    'channel_identifier',
     'customer_comment',
     'quote_items_amount',
     'quote_shipping_amount',
@@ -61,10 +66,15 @@ use Illuminate\Support\Str;
     'quote_notes',
     'quote_sent_at',
 ])]
-class PurchaseRequest extends Model
+class PurchaseRequest extends Model implements RoutesTelegram
 {
     /** @use HasFactory<PurchaseRequestFactory> */
     use HasFactory;
+
+    // The request, not the customer, is what gets notified on a messaging
+    // channel: the conversation that produced it is the only thread we know how
+    // to answer, and a customer may well have reached us through several.
+    use RoutesNotifications;
 
     /**
      * Requests are addressed by their customer-facing reference, never by id.
@@ -72,6 +82,16 @@ class PurchaseRequest extends Model
     public function getRouteKeyName(): string
     {
         return 'reference';
+    }
+
+    /**
+     * The Telegram chat this request was written in, when it was written in one.
+     */
+    public function routeNotificationForTelegram(): ?string
+    {
+        return $this->channel === Channel::Telegram->value
+            ? $this->channel_identifier
+            : null;
     }
 
     /**

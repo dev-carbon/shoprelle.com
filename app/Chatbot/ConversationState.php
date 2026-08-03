@@ -87,8 +87,11 @@ final class ConversationState
 
     /**
      * Build the persistable representation of the conversation.
+     *
+     * The identifier is passed in rather than held on the state: the
+     * conversation key already carries it, and one source is enough.
      */
-    public function toPurchaseRequestData(): PurchaseRequestData
+    public function toPurchaseRequestData(?string $channelIdentifier = null): PurchaseRequestData
     {
         return new PurchaseRequestData(
             customer: CustomerData::fromArray([
@@ -101,6 +104,7 @@ final class ConversationState
             ]),
             items: array_map(PurchaseItemData::fromArray(...), $this->items),
             channel: $this->channel->value,
+            channelIdentifier: $channelIdentifier,
         );
     }
 

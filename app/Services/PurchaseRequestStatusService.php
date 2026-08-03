@@ -8,6 +8,7 @@ use App\Exceptions\InvalidStatusTransition;
 use App\Models\PurchaseRequest;
 use App\Models\User;
 use App\Notifications\PurchaseRequestStatusChanged;
+use App\Notifications\QuoteSent;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -80,11 +81,18 @@ class PurchaseRequestStatusService
             }
         });
 
-        return $this->transition(
+        $request = $this->transition(
             $request,
             PurchaseRequestStatus::QuoteSent,
             $user,
             sprintf('Devis de %s %s envoyé.', $quote->totalAmount(), $quote->currency),
         );
+
+        // Last, and outside the transaction: a customer we cannot reach must not
+        // undo a quote that is already recorded and already visible in the back
+        // office. Requests from a channel we cannot answer notify nobody.
+        $this->notifications->notifyCustomer($request, new QuoteSent($request));
+
+        return $request;
     }
 }

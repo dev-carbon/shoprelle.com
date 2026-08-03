@@ -161,6 +161,8 @@ it('shows a request with its items, history and notes', function () {
             ->component('admin/requests/show')
             ->where('request.reference', $request->reference)
             ->has('request.items', 2)
+            // A web request has no thread to answer, and the form says so.
+            ->where('request.reaches_customer', false)
             // The form pre-fills each line with what it was last priced at.
             ->where('request.items.0.quoted_amount', '20000.00')
             ->where('request.items.1.quoted_amount', null)
