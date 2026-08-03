@@ -54,12 +54,12 @@ export default function Chat({ conversation }: Props) {
             <Head title="Votre concierge d'achat" />
 
             <header className="shrink-0 border-b bg-background">
-                <div className="mx-auto flex w-full max-w-3xl items-center justify-between gap-4 px-4 py-3">
+                <div className="mx-auto flex w-full max-w-3xl items-center justify-between gap-4 px-5 py-4 sm:px-6">
                     <Link
                         href={home()}
-                        className="flex items-center gap-2.5 font-semibold"
+                        className="flex items-center gap-2.5 font-display font-extrabold tracking-tight"
                     >
-                        <span className="flex size-8 items-center justify-center rounded-lg bg-accent-brand">
+                        <span className="flex size-9 items-center justify-center rounded-xl bg-accent-brand">
                             <AppLogoIcon className="size-4 text-accent-brand-foreground" />
                         </span>
                         Shoprelle
@@ -89,7 +89,7 @@ export default function Chat({ conversation }: Props) {
                 </div>
 
                 {progress && (
-                    <div className="mx-auto w-full max-w-3xl px-4 pb-3">
+                    <div className="mx-auto w-full max-w-3xl px-5 pb-4 sm:px-6">
                         <ChatProgress progress={progress} />
                     </div>
                 )}
@@ -97,10 +97,10 @@ export default function Chat({ conversation }: Props) {
 
             {/* `min-h-0` lets this flex child shrink below its content, which
                 is what allows the transcript inside it to scroll. */}
-            <main className="mx-auto flex min-h-0 w-full max-w-3xl flex-1 flex-col px-4">
+            <main className="mx-auto flex min-h-0 w-full max-w-3xl flex-1 flex-col px-5 sm:px-6">
                 <div
                     ref={transcript}
-                    className="flex-1 space-y-4 overflow-y-auto py-6"
+                    className="flex-1 space-y-5 overflow-y-auto py-8"
                     role="log"
                     aria-live="polite"
                     aria-label="Conversation avec Shopbot"
@@ -114,13 +114,13 @@ export default function Chat({ conversation }: Props) {
                     )}
 
                     {conversation.completed && conversation.reference && (
-                        <div className="animate-rise overflow-hidden rounded-xl border bg-card shadow-sm">
-                            <div className="p-5">
+                        <div className="animate-rise overflow-hidden rounded-3xl border bg-card shadow-md">
+                            <div className="p-6">
                                 <p className="flex items-center gap-2 text-sm font-medium text-success">
                                     <CheckCircle2 className="size-4" />
                                     Demande enregistrée
                                 </p>
-                                <p className="mt-1.5 text-sm text-muted-foreground">
+                                <p className="mt-2 text-sm text-muted-foreground">
                                     Notez cette référence : elle vous permet de
                                     suivre votre demande à tout moment.
                                 </p>
@@ -128,8 +128,8 @@ export default function Chat({ conversation }: Props) {
 
                             {/* The reference is what the visitor leaves with,
                                 so it gets the brand gold to itself. */}
-                            <div className="bg-accent-brand px-5 py-4 text-accent-brand-foreground">
-                                <p className="font-mono text-2xl font-semibold tracking-tight">
+                            <div className="bg-accent-brand px-6 py-5 text-accent-brand-foreground">
+                                <p className="font-mono text-2xl font-bold tracking-tight">
                                     {conversation.reference}
                                 </p>
                             </div>
@@ -139,7 +139,7 @@ export default function Chat({ conversation }: Props) {
             </main>
 
             <div className="shrink-0 border-t bg-background">
-                <div className="mx-auto w-full max-w-3xl space-y-3 px-4 py-4">
+                <div className="mx-auto w-full max-w-3xl space-y-4 px-5 py-5 sm:px-6">
                     {errorMessage && (
                         <Alert variant="destructive" className="animate-enter">
                             <AlertDescription>{errorMessage}</AlertDescription>

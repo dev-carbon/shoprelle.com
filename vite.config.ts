@@ -12,7 +12,12 @@ export default defineConfig({
             input: ['resources/css/app.css', 'resources/js/app.tsx'],
             refresh: true,
             fonts: [
-                bunny('Plus Jakarta Sans', {
+                // Le texte courant. Inter est dessinée pour être lue à l'écran
+                // en petit : hauteur d'x haute, ouvertures larges, formes
+                // neutres — exactement ce qu'une description de trois lignes
+                // demande, et ce que la géométrie un peu bavarde de la
+                // précédente rendait fatigant sur un paragraphe entier.
+                bunny('Inter', {
                     weights: [400, 500, 600, 700],
                 }),
                 // Headings only, and only in the weights that carry them: the

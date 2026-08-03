@@ -50,25 +50,25 @@ export function MarketplaceMarquee({
         <div className={cn('group relative', className)}>
             <div
                 aria-hidden
-                className="flex flex-col gap-3 overflow-hidden [mask-image:linear-gradient(to_right,transparent,black_8%,black_92%,transparent)]"
+                className="flex flex-col gap-4 overflow-hidden [mask-image:linear-gradient(to_right,transparent,black_8%,black_92%,transparent)]"
             >
                 {rows.map((row, rowIndex) => (
                     <div
                         key={rowIndex}
                         className={cn(
-                            'flex w-max gap-3 group-hover:[animation-play-state:paused]',
+                            'flex w-max gap-4 group-hover:[animation-play-state:paused]',
                             rowIndex % 2 === 0
                                 ? 'animate-marquee'
                                 : 'animate-marquee-reverse',
                         )}
                     >
                         {[0, 1].map((copy) => (
-                            <ul key={copy} className="flex shrink-0 gap-3">
+                            <ul key={copy} className="flex shrink-0 gap-4">
                                 {row.map((marketplace) => (
                                     <li
                                         key={`${copy}-${marketplace}`}
                                         style={{ color: colors[marketplace] }}
-                                        className="flex h-16 min-w-16 shrink-0 items-center justify-center rounded-xl border border-black/[0.07] bg-surface-tile px-4 text-neutral-900 shadow-sm transition-[transform,box-shadow] duration-200 hover:scale-105 hover:shadow-md"
+                                        className="flex h-20 min-w-20 shrink-0 items-center justify-center rounded-2xl border border-black/[0.07] bg-surface-tile px-6 text-neutral-900 shadow-sm transition-[transform,box-shadow] duration-300 hover:scale-105 hover:shadow-lg"
                                     >
                                         {logos[marketplace] ?? (
                                             <span className="text-center text-sm leading-tight font-semibold tracking-tight">

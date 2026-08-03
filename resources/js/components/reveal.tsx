@@ -11,12 +11,21 @@ import { cn } from '@/lib/utils';
  * instead of scrolling past. `fade` is for anything that should resolve rather
  * than arrive: a headline that slides has been made to perform, and a map that
  * slides looks like it was dropped.
+ *
+ * `blur` et `scale` sont les deux entrées ajoutées par la refonte, et elles ont
+ * chacune un seul emploi. `blur` est pour les grands titres : ils se mettent au
+ * point au lieu d'arriver, ce qui est la seule façon de donner de la présence à
+ * un mouvement sans le rendre bavard. `scale` est pour les images et les grands
+ * panneaux — une photo qui glisse a l'air posée de travers, une photo qui
+ * s'ouvre a l'air d'être à sa place.
  */
 const ENTRANCE = {
     bottom: 'animate-rise',
     left: 'animate-rise-left',
     right: 'animate-rise-right',
     fade: 'animate-fade',
+    blur: 'animate-rise-blur',
+    scale: 'animate-scale-in',
 } as const;
 
 export type Entrance = keyof typeof ENTRANCE;

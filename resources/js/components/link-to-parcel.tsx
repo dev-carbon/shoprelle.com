@@ -49,9 +49,9 @@ function Card({
         <div
             style={stageStyle(step)}
             className={cn(
-                'flex h-full animate-stage flex-col rounded-2xl border p-4 text-left transition-colors sm:p-5',
+                'flex h-full animate-stage flex-col rounded-3xl border p-5 text-left transition-colors sm:p-6',
                 highlight
-                    ? 'border-transparent bg-accent-brand text-accent-brand-foreground shadow-md'
+                    ? 'border-transparent bg-accent-brand text-accent-brand-foreground shadow-lg shadow-accent-brand/30'
                     : 'bg-card shadow-sm',
             )}
         >
@@ -66,12 +66,12 @@ function Card({
                 >
                     {step}
                 </span>
-                <span className="font-display text-sm font-extrabold">
+                <span className="font-display text-eyebrow font-extrabold uppercase">
                     {label}
                 </span>
             </p>
 
-            <div className="mt-4 flex flex-1 flex-col">{children}</div>
+            <div className="mt-5 flex flex-1 flex-col">{children}</div>
         </div>
     );
 }

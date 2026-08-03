@@ -74,8 +74,12 @@ export function ReviewCarousel({ reviews }: { reviews: Review[] }) {
     const review = reviews[index];
 
     return (
-        <div className="flex items-stretch gap-6 sm:gap-10">
-            <div className="min-w-0 flex-1">
+        // La carte est ce qui a changé : l'avis était posé à même la bande, et
+        // une parole posée sur un fond n'a pas de bord — donc pas de poids. Sur
+        // une surface à elle, avec beaucoup d'air autour du texte, elle se lit
+        // comme une citation encadrée plutôt que comme un paragraphe de plus.
+        <div className="flex items-stretch gap-5 sm:gap-8">
+            <div className="min-w-0 flex-1 rounded-3xl border bg-card p-8 shadow-sm sm:p-12">
                 {/* `aria-live` sur le conteneur et non sur le contenu : la zone
                     doit exister avant le changement pour qu'il soit annoncé. */}
                 <blockquote aria-live="polite" className="min-h-56 sm:min-h-52">
@@ -87,14 +91,14 @@ export function ReviewCarousel({ reviews }: { reviews: Review[] }) {
                     >
                         <Quote
                             aria-hidden
-                            className="size-8 text-accent-brand"
+                            className="size-9 fill-accent-brand text-accent-brand"
                         />
 
-                        <p className="mt-5 font-display text-subtitle font-extrabold text-balance sm:text-2xl">
+                        <p className="mt-6 font-display text-subtitle font-extrabold sm:text-3xl">
                             {review.comment}
                         </p>
 
-                        <footer className="mt-6 flex flex-wrap items-center gap-x-4 gap-y-2">
+                        <footer className="mt-8 flex flex-wrap items-center gap-x-4 gap-y-2 border-t pt-6">
                             <Rating rating={review.rating} />
 
                             <p className="text-sm font-semibold">

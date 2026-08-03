@@ -22,6 +22,7 @@ import type { ComponentType, ReactNode } from 'react';
 
 import AppLogoIcon from '@/components/app-logo-icon';
 import { BrandWordmark } from '@/components/brand-wordmark';
+import { HeroShowcase } from '@/components/hero-showcase';
 import { LinkToParcel } from '@/components/link-to-parcel';
 import {
     MARKETPLACE_COLORS,
@@ -44,7 +45,6 @@ import { Button } from '@/components/ui/button';
 import { WorldBackdrop } from '@/components/world-backdrop';
 import { useCountUp } from '@/hooks/use-count-up';
 import { useScrolled } from '@/hooks/use-scrolled';
-import delivered from '@/images/colis-livre.webp';
 import { flagFor } from '@/lib/destinations';
 import { cn } from '@/lib/utils';
 import { dashboard, login } from '@/routes';
@@ -61,6 +61,27 @@ const DeliveryMap = lazy(() =>
         default: module.DeliveryMap,
     })),
 );
+
+/**
+ * ── La gouttière, en un seul endroit ────────────────────────────────────────
+ *
+ * Toutes les sections lisent la même largeur et les mêmes marges latérales. Ce
+ * sont les marges qui ont le plus bougé dans cette refonte : 16 px sur un
+ * téléphone et 40 sur un grand écran, contre 16 partout auparavant. Une mise en
+ * page aérée se joue d'abord au bord de l'écran, où l'œil mesure sans y penser
+ * la place que le contenu s'accorde.
+ */
+const SHELL = 'mx-auto w-full max-w-7xl px-5 sm:px-8 lg:px-10';
+
+/**
+ * Le rythme vertical des sections, lui aussi unique.
+ *
+ * Nettement plus large qu'avant, et c'est délibéré : ce qui sépare deux idées
+ * sur une page, c'est le vide entre elles. Le pas est le même partout pour que
+ * le défilement ait une cadence — une section serrée suivie d'une section large
+ * se lit comme une erreur de gabarit.
+ */
+const BAND = 'py-28 lg:py-40';
 
 const MARKETPLACES = [
     'Shein',
@@ -259,7 +280,25 @@ type Props = {
  * lost control of.
  */
 const formatFigure = (value: number) =>
-    String(value).replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+    String(value).replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+
+/**
+ * Le sur-titre d'une section : un filet, puis deux mots en capitales.
+ *
+ * Il ne dit rien que le titre ne dise déjà — il annonce. C'est ce qui donne à
+ * un titre de section un point de départ visuel, et ce qui fait qu'une page
+ * très aérée reste lisible comme une suite de chapitres plutôt que comme une
+ * série de blocs flottants. Il prend la couleur primaire, qui est redéclarée
+ * par chaque bande colorée : blanc sur le bleu, marine sur l'or.
+ */
+function Eyebrow({ children }: { children: ReactNode }) {
+    return (
+        <p className="flex items-center gap-3 font-display text-eyebrow font-extrabold text-primary uppercase">
+            <span aria-hidden className="h-px w-7 bg-primary/40" />
+            {children}
+        </p>
+    );
+}
 
 /**
  * One figure in the network row, counting up to itself as it is reached.
@@ -295,10 +334,10 @@ function Stat({
                 )}
             </p>
 
-            <p className="mt-2 font-display text-sm font-extrabold">{label}</p>
+            <p className="mt-3 font-display text-sm font-extrabold">{label}</p>
 
             {hint && (
-                <p className="mt-1 text-sm text-muted-foreground">{hint}</p>
+                <p className="mt-1.5 text-sm text-muted-foreground">{hint}</p>
             )}
         </div>
     );
@@ -350,11 +389,11 @@ function ChannelCard({
 }) {
     const body = (
         <>
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-4">
                 <span
                     style={brand ? { backgroundColor: brand } : undefined}
                     className={cn(
-                        'flex size-11 shrink-0 items-center justify-center rounded-xl',
+                        'flex size-12 shrink-0 items-center justify-center rounded-2xl',
                         brand
                             ? 'text-white'
                             : 'bg-primary text-primary-foreground',
@@ -368,7 +407,7 @@ function ChannelCard({
                     </p>
                     <p
                         className={cn(
-                            'text-xs font-medium',
+                            'mt-0.5 text-xs font-semibold',
                             href ? 'text-success' : 'text-muted-foreground',
                         )}
                     >
@@ -377,10 +416,12 @@ function ChannelCard({
                 </div>
             </div>
 
-            <p className="mt-5 text-sm text-muted-foreground">{description}</p>
+            <p className="mt-6 text-body text-muted-foreground">
+                {description}
+            </p>
 
             {href && (
-                <p className="mt-auto inline-flex items-center gap-1.5 pt-6 text-sm font-semibold text-primary">
+                <p className="mt-auto inline-flex items-center gap-1.5 pt-8 text-sm font-semibold text-primary">
                     Ouvrir
                     <ArrowRight className="size-4 transition-transform group-hover:translate-x-0.5" />
                 </p>
@@ -391,7 +432,7 @@ function ChannelCard({
     // `h-full` and a column layout, so two cards with descriptions of
     // different lengths still line up and both actions sit on the same line.
     const shell =
-        'flex h-full flex-col rounded-2xl border bg-card p-6 shadow-sm transition-[transform,box-shadow,border-color] duration-200 sm:p-7';
+        'flex h-full flex-col rounded-3xl border bg-card p-7 shadow-sm sm:p-8';
 
     if (!href) {
         return <div className={cn(shell, 'opacity-70')}>{body}</div>;
@@ -403,10 +444,7 @@ function ChannelCard({
                 href={href}
                 target="_blank"
                 rel="noopener noreferrer"
-                className={cn(
-                    shell,
-                    'group block hover:-translate-y-1 hover:border-primary/40 hover:shadow-md',
-                )}
+                className={cn(shell, 'group block card-lift')}
             >
                 {body}
             </a>
@@ -414,13 +452,7 @@ function ChannelCard({
     }
 
     return (
-        <Link
-            href={href}
-            className={cn(
-                shell,
-                'group block hover:-translate-y-1 hover:border-primary/40 hover:shadow-md',
-            )}
-        >
+        <Link href={href} className={cn(shell, 'group block card-lift')}>
             {body}
         </Link>
     );
@@ -438,8 +470,10 @@ function FooterColumn({
 }) {
     return (
         <div>
-            <p className="font-display text-sm font-extrabold">{title}</p>
-            <ul className="mt-4 space-y-3 text-sm text-muted-foreground">
+            <p className="font-display text-eyebrow font-extrabold uppercase">
+                {title}
+            </p>
+            <ul className="mt-5 space-y-3.5 text-sm text-muted-foreground">
                 {children}
             </ul>
         </div>
@@ -524,17 +558,18 @@ export default function Welcome({
                 is only earned on scroll, so the hero starts unfenced. */}
             <header
                 className={cn(
-                    'sticky top-0 z-10 transition-[background-color,box-shadow,border-color] duration-300',
+                    'sticky top-0 z-30 transition-[background-color,box-shadow,border-color] duration-300',
                     scrolled
-                        ? 'border-b bg-background/85 shadow-sm backdrop-blur'
+                        ? 'border-b bg-background/80 shadow-sm backdrop-blur-xl'
                         : 'border-b border-transparent bg-background',
                 )}
             >
                 <ScrollProgress />
                 <div
                     className={cn(
-                        'mx-auto flex w-full max-w-7xl items-center justify-between gap-6 px-4 transition-[padding] duration-300',
-                        scrolled ? 'py-2.5' : 'py-4',
+                        SHELL,
+                        'flex items-center justify-between gap-6 transition-[padding] duration-300',
+                        scrolled ? 'py-3' : 'py-5',
                     )}
                 >
                     <a
@@ -543,8 +578,8 @@ export default function Welcome({
                     >
                         <span
                             className={cn(
-                                'flex items-center justify-center rounded-lg bg-accent-brand transition-[width,height] duration-300',
-                                scrolled ? 'size-7' : 'size-8',
+                                'flex items-center justify-center rounded-xl bg-accent-brand transition-[width,height] duration-300',
+                                scrolled ? 'size-8' : 'size-9',
                             )}
                         >
                             <AppLogoIcon className="size-4 text-accent-brand-foreground" />
@@ -552,15 +587,20 @@ export default function Welcome({
                         Shoprelle
                     </a>
 
+                    {/* Les liens ont maintenant une zone à eux : au survol, une
+                        pastille apparaît sous le mot au lieu de le teinter. Sur
+                        une barre aussi dépouillée, changer la couleur d'un mot
+                        est le retour le plus discret qu'on puisse donner — et
+                        au bout de cinq liens il ne se voit plus. */}
                     <nav
                         aria-label="Sections du site"
-                        className="hidden items-center gap-7 text-sm font-medium lg:flex"
+                        className="hidden items-center gap-1 lg:flex"
                     >
                         {NAVIGATION.map((item) => (
                             <a
                                 key={item.href}
                                 href={item.href}
-                                className="text-muted-foreground transition-colors hover:text-foreground"
+                                className="rounded-full px-3.5 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
                             >
                                 {item.label}
                             </a>
@@ -570,13 +610,6 @@ export default function Welcome({
                     {/* The staff entrance lives in the footer only: the header
                         belongs to the visitor, and a door marked for somebody
                         else is one more thing for them to read past. */}
-                    {/* Le bouton n'est plus discret et n'est plus réservé au
-                        grand écran. C'est la seule action que le header
-                        propose, et sur un téléphone c'était précisément là
-                        qu'il disparaissait. Il porte l'ombre portée du bleu de
-                        marque : sur une barre presque blanche, une teinte
-                        pleine sans relief se lit comme une étiquette, pas comme
-                        un bouton. */}
                     <div className="flex items-center gap-2">
                         <ThemeSwitcher />
 
@@ -588,7 +621,7 @@ export default function Welcome({
                             telegramUrl={telegramUrl}
                             whatsappUrl={whatsappUrl}
                             trigger={
-                                <Button className="shadow-md shadow-primary/25 transition-shadow hover:shadow-lg hover:shadow-primary/30">
+                                <Button className="h-10 rounded-full px-5 shadow-md shadow-primary/25 transition-shadow hover:shadow-lg hover:shadow-primary/30">
                                     <span className="hidden sm:inline">
                                         Nouvelle commande
                                     </span>
@@ -602,127 +635,166 @@ export default function Welcome({
             </header>
 
             <main className="flex-1">
-                {/* Hero — a soft radial wash gives the section depth without
-                    adding anything the eye has to decode, and the ghosted world
-                    behind it says "everywhere" before a word has been read.
-                    Both are masked away well above the headline: the hero's job
-                    is the sentence and the field under it, and texture behind
-                    either would only make them harder to read. */}
-                <section id="top" className="relative overflow-hidden border-b">
+                {/* ── Hero ────────────────────────────────────────────────────
+                    Deux colonnes, et c'est le changement de fond de cette
+                    refonte. La promesse et le champ qui la déclenche tiennent
+                    la colonne large ; la photo tient l'autre.
+
+                    Un hero centré demande au visiteur de croire une phrase.
+                    Celui-ci lui montre quelqu'un qui a déjà reçu son colis, à
+                    hauteur d'œil, avant même qu'il ait fait défiler quoi que ce
+                    soit — et il n'y a rien qu'un paragraphe puisse faire à la
+                    place de ça. */}
+                <section
+                    id="top"
+                    className="relative overflow-hidden border-b pt-16 pb-24 lg:pt-24 lg:pb-32"
+                >
                     <div
                         aria-hidden
-                        className="pointer-events-none absolute inset-0 bg-[radial-gradient(60%_60%_at_50%_0%,var(--color-primary)_0%,transparent_70%)] opacity-[0.07]"
+                        className="pointer-events-none absolute inset-0 animate-drift bg-[radial-gradient(55%_60%_at_50%_0%,var(--color-primary)_0%,transparent_70%)] opacity-[0.08]"
                     />
 
                     <WorldBackdrop
                         codes={countries.map((country) => country.code)}
                     />
 
-                    <div className="relative mx-auto w-full max-w-3xl px-4 pt-28 pb-20 text-center lg:pt-36 lg:pb-24">
-                        <h1
-                            className="mx-auto max-w-3xl animate-rise font-display text-hero font-black text-balance"
-                            style={{ animationDelay: '40ms' }}
-                        >
-                            Vos envies, enfin livrées chez vous.
-                        </h1>
+                    <div
+                        className={cn(
+                            SHELL,
+                            'relative grid items-center gap-14 lg:grid-cols-[minmax(0,6fr)_minmax(0,5fr)] lg:gap-20',
+                        )}
+                    >
+                        <div className="text-center lg:text-left">
+                            <div
+                                className="flex animate-rise justify-center lg:justify-start"
+                                style={{ animationDelay: '20ms' }}
+                            >
+                                <Eyebrow>
+                                    Concierge d'achat international
+                                </Eyebrow>
+                            </div>
 
-                        <p
-                            className="mx-auto mt-7 max-w-xl animate-rise text-lg text-balance text-muted-foreground"
-                            style={{ animationDelay: '150ms' }}
-                        >
-                            Un lien suffit pour commander sur vos plateformes
-                            préférées.
-                        </p>
+                            {/* Se met au point plutôt que d'arriver : à cette
+                                taille, un titre qui glisse fait un mouvement de
+                                quinze centimètres à l'écran. */}
+                            <h1
+                                className="mt-7 animate-rise-blur font-display text-hero font-black"
+                                style={{ animationDelay: '60ms' }}
+                            >
+                                Vos envies, enfin livrées chez vous.
+                            </h1>
 
-                        {/* Not a mock-up of a field: it is the field. Pasting a
-                            link here opens the assistant with the platform
-                            already read off the host and the product already
-                            attached, so the first thing asked is the colour. A
-                            hero that only *looks* like the product is a poster;
-                            this one is the first step of it. */}
-                        <Form
-                            {...link.form()}
-                            className="mx-auto mt-12 flex w-full max-w-2xl animate-rise flex-col gap-3 sm:flex-row"
-                            style={{ animationDelay: '210ms' }}
-                        >
-                            {({ processing, errors }) => (
-                                <>
-                                    <div className="flex-1 text-left">
-                                        <label
-                                            htmlFor="hero-url"
-                                            className="sr-only"
-                                        >
-                                            Lien du produit
-                                        </label>
-                                        {/* Plus haut et plus posé qu'un champ
-                                            de formulaire ordinaire : c'est
-                                            l'objet du hero, pas un réglage. */}
-                                        <div className="flex items-center gap-2.5 rounded-2xl border bg-card px-5 shadow-lg shadow-foreground/[0.06] transition-shadow focus-within:border-primary focus-within:ring-[3px] focus-within:ring-ring/40">
-                                            <LinkIcon className="size-5 shrink-0 text-muted-foreground" />
-                                            <input
-                                                id="hero-url"
-                                                name="url"
-                                                type="url"
-                                                inputMode="url"
-                                                maxLength={2048}
-                                                autoComplete="off"
-                                                placeholder="https://www.shein.com/…"
-                                                className="h-14 w-full min-w-0 bg-transparent text-base outline-none placeholder:text-muted-foreground"
-                                            />
+                            <p
+                                className="mx-auto mt-7 max-w-lg animate-rise text-lead text-muted-foreground lg:mx-0"
+                                style={{ animationDelay: '160ms' }}
+                            >
+                                Un lien suffit pour commander sur vos
+                                plateformes préférées. Nous achetons depuis la
+                                France et livrons jusqu'à votre ville.
+                            </p>
+
+                            {/* Not a mock-up of a field: it is the field.
+                                Pasting a link here opens the assistant with the
+                                platform already read off the host and the
+                                product already attached, so the first thing
+                                asked is the colour. A hero that only *looks*
+                                like the product is a poster; this one is the
+                                first step of it. */}
+                            <Form
+                                {...link.form()}
+                                className="mt-10 flex w-full animate-rise flex-col gap-3 sm:flex-row"
+                                style={{ animationDelay: '220ms' }}
+                            >
+                                {({ processing, errors }) => (
+                                    <>
+                                        <div className="flex-1 text-left">
+                                            <label
+                                                htmlFor="hero-url"
+                                                className="sr-only"
+                                            >
+                                                Lien du produit
+                                            </label>
+                                            {/* Plus haut et plus posé qu'un
+                                                champ de formulaire ordinaire :
+                                                c'est l'objet du hero, pas un
+                                                réglage. */}
+                                            <div className="flex items-center gap-3 rounded-2xl border bg-card px-5 shadow-lg shadow-foreground/[0.06] transition-shadow focus-within:border-primary focus-within:ring-[3px] focus-within:ring-ring/40">
+                                                <LinkIcon className="size-5 shrink-0 text-muted-foreground" />
+                                                <input
+                                                    id="hero-url"
+                                                    name="url"
+                                                    type="url"
+                                                    inputMode="url"
+                                                    maxLength={2048}
+                                                    autoComplete="off"
+                                                    placeholder="https://www.shein.com/…"
+                                                    className="h-16 w-full min-w-0 bg-transparent text-base outline-none placeholder:text-muted-foreground"
+                                                />
+                                            </div>
+
+                                            {errors.url && (
+                                                <p className="mt-2 text-sm text-destructive">
+                                                    {errors.url}
+                                                </p>
+                                            )}
                                         </div>
 
-                                        {errors.url && (
-                                            <p className="mt-2 text-sm text-destructive">
-                                                {errors.url}
-                                            </p>
-                                        )}
-                                    </div>
+                                        <Button
+                                            type="submit"
+                                            size="lg"
+                                            disabled={processing}
+                                            className="h-16 shrink-0 rounded-2xl px-8 text-base shadow-lg shadow-primary/25 transition-shadow hover:shadow-xl hover:shadow-primary/30"
+                                        >
+                                            Commander
+                                            <ArrowRight className="size-4" />
+                                        </Button>
+                                    </>
+                                )}
+                            </Form>
 
-                                    <Button
-                                        type="submit"
-                                        size="lg"
-                                        disabled={processing}
-                                        className="h-14 shrink-0 rounded-2xl px-8 text-base shadow-lg shadow-primary/25 transition-shadow hover:shadow-xl hover:shadow-primary/30"
+                            {/* Une ligne grise disait les trois choses d'un coup
+                                et ne s'en faisait lire aucune. Séparées,
+                                cochées, elles se parcourent — et chacune reprend
+                                un engagement que la page tient plus bas, aucune
+                                n'en ajoute. */}
+                            <ul
+                                className="mt-8 flex animate-rise flex-wrap items-center justify-center gap-x-7 gap-y-3 text-sm font-medium lg:justify-start"
+                                style={{ animationDelay: '280ms' }}
+                            >
+                                {[
+                                    'Gratuit, sans inscription',
+                                    'Devis avant paiement',
+                                    `Réponse ${contact.responseTime}`,
+                                ].map((promise) => (
+                                    <li
+                                        key={promise}
+                                        className="flex items-center gap-2"
                                     >
-                                        Commander
-                                        <ArrowRight className="size-4" />
-                                    </Button>
-                                </>
-                            )}
-                        </Form>
+                                        <Check className="size-4 shrink-0 text-success" />
+                                        {promise}
+                                    </li>
+                                ))}
+                            </ul>
+                        </div>
 
-                        {/* Une ligne grise disait les trois choses d'un coup et
-                            ne s'en faisait lire aucune. Séparées, cochées, elles
-                            se parcourent — et chacune reprend un engagement que
-                            la page tient plus bas, aucune n'en ajoute. */}
-                        <ul
-                            className="mx-auto mt-8 flex animate-rise flex-wrap items-center justify-center gap-x-7 gap-y-3 text-sm font-medium"
-                            style={{ animationDelay: '260ms' }}
-                        >
-                            {[
-                                'Gratuit, sans inscription',
-                                'Devis avant paiement',
-                                `Réponse ${contact.responseTime}`,
-                            ].map((promise) => (
-                                <li
-                                    key={promise}
-                                    className="flex items-center gap-2"
-                                >
-                                    <Check className="size-4 shrink-0 text-success" />
-                                    {promise}
-                                </li>
-                            ))}
-                        </ul>
+                        <HeroShowcase
+                            countries={stats.countries}
+                            destinationCodes={countries
+                                .slice(0, 3)
+                                .map((country) => country.code)}
+                            className="animate-scale-in"
+                            style={{ animationDelay: '180ms' }}
+                        />
                     </div>
 
                     {/* Wider than the copy above it: four cards in a row need
                         the room, and the timeline is the part of the hero doing
                         the explaining. */}
-                    <div className="relative mx-auto w-full max-w-7xl px-4 pt-4">
-                        <LinkToParcel
-                            className="animate-rise"
-                            style={{ animationDelay: '300ms' }}
-                        />
+                    <div
+                        className={cn(SHELL, 'relative mt-20 animate-rise')}
+                        style={{ animationDelay: '340ms' }}
+                    >
+                        <LinkToParcel />
                     </div>
 
                     {/* The platforms close the hero, with nothing said about
@@ -733,8 +805,8 @@ export default function Welcome({
                         answer "does this work with what I already use?" while
                         the promise above is still on screen. */}
                     <div
-                        className="relative mx-auto w-full max-w-7xl animate-rise px-4 pt-16 pb-20 lg:pb-24"
-                        style={{ animationDelay: '380ms' }}
+                        className={cn(SHELL, 'relative mt-20 animate-rise')}
+                        style={{ animationDelay: '420ms' }}
                     >
                         <MarketplaceMarquee
                             marketplaces={MARKETPLACES}
@@ -757,7 +829,7 @@ export default function Welcome({
                     reader that cannot see a shape. */}
                 <section
                     id="livraison"
-                    className="relative overflow-hidden border-b py-24 lg:py-32"
+                    className={cn('relative overflow-hidden border-b', BAND)}
                 >
                     {/* The same radial wash as the hero, at half its strength.
                         It is the whole of the depth here: the section's subject
@@ -768,45 +840,29 @@ export default function Welcome({
                         className="pointer-events-none absolute inset-0 bg-[radial-gradient(70%_55%_at_50%_0%,var(--color-primary)_0%,transparent_70%)] opacity-[0.06]"
                     />
 
-                    {/* La promesse et son aboutissement, côte à côte.
+                    {/* Le titre est centré et seul sur sa ligne. La photo qui
+                        l'accompagnait est remontée dans le hero, et c'est la
+                        carte qui illustre désormais cette section — ce qu'elle
+                        faisait déjà bien mieux qu'une image posée à côté. */}
+                    <Reveal
+                        from="blur"
+                        className={cn(
+                            SHELL,
+                            'relative flex max-w-3xl flex-col items-center text-center',
+                        )}
+                    >
+                        <Eyebrow>Le réseau</Eyebrow>
 
-                        Tout ce qui suit dans cette section est un schéma : des
-                        arcs, des chiffres, des pastilles. Une seule image de ce
-                        que tout cela produit — un colis dans les mains de
-                        quelqu'un, devant chez lui — dit ce qu'un réseau tracé ne
-                        dira jamais, et elle ouvre la section plutôt que de la
-                        clore.
+                        <h2 className="mt-7 font-display text-title font-black">
+                            Vos envies voyagent jusqu'à vous.
+                        </h2>
 
-                        Chargée en `lazy`, dimensions déclarées : elle est bien
-                        au-delà du premier écran, et la place lui est réservée
-                        d'avance pour que rien ne saute à son arrivée. */}
-                    <div className="relative mx-auto grid w-full max-w-7xl items-center gap-10 px-4 lg:grid-cols-[minmax(0,6fr)_minmax(0,5fr)] lg:gap-16">
-                        <Reveal
-                            from="left"
-                            className="text-center lg:text-left"
-                        >
-                            <h2 className="font-display text-title font-black text-balance">
-                                Vos envies voyagent jusqu'à vous.
-                            </h2>
-                            <p className="mt-5 max-w-xl text-lg text-muted-foreground">
-                                Shoprelle vous ouvre l'accès aux plus grandes
-                                plateformes d'achat et organise l'acheminement
-                                de vos commandes jusqu'à votre destination.
-                            </p>
-                        </Reveal>
-
-                        <Reveal from="right">
-                            <img
-                                src={delivered}
-                                alt="Une cliente reçoit son colis Shoprelle devant chez elle."
-                                width={1200}
-                                height={655}
-                                loading="lazy"
-                                decoding="async"
-                                className="aspect-[5/4] w-full rounded-2xl border object-cover shadow-lg shadow-foreground/[0.07]"
-                            />
-                        </Reveal>
-                    </div>
+                        <p className="mt-6 text-lead text-muted-foreground">
+                            Shoprelle vous ouvre l'accès aux plus grandes
+                            plateformes d'achat et organise l'acheminement de
+                            vos commandes jusqu'à votre destination.
+                        </p>
+                    </Reveal>
 
                     {/* Full bleed, and the only thing on the page that is: the
                         map is the answer this section exists to give, and a
@@ -817,7 +873,7 @@ export default function Welcome({
                     <Reveal
                         from="fade"
                         delay={100}
-                        className="relative mx-auto mt-14 w-full max-w-[1800px] lg:mt-16"
+                        className="relative mx-auto mt-16 w-full max-w-[1800px] lg:mt-20"
                     >
                         <Suspense
                             fallback={
@@ -831,8 +887,8 @@ export default function Welcome({
                         </Suspense>
                     </Reveal>
 
-                    <div className="relative mx-auto w-full max-w-7xl px-4">
-                        <ul className="mt-8 flex flex-wrap items-center justify-center gap-x-7 gap-y-2 text-xs font-semibold">
+                    <div className={cn(SHELL, 'relative')}>
+                        <ul className="mt-10 flex flex-wrap items-center justify-center gap-x-8 gap-y-2 text-xs font-semibold">
                             <Legend swatch="bg-accent-brand">
                                 Hub · France
                             </Legend>
@@ -848,7 +904,7 @@ export default function Welcome({
                             claim the map makes, stated as numbers, and sitting
                             them under the drawing would make them read as its
                             caption. */}
-                        <div className="mx-auto mt-16 grid max-w-4xl gap-10 border-t pt-12 sm:grid-cols-3 sm:gap-6">
+                        <div className="mx-auto mt-20 grid max-w-4xl gap-12 border-t pt-16 sm:grid-cols-3 sm:gap-8">
                             {figures.map((figure, index) => (
                                 <Reveal
                                     key={figure.label}
@@ -866,20 +922,20 @@ export default function Welcome({
                             named as well as drawn: the markers carry their name,
                             but a list is what a visitor scans and what a search
                             engine reads. */}
-                        <div className="mx-auto mt-16 flex w-full max-w-3xl flex-col items-center gap-6 text-center">
+                        <div className="mx-auto mt-20 flex w-full max-w-3xl flex-col items-center gap-8 text-center">
                             <div>
                                 <p className="flex items-center justify-center gap-2 text-sm font-semibold">
                                     <span className="size-2 rounded-full bg-primary" />
                                     Nous livrons aujourd'hui
                                 </p>
-                                <ul className="mt-3 flex flex-wrap justify-center gap-2">
+                                <ul className="mt-4 flex flex-wrap justify-center gap-2.5">
                                     {countries.map((country, index) => (
                                         <Reveal
                                             as="li"
                                             from="fade"
                                             key={country.code}
                                             delay={index * 55}
-                                            className="flex items-center gap-2 rounded-full border bg-card px-4 py-1.5 text-sm font-semibold shadow-sm"
+                                            className="flex items-center gap-2 rounded-full border bg-card px-4 py-2 text-sm font-semibold shadow-sm"
                                         >
                                             <span aria-hidden>
                                                 {flagFor(country.code)}
@@ -891,7 +947,7 @@ export default function Welcome({
                             </div>
 
                             {upcomingCountries.length > 0 && (
-                                <div className="border-t pt-6">
+                                <div className="border-t pt-8">
                                     <p className="text-sm text-muted-foreground">
                                         Bientôt
                                     </p>
@@ -900,7 +956,7 @@ export default function Welcome({
                                         are announced, not open, and the
                                         assistant turns them down until the
                                         config says otherwise. */}
-                                    <ul className="mt-3 flex flex-wrap justify-center gap-2">
+                                    <ul className="mt-4 flex flex-wrap justify-center gap-2.5">
                                         {upcomingCountries.map(
                                             (country, index) => (
                                                 <Reveal
@@ -908,7 +964,7 @@ export default function Welcome({
                                                     from="fade"
                                                     key={country.code}
                                                     delay={index * 55}
-                                                    className="flex items-center gap-2 rounded-full border border-dashed px-4 py-1.5 text-sm font-medium text-muted-foreground"
+                                                    className="flex items-center gap-2 rounded-full border border-dashed px-4 py-2 text-sm font-medium text-muted-foreground"
                                                 >
                                                     <span aria-hidden>
                                                         {flagFor(country.code)}
@@ -929,16 +985,18 @@ export default function Welcome({
                             description into four ragged lines, and a promise
                             that has to be deciphered is not reassuring. Given a
                             full line each they read at a glance. */}
-                        <div className="mt-16 grid gap-10 border-t pt-14 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] lg:gap-14">
+                        <div className="mt-20 grid gap-12 border-t pt-20 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] lg:gap-20">
                             <Reveal
                                 from="left"
-                                className="lg:sticky lg:top-28 lg:self-start"
+                                className="lg:sticky lg:top-32 lg:self-start"
                             >
-                                <h3 className="font-display text-subtitle font-extrabold text-balance">
+                                <Eyebrow>Toujours pareil</Eyebrow>
+
+                                <h3 className="mt-6 font-display text-subtitle font-extrabold">
                                     Le même parcours, quelle que soit la
                                     destination.
                                 </h3>
-                                <p className="mt-3 max-w-sm text-muted-foreground">
+                                <p className="mt-4 max-w-sm text-body text-muted-foreground">
                                     Chaque commande suit les mêmes étapes, du
                                     panier français jusqu'à votre ville.
                                 </p>
@@ -951,17 +1009,17 @@ export default function Welcome({
                                         from="right"
                                         key={assurance.title}
                                         delay={index * 80}
-                                        className="flex gap-5 border-b py-5 first:pt-0 last:border-b-0 last:pb-0"
+                                        className="flex gap-6 border-b py-7 first:pt-0 last:border-b-0 last:pb-0"
                                     >
-                                        <span className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-accent-brand text-accent-brand-foreground">
+                                        <span className="flex size-12 shrink-0 items-center justify-center rounded-2xl bg-accent-brand text-accent-brand-foreground">
                                             <assurance.icon className="size-5" />
                                         </span>
 
                                         <div className="pt-1">
-                                            <p className="font-display font-extrabold">
+                                            <p className="font-display text-lg font-extrabold">
                                                 {assurance.title}
                                             </p>
-                                            <p className="mt-1 text-muted-foreground">
+                                            <p className="mt-2 text-body text-muted-foreground">
                                                 {assurance.description}
                                             </p>
                                         </div>
@@ -974,18 +1032,25 @@ export default function Welcome({
 
                 <section
                     id="comment-ca-marche"
-                    className="border-b section-brand py-24 lg:py-32"
+                    className={cn('border-b section-brand', BAND)}
                 >
                     {/* Same two-column split as the marketplace section: the
                         heading holds the narrow side and the content takes the
                         width, which is what keeps a wide page from stretching
                         its paragraphs past reading length. */}
-                    <div className="mx-auto grid w-full max-w-7xl gap-10 px-4 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] lg:gap-14">
-                        <div className="lg:sticky lg:top-28 lg:self-start">
-                            <h2 className="font-display text-title font-black text-balance">
+                    <div
+                        className={cn(
+                            SHELL,
+                            'grid gap-14 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] lg:gap-20',
+                        )}
+                    >
+                        <div className="lg:sticky lg:top-32 lg:self-start">
+                            <Eyebrow>Comment ça marche</Eyebrow>
+
+                            <h2 className="mt-7 font-display text-title font-black">
                                 Trois étapes, et c'est tout
                             </h2>
-                            <p className="mt-4 max-w-sm text-lg text-muted-foreground">
+                            <p className="mt-6 max-w-sm text-lead text-muted-foreground">
                                 Pas de formulaire interminable, pas de compte :
                                 une conversation.
                             </p>
@@ -1001,10 +1066,10 @@ export default function Welcome({
                                     from="right"
                                     key={step.title}
                                     delay={index * 110}
-                                    className="group grid grid-cols-[auto_1fr] gap-x-5 sm:gap-x-8"
+                                    className="group grid grid-cols-[auto_1fr] gap-x-6 sm:gap-x-9"
                                 >
                                     <div className="flex flex-col items-center">
-                                        <span className="flex size-11 items-center justify-center rounded-full bg-primary text-primary-foreground">
+                                        <span className="flex size-12 items-center justify-center rounded-full bg-primary text-primary-foreground">
                                             <step.icon className="size-5" />
                                         </span>
 
@@ -1015,15 +1080,15 @@ export default function Welcome({
                                         />
                                     </div>
 
-                                    <div className="pt-1.5 pb-12 group-last:pb-0">
-                                        <span className="inline-flex items-center rounded-md bg-accent-brand px-2.5 py-1 text-xs font-bold tracking-wide text-accent-brand-foreground tabular-nums">
+                                    <div className="pt-1.5 pb-14 group-last:pb-0">
+                                        <span className="inline-flex items-center rounded-lg bg-accent-brand px-2.5 py-1 text-xs font-bold tracking-wide text-accent-brand-foreground tabular-nums">
                                             Étape 0{index + 1}
                                         </span>
 
-                                        <h3 className="mt-4 font-display text-subtitle font-extrabold text-balance">
+                                        <h3 className="mt-5 font-display text-subtitle font-extrabold">
                                             {step.title}
                                         </h3>
-                                        <p className="mt-2 max-w-xl text-muted-foreground">
+                                        <p className="mt-3 max-w-xl text-body text-muted-foreground">
                                             {step.description}
                                         </p>
                                     </div>
@@ -1036,22 +1101,32 @@ export default function Welcome({
                 {/* The assistant is the product, so it gets a section of its own
                     rather than a line in the steps: the visitor's real question
                     is where the conversation happens, and the answer is
-                    "wherever you already are". */}
-                <section id="assistant" className="border-b py-24 lg:py-32">
-                    <div className="mx-auto grid w-full max-w-7xl items-center gap-10 px-4 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] lg:gap-14">
-                        <div>
-                            <h2 className="font-display text-title font-black text-balance">
+                    "wherever you already are".
+
+                    Titre centré et trois cartes de front, au lieu d'un titre à
+                    gauche et de trois cartes tassées dans les sept douzièmes
+                    restants. Les canaux sont des égaux : les mettre en colonne
+                    à côté d'un titre en désignait un premier. */}
+                <section id="assistant" className={cn('border-b', BAND)}>
+                    <div className={cn(SHELL, 'flex flex-col items-center')}>
+                        <Reveal
+                            from="blur"
+                            className="flex max-w-2xl flex-col items-center text-center"
+                        >
+                            <Eyebrow>L'assistant</Eyebrow>
+
+                            <h2 className="mt-7 font-display text-title font-black">
                                 Commandez simplement en discutant
                             </h2>
-                            <p className="mt-4 max-w-sm text-lg text-muted-foreground">
+                            <p className="mt-6 text-lead text-muted-foreground">
                                 Plus besoin de remplir des formulaires
                                 compliqués. Envoyez un lien à notre assistant et
                                 laissez-vous guider étape par étape.
                             </p>
-                        </div>
+                        </Reveal>
 
-                        <div className="grid gap-4 sm:grid-cols-2">
-                            <Reveal from="right" className="h-full">
+                        <div className="mt-16 grid w-full gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                            <Reveal className="h-full">
                                 <ChannelCard
                                     icon={MessagesSquare}
                                     name="Chat web"
@@ -1061,7 +1136,7 @@ export default function Welcome({
                                 />
                             </Reveal>
 
-                            <Reveal from="right" delay={140} className="h-full">
+                            <Reveal delay={120} className="h-full">
                                 <ChannelCard
                                     icon={Send}
                                     name="Telegram"
@@ -1082,7 +1157,7 @@ export default function Welcome({
                                 la même promesse que le reste de la page — « une
                                 personne lit chaque demande » — mais elle se
                                 tient dans un fil que le client garde. */}
-                            <Reveal from="right" delay={280} className="h-full">
+                            <Reveal delay={240} className="h-full">
                                 <ChannelCard
                                     icon={WhatsAppIcon}
                                     brand={WHATSAPP_GREEN}
@@ -1107,17 +1182,24 @@ export default function Welcome({
                     who wants to know why it had to exist. */}
                 <section
                     id="a-propos"
-                    className="border-b bg-surface-alt py-24 lg:py-32"
+                    className={cn('border-b bg-surface-alt', BAND)}
                 >
-                    <div className="mx-auto grid w-full max-w-7xl gap-12 px-4 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] lg:gap-16">
+                    <div
+                        className={cn(
+                            SHELL,
+                            'grid gap-14 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] lg:gap-20',
+                        )}
+                    >
                         <Reveal
                             from="left"
-                            className="lg:sticky lg:top-28 lg:self-start"
+                            className="lg:sticky lg:top-32 lg:self-start"
                         >
-                            <h2 className="font-display text-title font-black text-balance">
+                            <Eyebrow>À propos</Eyebrow>
+
+                            <h2 className="mt-7 font-display text-title font-black">
                                 Pourquoi Shoprelle existe ?
                             </h2>
-                            <p className="mt-6 text-lg text-muted-foreground">
+                            <p className="mt-7 text-lead text-muted-foreground">
                                 De nombreux produits sont difficiles à obtenir
                                 dans certaines régions du monde. Shoprelle
                                 simplifie l'accès aux grandes plateformes
@@ -1131,21 +1213,21 @@ export default function Welcome({
                             and what is missing from the page is what goes wrong
                             without it. Every line on the right is something
                             claimed elsewhere on this page, not a new promise. */}
-                        <div className="grid gap-4 sm:grid-cols-2">
+                        <div className="grid gap-6 sm:grid-cols-2">
                             <Reveal
                                 from="right"
-                                className="rounded-2xl border border-dashed p-6 sm:p-7"
+                                className="rounded-3xl border border-dashed p-7 sm:p-8"
                             >
-                                <p className="font-display text-sm font-extrabold text-muted-foreground">
+                                <p className="font-display text-eyebrow font-extrabold text-muted-foreground uppercase">
                                     Sans Shoprelle
                                 </p>
-                                <ul className="mt-5 space-y-3.5">
+                                <ul className="mt-6 space-y-4">
                                     {OBSTACLES.map((obstacle) => (
                                         <li
                                             key={obstacle}
-                                            className="flex gap-2.5 text-sm text-muted-foreground"
+                                            className="flex gap-3 text-muted-foreground"
                                         >
-                                            <X className="mt-0.5 size-4 shrink-0" />
+                                            <X className="mt-1 size-4 shrink-0" />
                                             {obstacle}
                                         </li>
                                     ))}
@@ -1155,18 +1237,15 @@ export default function Welcome({
                             <Reveal
                                 from="right"
                                 delay={100}
-                                className="rounded-2xl border bg-card p-6 shadow-sm sm:p-7"
+                                className="rounded-3xl border bg-card p-7 shadow-sm sm:p-8"
                             >
-                                <p className="font-display text-sm font-extrabold">
+                                <p className="font-display text-eyebrow font-extrabold uppercase">
                                     Avec Shoprelle
                                 </p>
-                                <ul className="mt-5 space-y-3.5">
+                                <ul className="mt-6 space-y-4">
                                     {ANSWERS.map((answer) => (
-                                        <li
-                                            key={answer}
-                                            className="flex gap-2.5 text-sm"
-                                        >
-                                            <Check className="mt-0.5 size-4 shrink-0 text-success" />
+                                        <li key={answer} className="flex gap-3">
+                                            <Check className="mt-1 size-4 shrink-0 text-success" />
                                             {answer}
                                         </li>
                                     ))}
@@ -1176,34 +1255,60 @@ export default function Welcome({
                     </div>
                 </section>
 
-                <section className="border-b py-24 lg:py-32">
-                    <div className="mx-auto w-full max-w-7xl px-4">
-                        <div className="max-w-2xl">
-                            <h2 className="font-display text-title font-black text-balance">
+                {/* ── Les engagements, en grille bento ───────────────────────
+                    Cinq cartes sur six colonnes : la première en occupe quatre,
+                    les quatre autres deux chacune. Les deux rangées tombent
+                    juste, et la carte large est celle qui porte l'engagement
+                    qui compte — « rien sans votre accord ». Une grille où
+                    toutes les cases font la même taille ne dit rien de ce qui
+                    est important ; celle-ci le dit par la place qu'elle donne. */}
+                <section
+                    className={cn('relative overflow-hidden border-b', BAND)}
+                >
+                    <div
+                        aria-hidden
+                        className="pointer-events-none absolute inset-0 bg-grid [mask-image:radial-gradient(70%_60%_at_50%_0%,black,transparent)] opacity-40"
+                    />
+
+                    <div className={cn(SHELL, 'relative')}>
+                        <Reveal from="blur" className="max-w-2xl">
+                            <Eyebrow>Nos engagements</Eyebrow>
+
+                            <h2 className="mt-7 font-display text-title font-black">
                                 Une solution simple, transparente et fiable
                             </h2>
-                        </div>
+                        </Reveal>
 
-                        {/* Five cards in a three-column grid: the first spans
-                            two, which is what makes both rows come out full
-                            instead of leaving a hole under the last one. */}
-                        <div className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                        <div className="mt-16 grid gap-6 sm:grid-cols-2 lg:grid-cols-6">
                             {PROMISES.map((promise, index) => (
                                 <Reveal
                                     key={promise.title}
                                     delay={index * 80}
                                     className={cn(
-                                        'rounded-2xl border bg-card p-7 shadow-sm transition-[transform,box-shadow] duration-200 hover:-translate-y-1 hover:shadow-md sm:p-8',
-                                        index === 0 && 'sm:col-span-2',
+                                        'card-lift rounded-3xl border bg-card p-8 shadow-sm sm:p-9',
+                                        index === 0
+                                            ? 'sm:col-span-2 lg:col-span-4'
+                                            : 'lg:col-span-2',
                                     )}
                                 >
-                                    <span className="flex size-10 items-center justify-center rounded-xl bg-accent-brand text-accent-brand-foreground">
-                                        <promise.icon className="size-5" />
+                                    <span
+                                        className={cn(
+                                            'flex items-center justify-center rounded-2xl bg-accent-brand text-accent-brand-foreground',
+                                            index === 0 ? 'size-14' : 'size-12',
+                                        )}
+                                    >
+                                        <promise.icon
+                                            className={cn(
+                                                index === 0
+                                                    ? 'size-7'
+                                                    : 'size-5',
+                                            )}
+                                        />
                                     </span>
 
                                     <h3
                                         className={cn(
-                                            'mt-6 font-display font-extrabold text-balance',
+                                            'mt-8 font-display font-extrabold',
                                             index === 0
                                                 ? 'text-subtitle'
                                                 : 'text-lg',
@@ -1211,7 +1316,7 @@ export default function Welcome({
                                     >
                                         {promise.title}
                                     </h3>
-                                    <p className="mt-3 max-w-md text-muted-foreground">
+                                    <p className="mt-4 max-w-md text-body text-muted-foreground">
                                         {promise.description}
                                     </p>
                                 </Reveal>
@@ -1224,13 +1329,20 @@ export default function Welcome({
                     témoignages vide, ou remplie d'exemples, dit exactement le
                     contraire de ce qu'elle vient dire. */}
                 {reviews.length > 0 && (
-                    <section className="border-b bg-surface-alt py-24 lg:py-32">
-                        <div className="mx-auto grid w-full max-w-7xl gap-10 px-4 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] lg:gap-16">
+                    <section className={cn('border-b bg-surface-alt', BAND)}>
+                        <div
+                            className={cn(
+                                SHELL,
+                                'grid gap-14 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] lg:gap-20',
+                            )}
+                        >
                             <Reveal from="left">
-                                <h2 className="font-display text-title font-black text-balance">
+                                <Eyebrow>Ils l'ont fait</Eyebrow>
+
+                                <h2 className="mt-7 font-display text-title font-black">
                                     Ils ont commandé avec nous
                                 </h2>
-                                <p className="mt-4 max-w-sm text-lg text-muted-foreground">
+                                <p className="mt-6 max-w-sm text-lead text-muted-foreground">
                                     Des avis laissés à la fin d'une
                                     conversation, par des clients qui ont reçu
                                     leur colis.
@@ -1244,10 +1356,17 @@ export default function Welcome({
                     </section>
                 )}
 
-                <section className="border-b py-24 lg:py-32">
-                    <div className="mx-auto grid w-full max-w-7xl gap-10 px-4 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] lg:gap-14">
-                        <div className="lg:sticky lg:top-28 lg:self-start">
-                            <h2 className="font-display text-title font-black text-balance">
+                <section className={cn('border-b', BAND)}>
+                    <div
+                        className={cn(
+                            SHELL,
+                            'grid gap-14 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] lg:gap-20',
+                        )}
+                    >
+                        <div className="lg:sticky lg:top-32 lg:self-start">
+                            <Eyebrow>Questions fréquentes</Eyebrow>
+
+                            <h2 className="mt-7 font-display text-title font-black">
                                 Ce qu'on nous demande le plus
                             </h2>
                         </div>
@@ -1265,16 +1384,16 @@ export default function Welcome({
                                     name="questions-frequentes"
                                     className="group border-b"
                                 >
-                                    <summary className="flex cursor-pointer list-none items-center justify-between gap-4 py-5 font-semibold transition-colors hover:text-primary focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ring [&::-webkit-details-marker]:hidden">
+                                    <summary className="flex cursor-pointer list-none items-center justify-between gap-6 py-7 font-display text-lg font-extrabold transition-colors hover:text-primary focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ring [&::-webkit-details-marker]:hidden">
                                         {item.question}
 
                                         <ChevronDown
                                             aria-hidden
-                                            className="size-4 shrink-0 text-muted-foreground transition-transform duration-200 group-open:rotate-180"
+                                            className="size-5 shrink-0 text-muted-foreground transition-transform duration-300 group-open:rotate-180"
                                         />
                                     </summary>
 
-                                    <p className="max-w-2xl pt-1 pb-8 text-muted-foreground">
+                                    <p className="max-w-2xl pb-9 text-body text-muted-foreground">
                                         {item.answer}
                                     </p>
                                 </Reveal>
@@ -1289,14 +1408,21 @@ export default function Welcome({
                     it up from its reference. */}
                 <section
                     id="contact"
-                    className="border-b bg-surface-alt py-24 lg:py-32"
+                    className={cn('border-b bg-surface-alt', BAND)}
                 >
-                    <div className="mx-auto grid w-full max-w-7xl gap-12 px-4 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] lg:gap-14">
+                    <div
+                        className={cn(
+                            SHELL,
+                            'grid gap-14 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] lg:gap-20',
+                        )}
+                    >
                         <Reveal from="left">
-                            <h2 className="font-display text-title font-black text-balance">
+                            <Eyebrow>Contact</Eyebrow>
+
+                            <h2 className="mt-7 font-display text-title font-black">
                                 Nous contacter
                             </h2>
-                            <p className="mt-4 max-w-md text-muted-foreground">
+                            <p className="mt-6 max-w-md text-body text-muted-foreground">
                                 Une question avant de commander, un partenariat,
                                 ou simplement une hésitation : écrivez-nous, on
                                 répond {contact.responseTime}.
@@ -1306,7 +1432,7 @@ export default function Welcome({
                         <Reveal
                             from="right"
                             delay={140}
-                            className="flex flex-col gap-6"
+                            className="flex flex-col gap-8"
                         >
                             <div>
                                 <p className="text-sm text-muted-foreground">
@@ -1314,22 +1440,22 @@ export default function Welcome({
                                 </p>
                                 <a
                                     href={`mailto:${contact.email}`}
-                                    className="mt-1 inline-flex items-center gap-2 font-display text-subtitle font-extrabold text-primary underline-offset-4 transition-colors hover:underline"
+                                    className="mt-2 inline-flex items-center gap-3 font-display text-subtitle font-extrabold text-primary underline-offset-4 transition-colors hover:underline"
                                 >
                                     <Mail className="size-5 shrink-0" />
                                     {contact.email}
                                 </a>
                             </div>
 
-                            <div className="border-t pt-6">
-                                <p className="text-sm text-muted-foreground">
+                            <div className="border-t pt-8">
+                                <p className="text-body text-muted-foreground">
                                     Vous avez déjà une demande en cours ?
                                     L'assistant la retrouve avec votre référence
                                     et vous donne son statut tout de suite.
                                 </p>
                                 <Link
                                     href={chat()}
-                                    className="mt-3 inline-flex items-center gap-1.5 font-semibold text-primary underline-offset-4 hover:underline"
+                                    className="mt-4 inline-flex items-center gap-1.5 font-semibold text-primary underline-offset-4 hover:underline"
                                 >
                                     Suivre ma demande
                                     <ArrowRight className="size-4" />
@@ -1340,13 +1466,18 @@ export default function Welcome({
                 </section>
 
                 {/* The last thing on the page is the only thing on its screen:
-                    one sentence, one button, and the brand blue behind both. */}
+                    one sentence, one button, and the brand gold behind both. */}
                 <section className="section-accent">
-                    <div className="mx-auto w-full max-w-5xl px-4 py-28 text-center lg:py-36">
+                    <div
+                        className={cn(
+                            SHELL,
+                            'max-w-5xl py-32 text-center lg:py-44',
+                        )}
+                    >
                         <Reveal
                             as="h2"
-                            from="fade"
-                            className="font-display text-display font-black text-balance"
+                            from="blur"
+                            className="font-display text-display font-black"
                         >
                             Le produit que vous cherchez est à un lien de
                             distance.
@@ -1355,7 +1486,7 @@ export default function Welcome({
                         <Button
                             size="lg"
                             asChild
-                            className="mt-12 h-14 px-9 text-base"
+                            className="mt-14 h-16 rounded-2xl px-10 text-base shadow-xl shadow-black/10"
                         >
                             <Link href={chat()}>
                                 Envoyer un lien
@@ -1367,20 +1498,25 @@ export default function Welcome({
             </main>
 
             <footer className="border-t">
-                <div className="mx-auto grid w-full max-w-7xl gap-10 px-4 py-16 sm:grid-cols-2 lg:grid-cols-[minmax(0,2fr)_repeat(3,minmax(0,1fr))] lg:gap-12">
+                <div
+                    className={cn(
+                        SHELL,
+                        'grid gap-12 py-20 sm:grid-cols-2 lg:grid-cols-[minmax(0,2fr)_repeat(3,minmax(0,1fr))] lg:gap-16',
+                    )}
+                >
                     <div>
                         <span className="flex items-center gap-2.5 font-display text-lg font-extrabold tracking-tight">
-                            <span className="flex size-8 items-center justify-center rounded-lg bg-accent-brand">
+                            <span className="flex size-9 items-center justify-center rounded-xl bg-accent-brand">
                                 <AppLogoIcon className="size-4 text-accent-brand-foreground" />
                             </span>
                             Shoprelle
                         </span>
 
-                        <p className="mt-5 font-display text-subtitle font-extrabold text-balance">
+                        <p className="mt-6 font-display text-subtitle font-extrabold">
                             Un lien. Une commande. Une livraison.
                         </p>
 
-                        <p className="mt-4 max-w-sm text-sm text-muted-foreground">
+                        <p className="mt-5 max-w-sm text-muted-foreground">
                             Shoprelle simplifie vos achats en ligne. Envoyez un
                             lien depuis vos plateformes préférées, nous nous
                             chargeons de l'achat, du suivi et de la livraison
@@ -1388,7 +1524,7 @@ export default function Welcome({
                         </p>
 
                         {socials.length > 0 && (
-                            <ul className="mt-6 flex items-center gap-2">
+                            <ul className="mt-8 flex items-center gap-2.5">
                                 {socials.map((network) => {
                                     const Icon = SOCIAL_ICONS[network.key];
 
@@ -1399,7 +1535,7 @@ export default function Welcome({
                                                 target="_blank"
                                                 rel="noopener noreferrer"
                                                 aria-label={network.label}
-                                                className="flex size-10 items-center justify-center rounded-full border text-muted-foreground transition-colors hover:border-primary/40 hover:text-primary"
+                                                className="flex size-11 items-center justify-center rounded-full border text-muted-foreground transition-colors hover:border-primary/40 hover:bg-accent hover:text-primary"
                                             >
                                                 <Icon className="size-4" />
                                             </a>
@@ -1488,7 +1624,7 @@ export default function Welcome({
                     </FooterColumn>
                 </div>
 
-                <div className="mx-auto w-full max-w-7xl border-t px-4 py-6">
+                <div className={cn(SHELL, 'border-t py-7')}>
                     <p className="text-sm text-muted-foreground">
                         © {new Date().getFullYear()} Shoprelle. Tous droits
                         réservés.

@@ -8,10 +8,14 @@
 @custom-variant dark (&:is(.dark *));
 
 @theme {
+    /* Le texte courant, et surtout les descriptions — c'est-à-dire l'essentiel
+       du volume de la page. Inter est dessinée pour l'écran en petit corps :
+       hauteur d'x haute, ouvertures larges, dessin neutre. Un paragraphe y
+       tient sans que la forme des lettres se rappelle à vous, ce qui est
+       exactement le contraire de ce qu'on attend du titre juste au-dessus. */
     --font-sans:
-        'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif,
-        'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol',
-        'Noto Color Emoji';
+        'Inter', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji',
+        'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
 
     /* Display only, and never below 700: Archivo is a grotesque drawn for size,
        and it is here for one reason — it carries a true 900, where most humanist
@@ -20,28 +24,66 @@
        pairing reads as deliberate. */
     --font-display: 'Archivo', ui-sans-serif, system-ui, sans-serif;
 
-    /* Buttons and inputs sit at 12px, cards at 16px. */
+    /* Boutons et champs à 14 px, cartes à 20, grands panneaux à 28.
+       Une famille d'arrondis qui s'ouvre avec la taille de la boîte : un rayon
+       constant appliqué à une pastille et à un panneau pleine largeur fait
+       paraître la première molle et le second carré. */
     --radius-lg: var(--radius);
     --radius-md: calc(var(--radius) - 2px);
     --radius-sm: calc(var(--radius) - 4px);
-    --radius-xl: 1rem;
+    --radius-xl: 1.125rem;
+    --radius-2xl: 1.375rem;
+    --radius-3xl: 1.75rem;
+    --radius-4xl: 2.25rem;
 
-    /* Type scale. The three display steps are fluid: they are set large enough
-       that a fixed value would either overflow a phone or look timid on a
-       desktop, and a clamp settles both without a breakpoint in the markup.
-       Body stays fixed at 16 / small 14 — copy does not want to move. */
-    --text-display: clamp(2.75rem, 7vw, 4.5rem);
-    --text-display--line-height: 1;
-    --text-display--letter-spacing: -0.035em;
-    --text-hero: clamp(2.5rem, 6vw, 3.75rem);
-    --text-hero--line-height: 1.03;
-    --text-hero--letter-spacing: -0.03em;
-    --text-title: clamp(2rem, 4vw, 2.5rem);
-    --text-title--line-height: 1.12;
-    --text-title--letter-spacing: -0.025em;
-    --text-subtitle: 1.375rem;
-    --text-subtitle--line-height: 1.3;
-    --text-subtitle--letter-spacing: -0.015em;
+    /* ── Échelle typographique ───────────────────────────────────────────────
+     *
+     * Les quatre pas d'affichage sont fluides : ils sont assez grands pour
+     * qu'une valeur fixe déborde d'un téléphone ou paraisse timide sur un
+     * grand écran, et un `clamp` règle les deux sans un seul point de rupture
+     * dans le balisage. Ils ont tous été montés d'un cran par rapport à la
+     * version précédente : une direction artistique aérée se joue autant dans
+     * l'écart entre le titre et le texte que dans les marges.
+     *
+     * L'interlignage suit la taille en sens inverse — serré en haut de
+     * l'échelle où les lettres sont déjà énormes, largement ouvert en bas où
+     * l'œil doit revenir à la ligne. Le crénage aussi : un titre à 5 rem
+     * dessiné à l'espacement du texte courant paraît troué.
+     */
+    --text-display: clamp(3rem, 7.5vw, 5.25rem);
+    --text-display--line-height: 0.98;
+    --text-display--letter-spacing: -0.04em;
+    --text-hero: clamp(2.75rem, 6.4vw, 4.25rem);
+    --text-hero--line-height: 1.02;
+    --text-hero--letter-spacing: -0.035em;
+    --text-title: clamp(2.125rem, 4.2vw, 3rem);
+    --text-title--line-height: 1.08;
+    --text-title--letter-spacing: -0.03em;
+    --text-subtitle: clamp(1.375rem, 1.9vw, 1.625rem);
+    --text-subtitle--line-height: 1.25;
+    --text-subtitle--letter-spacing: -0.02em;
+
+    /* Les deux pas du texte, et le vrai sujet de cette refonte.
+     *
+     * `lead` accompagne un titre de section, `body` porte les descriptions.
+     * Les deux sont plus grands et bien plus aérés que le 16/1.5 par défaut :
+     * une description se lit d'un coup d'œil ou ne se lit pas, et c'est
+     * l'interligne qui décide de ça, pas la taille. Le crénage est très
+     * légèrement négatif — Inter est dessinée un peu large pour les corps
+     * d'interface, et à 17 px un paragraphe s'y resserre avec profit. */
+    --text-lead: clamp(1.0625rem, 1.35vw, 1.25rem);
+    --text-lead--line-height: 1.65;
+    --text-lead--letter-spacing: -0.011em;
+    --text-body: 1.0625rem;
+    --text-body--line-height: 1.7;
+    --text-body--letter-spacing: -0.006em;
+
+    /* Le sur-titre : petit, capitales, très espacé. C'est le seul endroit du
+       site où le crénage est positif, et c'est ce qui l'empêche de se lire
+       comme un mot ordinaire écrit trop petit. */
+    --text-eyebrow: 0.75rem;
+    --text-eyebrow--line-height: 1;
+    --text-eyebrow--letter-spacing: 0.14em;
 
     --color-accent-brand: var(--accent-brand);
     --color-accent-brand-foreground: var(--accent-brand-foreground);
@@ -199,7 +241,7 @@
     --chart-3: oklch(0.5 0.13 255);
     --chart-4: oklch(0.64 0.13 90);
     --chart-5: oklch(0.52 0.15 32);
-    --radius: 0.75rem;
+    --radius: 0.875rem;
     --sidebar: oklch(0.975 0.018 78);
     --sidebar-foreground: oklch(0.187 0.043 240);
     --sidebar-primary: oklch(0.532 0.215 263);
@@ -365,6 +407,33 @@
     --color-ring: var(--accent-brand-foreground);
 }
 
+/*
+ * Une vignette blanche dans les deux thèmes, posée sur une photo.
+ *
+ * Même raisonnement que les tuiles marketplace, et même idiome que
+ * `section-dark` : plutôt que d'habiller chaque enfant, on redéclare les jetons
+ * que le contenu lit déjà, épinglés sur leur valeur du thème clair. Une photo
+ * ne bascule pas en mode sombre — le carton reste beige, le mur reste en
+ * briques — et une vignette qui virerait au bleu nuit par-dessus se lirait
+ * comme un bogue d'affichage, pas comme un thème.
+ *
+ * Le fond est translucide et flouté : la photo transparaît juste assez pour que
+ * la vignette soit posée dessus plutôt que découpée dedans.
+ */
+@utility panel-tile {
+    background-color: color-mix(in oklab, var(--surface-tile) 90%, transparent);
+    backdrop-filter: blur(12px);
+    color: oklch(0.187 0.043 240);
+
+    --color-background: var(--surface-tile);
+    --color-foreground: oklch(0.187 0.043 240);
+    --color-muted-foreground: oklch(0.505 0.035 263);
+    --color-border: oklch(0 0 0 / 0.07);
+    --color-primary: oklch(0.532 0.215 263);
+    --color-primary-foreground: oklch(1 0 0);
+    --color-success: oklch(0.53 0.13 150);
+}
+
 @layer base {
     * {
         @apply border-border;
@@ -373,13 +442,31 @@
     body {
         @apply bg-background text-foreground;
         -webkit-font-smoothing: antialiased;
+        /* Le texte respire par défaut, pas seulement là où on y a pensé :
+           1.6 sur le corps est ce qui distingue une page aérée d'une page
+           dont seules les marges sont larges. */
+        line-height: 1.6;
+    }
+
+    /* Les titres sont serrés là où le texte est ouvert. Posé ici plutôt que
+       répété sur chaque titre : c'est une règle de la direction artistique, et
+       une classe oubliée quelque part la contredirait en silence. */
+    h1,
+    h2,
+    h3,
+    h4 {
+        text-wrap: balance;
+    }
+
+    p {
+        text-wrap: pretty;
     }
 
     /* The landing page's header is sticky, so an anchor that scrolls to the top
        of a section would put its heading underneath the bar. Every section that
        a nav link points at reserves that height for itself. */
     :target {
-        scroll-margin-top: 6rem;
+        scroll-margin-top: 7rem;
     }
 
     @media (prefers-reduced-motion: no-preference) {
@@ -591,6 +678,131 @@
 }
 
 /*
+ * Ce qui se met au point.
+ *
+ * Un flou qui se lève, doublé d'un déplacement minuscule : le titre n'arrive
+ * pas de quelque part, il devient net. C'est la seule entrée du jeu qui touche
+ * `filter`, et elle est réservée aux en-têtes de section — le sur-titre, le
+ * titre et sa ligne d'accroche pris comme un seul bloc, parce que c'est ainsi
+ * qu'ils se lisent. Jamais sur une liste : huit éléments flous, ce sont huit
+ * compositions successives pour un effet que personne ne remarque.
+ */
+@utility animate-rise-blur {
+    animation: shoprelle-rise-blur 0.75s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes shoprelle-rise-blur {
+    from {
+        opacity: 0;
+        transform: translateY(14px);
+        filter: blur(12px);
+    }
+}
+
+/* Ce qui s'ouvre : pour une image ou un panneau, que l'on veut voir prendre sa
+   place plutôt que glisser dans le cadre. Le facteur reste tout près de 1 — en
+   dessous de 0.95 une photo entre en zoomant, et ça se remarque. */
+@utility animate-scale-in {
+    animation: shoprelle-scale-in 0.7s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes shoprelle-scale-in {
+    from {
+        opacity: 0;
+        transform: scale(0.96);
+    }
+}
+
+/*
+ * Les vignettes posées sur la photo du hero, qui flottent.
+ *
+ * Six pixels, très lentement, et deux durées différentes pour que les deux
+ * vignettes ne montent jamais ensemble — synchrones, elles se liraient comme un
+ * seul bloc qui tremble.
+ */
+@utility animate-float {
+    animation: shoprelle-float 6s ease-in-out infinite;
+}
+
+@utility animate-float-slow {
+    animation: shoprelle-float 8.5s ease-in-out infinite;
+    animation-delay: -2s;
+}
+
+@keyframes shoprelle-float {
+    0%,
+    100% {
+        transform: translateY(0);
+    }
+    50% {
+        transform: translateY(-6px);
+    }
+}
+
+/*
+ * Le halo derrière le hero, qui dérive.
+ *
+ * Très lent et très ample : il n'y a rien à y voir, il n'est là que pour que le
+ * fond ne soit jamais tout à fait immobile. `alternate` évite le saut qu'un
+ * cycle qui reboucle sur son point de départ produirait à cette durée.
+ */
+@utility animate-drift {
+    animation: shoprelle-drift 22s ease-in-out infinite alternate;
+}
+
+@keyframes shoprelle-drift {
+    from {
+        transform: translate3d(-4%, -2%, 0) scale(1);
+    }
+    to {
+        transform: translate3d(4%, 3%, 0) scale(1.15);
+    }
+}
+
+/*
+ * Le comportement d'une carte que l'on survole, en un seul mot.
+ *
+ * Écrit ici plutôt que répété dans le balisage : la page compte une vingtaine
+ * de cartes et elles doivent toutes réagir exactement pareil. Le décalage est
+ * de quatre pixels — assez pour que la carte réponde, trop peu pour que la
+ * grille bouge.
+ */
+@utility card-lift {
+    transition-property: transform, box-shadow, border-color, background-color;
+    transition-duration: 0.3s;
+    transition-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+
+    &:hover {
+        transform: translateY(-4px);
+        border-color: color-mix(
+            in oklab,
+            var(--color-primary) 35%,
+            transparent
+        );
+        box-shadow:
+            0 18px 40px -24px
+                color-mix(in oklab, var(--color-foreground) 45%, transparent),
+            0 2px 8px -4px
+                color-mix(in oklab, var(--color-foreground) 25%, transparent);
+    }
+}
+
+/*
+ * La trame de fond : un quadrillage d'une ligne de large, au pas de 64 px.
+ *
+ * C'est la grille du site rendue visible, très faiblement, derrière les
+ * sections qui n'ont rien d'autre à montrer. Toujours masquée par un dégradé
+ * là où elle est employée — un quadrillage qui s'arrête net sur un bord se lit
+ * comme un tableau qu'on aurait oublié d'enlever.
+ */
+@utility bg-grid {
+    background-image:
+        linear-gradient(to right, var(--color-border) 1px, transparent 1px),
+        linear-gradient(to bottom, var(--color-border) 1px, transparent 1px);
+    background-size: 64px 64px;
+}
+
+/*
  * ── The delivery network ────────────────────────────────────────────────────
  *
  * A route drawing itself from the hub to its destination.
@@ -696,8 +908,26 @@
     .animate-rise-right,
     .animate-drop,
     .animate-fade,
+    .animate-rise-blur,
+    .animate-scale-in,
+    .animate-float,
+    .animate-float-slow,
+    .animate-drift,
     .route-parcel {
         animation: none;
+    }
+
+    /* `animate-rise-blur` pose son flou dans les images-clés, donc couper
+       l'animation suffit à le lever — mais la carte, elle, garde sa
+       transition : c'est un survol, pas une entrée, et le seul déplacement
+       qu'elle produit est de quatre pixels. On l'annule quand même, la règle
+       étant que rien ne bouge ici. */
+    .card-lift {
+        transition: none;
+    }
+
+    .card-lift:hover {
+        transform: none;
     }
 
     /* The route is drawn by animating its dash offset away, so switching the

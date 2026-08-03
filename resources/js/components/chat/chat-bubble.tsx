@@ -20,25 +20,28 @@ export function ChatBubble({ message }: { message: ChatMessage }) {
     return (
         <div
             className={cn(
-                'flex w-full animate-enter gap-2.5',
+                'flex w-full animate-enter gap-3',
                 isBot ? 'justify-start' : 'justify-end',
             )}
         >
             {isBot && (
                 <div
                     aria-hidden
-                    className="mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-full bg-primary text-xs font-semibold text-primary-foreground"
+                    className="mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-full bg-primary font-display text-sm font-extrabold text-primary-foreground"
                 >
                     S
                 </div>
             )}
 
+            {/* Une bulle plus large et un texte d'un point plus grand : la
+                conversation est le produit, et c'est le seul endroit du site où
+                l'on lit ligne à ligne pendant plusieurs minutes. */}
             <div
                 className={cn(
-                    'max-w-[85%] px-4 py-2.5 text-sm leading-relaxed break-words whitespace-pre-line sm:max-w-[75%]',
+                    'max-w-[85%] px-5 py-3 text-[0.9375rem] leading-relaxed break-words whitespace-pre-line sm:max-w-[75%]',
                     isBot
-                        ? 'rounded-2xl rounded-tl-md border bg-card text-card-foreground shadow-sm'
-                        : 'rounded-2xl rounded-tr-md bg-primary text-primary-foreground',
+                        ? 'rounded-3xl rounded-tl-lg border bg-card text-card-foreground shadow-sm'
+                        : 'rounded-3xl rounded-tr-lg bg-primary text-primary-foreground shadow-md shadow-primary/20',
                 )}
             >
                 {message.text}
