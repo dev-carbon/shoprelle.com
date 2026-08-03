@@ -9,6 +9,7 @@ use App\Http\Controllers\Admin\PaymentController;
 use App\Http\Controllers\Admin\PurchaseRequestController;
 use App\Http\Controllers\Admin\PurchaseRequestStatusController;
 use App\Http\Controllers\Admin\QuoteController;
+use App\Http\Controllers\Admin\ReviewApprovalController;
 use App\Http\Controllers\Admin\ReviewController;
 use App\Http\Controllers\Admin\StatisticsController;
 use App\Http\Controllers\ChatbotController;
@@ -87,6 +88,8 @@ Route::middleware(['auth', 'verified', EnsureUserIsAdmin::class])->group(functio
         Route::post('clients/{customer}/code', CustomerAccessCodeController::class)->name('customers.code.store');
 
         Route::get('avis', ReviewController::class)->name('reviews.index');
+        Route::patch('avis/{review}/publication', ReviewApprovalController::class)
+            ->name('reviews.approval');
 
         Route::get('statistiques', StatisticsController::class)->name('statistics');
 

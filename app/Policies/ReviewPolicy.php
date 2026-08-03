@@ -6,9 +6,9 @@ use App\Models\Review;
 use App\Models\User;
 
 /**
- * Reviews are written by the public but read only by the back office: nothing
- * on the site displays one yet, and the day something does it will read the
- * approved ones rather than all of them.
+ * Reviews are written by the public and published by the back office. Nothing
+ * reaches the landing page on its own: `approved_at` is what lets one out, and
+ * setting it is a decision somebody takes.
  */
 class ReviewPolicy
 {
@@ -18,6 +18,18 @@ class ReviewPolicy
     }
 
     public function view(User $user, Review $review): bool
+    {
+        return $user->isAdmin();
+    }
+
+    /**
+     * Publier un avis, ou le retirer.
+     *
+     * La même permission dans les deux sens : décider qu'un avis est public et
+     * décider qu'il ne l'est plus sont le même geste, et le retirer doit être
+     * au moins aussi facile que le publier.
+     */
+    public function approve(User $user, Review $review): bool
     {
         return $user->isAdmin();
     }

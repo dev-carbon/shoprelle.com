@@ -1,5 +1,8 @@
 <?php
 
+use App\Models\Customer;
+use App\Models\Review;
+
 it('renders the landing page with its contact details', function () {
     config([
         'shoprelle.contact.email' => 'bonjour@shoprelle.test',
@@ -204,3 +207,61 @@ it('offers no WhatsApp link for a number that cannot be dialled', function (?str
     'sans chiffres' => ['bientôt'],
     'forme nationale' => ['06 12 34 56 78'],
 ]);
+
+it('publishes only the reviews somebody approved', function () {
+    $shown = Review::factory()->create([
+        'comment' => 'Colis reçu en dix jours.',
+        'approved_at' => now(),
+    ]);
+
+    Review::factory()->create([
+        'comment' => 'Jamais validé par personne.',
+        'approved_at' => null,
+    ]);
+
+    // Rien n'atteint la vitrine tout seul : `approved_at` est ce qui laisse
+    // sortir un avis, et le poser est une décision que quelqu'un prend.
+    $this->get(route('home'))
+        ->assertInertia(fn ($page) => $page
+            ->has('reviews', 1)
+            ->where('reviews.0.comment', $shown->comment)
+        );
+});
+
+it('never puts a reviewer’s surname on the page', function () {
+    $customer = Customer::factory()->create([
+        'first_name' => 'Aminata',
+        'last_name' => 'Ndiaye',
+        'city' => 'Douala',
+    ]);
+
+    Review::factory()->create([
+        'customer_id' => $customer->id,
+        'comment' => 'Très bon service.',
+        'approved_at' => now(),
+    ]);
+
+    // Le prénom et la ville suffisent à faire une voix. Laisser un avis ne vaut
+    // pas consentement à voir son nom complet sur une page publique.
+    $this->get(route('home'))
+        ->assertInertia(fn ($page) => $page
+            ->where('reviews.0.author', 'Aminata')
+            ->where('reviews.0.place', 'Douala')
+        )
+        ->assertDontSee('Ndiaye');
+});
+
+it('falls back to a neutral name when the reviewer was never identified', function () {
+    Review::factory()->create([
+        'customer_id' => null,
+        'comment' => 'Rapide et clair.',
+        'approved_at' => now(),
+    ]);
+
+    // Le cas courant : parler à l'assistant ne demande aucun compte.
+    $this->get(route('home'))
+        ->assertInertia(fn ($page) => $page
+            ->where('reviews.0.author', 'Client Shoprelle')
+            ->where('reviews.0.place', null)
+        );
+});

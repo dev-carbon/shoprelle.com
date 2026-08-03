@@ -1,10 +1,11 @@
-import { Head, Link } from '@inertiajs/react';
-import { MessageSquareQuote, Star } from 'lucide-react';
+import { Form, Head, Link } from '@inertiajs/react';
+import { Eye, EyeOff, MessageSquareQuote, Star } from 'lucide-react';
 
 import { Pagination } from '@/components/admin/pagination';
+import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { show as customerShow } from '@/routes/admin/customers';
-import { index as reviewsIndex } from '@/routes/admin/reviews';
+import { approval, index as reviewsIndex } from '@/routes/admin/reviews';
 import type { Paginated, ReviewRow } from '@/types';
 
 type Props = {
@@ -117,25 +118,61 @@ export default function ReviewsIndex({ reviews: page, summary }: Props) {
                                         </p>
                                     )}
 
-                                    <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
-                                        {review.customer ? (
-                                            <Link
-                                                href={customerShow(
-                                                    review.customer.id,
-                                                )}
-                                                className="font-medium text-primary underline-offset-4 hover:underline"
-                                            >
-                                                {review.customer.full_name}
-                                            </Link>
-                                        ) : (
-                                            <span>Anonyme</span>
-                                        )}
+                                    <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
+                                        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
+                                            {review.customer ? (
+                                                <Link
+                                                    href={customerShow(
+                                                        review.customer.id,
+                                                    )}
+                                                    className="font-medium text-primary underline-offset-4 hover:underline"
+                                                >
+                                                    {review.customer.full_name}
+                                                </Link>
+                                            ) : (
+                                                <span>Anonyme</span>
+                                            )}
 
-                                        {review.reference && (
-                                            <span className="font-mono">
-                                                {review.reference}
-                                            </span>
-                                        )}
+                                            {review.reference && (
+                                                <span className="font-mono">
+                                                    {review.reference}
+                                                </span>
+                                            )}
+                                        </div>
+
+                                        {/* Rien n'atteint la vitrine tout seul.
+                                            Une bascule, dans les deux sens :
+                                            retirer un avis doit être au moins
+                                            aussi facile que le publier. */}
+                                        <Form
+                                            {...approval.form(review.id)}
+                                            options={{ preserveScroll: true }}
+                                        >
+                                            {({ processing }) => (
+                                                <Button
+                                                    type="submit"
+                                                    size="sm"
+                                                    variant={
+                                                        review.is_approved
+                                                            ? 'secondary'
+                                                            : 'default'
+                                                    }
+                                                    disabled={processing}
+                                                >
+                                                    {review.is_approved ? (
+                                                        <>
+                                                            <EyeOff className="size-4" />
+                                                            Retirer du site
+                                                        </>
+                                                    ) : (
+                                                        <>
+                                                            <Eye className="size-4" />
+                                                            Publier
+                                                        </>
+                                                    )}
+                                                </Button>
+                                            )}
+                                        </Form>
                                     </div>
                                 </li>
                             ))}

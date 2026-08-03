@@ -31,6 +31,8 @@ import { MarketplaceMarquee } from '@/components/marketplace-marquee';
 import { OrderFab } from '@/components/order-fab';
 import { OrderMenu } from '@/components/order-menu';
 import { Reveal } from '@/components/reveal';
+import { ReviewCarousel } from '@/components/review-carousel';
+import type { Review } from '@/components/review-carousel';
 import { ScrollProgress } from '@/components/scroll-progress';
 import {
     SOCIAL_ICONS,
@@ -244,6 +246,7 @@ type Props = {
     /** Announced, not open — the assistant still refuses these. */
     upcomingCountries: Destination[];
     stats: NetworkStats;
+    reviews: Review[];
     social: Partial<Record<SocialNetwork, string>>;
 };
 
@@ -460,6 +463,7 @@ export default function Welcome({
     countries,
     upcomingCountries,
     stats,
+    reviews,
     social,
 }: Props) {
     const { auth } = usePage().props;
@@ -1215,6 +1219,30 @@ export default function Welcome({
                         </div>
                     </div>
                 </section>
+
+                {/* Les avis n'apparaissent que s'il y en a. Une section de
+                    témoignages vide, ou remplie d'exemples, dit exactement le
+                    contraire de ce qu'elle vient dire. */}
+                {reviews.length > 0 && (
+                    <section className="border-b bg-surface-alt py-24 lg:py-32">
+                        <div className="mx-auto grid w-full max-w-7xl gap-10 px-4 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] lg:gap-16">
+                            <Reveal from="left">
+                                <h2 className="font-display text-title font-black text-balance">
+                                    Ils ont commandé avec nous
+                                </h2>
+                                <p className="mt-4 max-w-sm text-lg text-muted-foreground">
+                                    Des avis laissés à la fin d'une
+                                    conversation, par des clients qui ont reçu
+                                    leur colis.
+                                </p>
+                            </Reveal>
+
+                            <Reveal from="right" delay={120}>
+                                <ReviewCarousel reviews={reviews} />
+                            </Reveal>
+                        </div>
+                    </section>
+                )}
 
                 <section className="border-b py-24 lg:py-32">
                     <div className="mx-auto grid w-full max-w-7xl gap-10 px-4 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] lg:gap-14">

@@ -566,6 +566,19 @@
     }
 }
 
+/* La symétrique de `animate-rise` : ce qui vient d'au-dessus. Utilisée quand on
+   remonte un carrousel vertical — le mouvement doit suivre le geste. */
+@utility animate-drop {
+    animation: shoprelle-drop 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes shoprelle-drop {
+    from {
+        opacity: 0;
+        transform: translateY(-12px);
+    }
+}
+
 /* No travel at all: for the things that should resolve rather than arrive. */
 @utility animate-fade {
     animation: shoprelle-fade 0.55s cubic-bezier(0.16, 1, 0.3, 1) both;
@@ -681,6 +694,7 @@
     .animate-route,
     .animate-rise-left,
     .animate-rise-right,
+    .animate-drop,
     .animate-fade,
     .route-parcel {
         animation: none;

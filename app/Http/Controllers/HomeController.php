@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Review;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -26,6 +27,7 @@ class HomeController extends Controller
             'countries' => $this->asList(config('shoprelle.countries')),
             'upcomingCountries' => $this->asList(config('shoprelle.upcoming_countries')),
             'stats' => $this->stats(),
+            'reviews' => $this->reviews(),
             'social' => array_filter(config('shoprelle.social')),
         ]);
     }
@@ -57,6 +59,39 @@ class HomeController extends Controller
         }
 
         return $list;
+    }
+
+    /**
+     * Les avis publiés, du plus récent au plus ancien.
+     *
+     * `approved()` et rien d'autre : un avis n'atteint la vitrine que si
+     * quelqu'un l'a décidé depuis le back-office. La portée le garantit ici, et
+     * la colonne `approved_at` le garantit en base.
+     *
+     * Le nom n'est jamais donné en entier. La plupart des avis sont anonymes —
+     * parler à l'assistant ne demande aucun compte — et ceux qui ne le sont pas
+     * n'ont pas pour autant consenti à voir leur nom de famille sur une page
+     * publique. Le prénom et la ville suffisent à faire une voix ; le reste
+     * n'ajoute que du risque.
+     *
+     * @return list<array{rating: int, comment: string, author: string, place: ?string}>
+     */
+    private function reviews(): array
+    {
+        return Review::query()
+            ->approved()
+            ->whereNotNull('comment')
+            ->with('customer')
+            ->latest('approved_at')
+            ->limit(12)
+            ->get()
+            ->map(fn (Review $review): array => [
+                'rating' => $review->rating,
+                'comment' => (string) $review->comment,
+                'author' => $review->customer?->first_name ?: 'Client Shoprelle',
+                'place' => $review->customer?->city,
+            ])
+            ->all();
     }
 
     /**
