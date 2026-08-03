@@ -845,6 +845,57 @@ export default function Welcome({
                         <Reveal delay={80} className="mt-14">
                             <LinkToParcel />
                         </Reveal>
+
+                        {/* ── La sortie du parcours ───────────────────────────
+                            On venait de regarder les quatre étapes, on était au
+                            plus près de vouloir essayer, et il n'y avait rien à
+                            cliquer : il fallait remonter au champ ou aller
+                            chercher la barre. Ce bouton ferme ce cul-de-sac.
+
+                            Un seul, et pas les trois canaux de front. Les trois
+                            ont déjà une section à eux plus bas, et la refaire
+                            ici ne ferait que la déprécier — mais surtout, ce
+                            bloc vient de passer quatorze secondes à dire « un
+                            lien suffit, trois questions, pas un formulaire ».
+                            Le terminer par « choisissez d'abord votre canal »,
+                            c'est se contredire à l'instant précis où l'on vient
+                            de convaincre.
+
+                            Les trois canaux restent à un clic : c'est
+                            `OrderMenu`, exactement l'objet que le header et le
+                            bouton flottant déclenchent. Cohérent par
+                            construction plutôt que par relecture. */}
+                        <Reveal
+                            delay={160}
+                            className="mt-16 flex flex-col items-center text-center"
+                        >
+                            <p className="font-display text-subtitle font-extrabold">
+                                Prêt ? Envoyez votre premier lien.
+                            </p>
+
+                            <OrderMenu
+                                chatHref={chat().url}
+                                telegramUrl={telegramUrl}
+                                whatsappUrl={whatsappUrl}
+                                trigger={
+                                    <Button
+                                        size="lg"
+                                        className="mt-7 h-14 rounded-2xl px-9 text-base shadow-lg shadow-primary/25 transition-shadow hover:shadow-xl hover:shadow-primary/30"
+                                    >
+                                        Commander maintenant
+                                        <ShoppingCart className="size-4" />
+                                    </Button>
+                                }
+                            />
+
+                            {/* Deux engagements que la page tient déjà, et
+                                aucun de plus : celui du haut de page, et celui
+                                que l'étape « Devis » vient de montrer. */}
+                            <p className="mt-5 text-sm text-muted-foreground">
+                                Gratuit, sans inscription — vous n'engagez rien
+                                avant d'avoir vu le devis.
+                            </p>
+                        </Reveal>
                     </div>
                 </section>
 
