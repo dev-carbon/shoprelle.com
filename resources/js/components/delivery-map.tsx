@@ -9,9 +9,22 @@ import { cn } from '@/lib/utils';
  * The world, projected and committed rather than computed.
  *
  * `world-atlas.json` was generated once from the country outlines — Equal
- * Earth, cropped to the frame the section wants — by an ad hoc script, exactly
- * as `world.json` before it. Which is why nothing here imports `d3-geo`: the
- * projection ran at build time, and what ships is a path string per country.
+ * Earth, cropped to the frame the section wants — by an ad hoc script. Which is
+ * why nothing here imports `d3-geo`: the projection ran at build time, and what
+ * ships is a path string per country.
+ *
+ * ── Ce que le fichier ne contient plus
+ *
+ * Les tracés sont arrondis à l'unité. Le cadre fait 957 unités de large pour
+ * une carte rendue au plus autour de 1200 px : une unité vaut à peu près un
+ * pixel, donc la décimale valait un dixième de pixel et pesait un tiers du
+ * fichier. Les ancres et le hub, eux, gardent la leur — ce sont eux qui posent
+ * un marqueur sur un pays, et un demi-pixel s'y verrait.
+ *
+ * Le `graticule` a disparu avec : vingt et un kilo-octets de méridiens et de
+ * parallèles, chargés par chaque visiteur, que ce composant ne dessine plus
+ * depuis qu'il les a retirés — et que seule cette annotation de type lisait
+ * encore.
  *
  * The shape is asserted rather than inferred: a JSON module widens every array
  * to `number[]`, so the pairs and the viewport come back having forgotten how
@@ -26,7 +39,6 @@ const {
 } = atlas as unknown as {
     view: [number, number, number, number];
     hub: [number, number];
-    graticule: string;
     anchors: Record<string, [number, number]>;
     shapes: Record<string, string>;
 };
