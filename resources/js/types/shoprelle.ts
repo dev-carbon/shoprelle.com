@@ -165,8 +165,8 @@ export type PurchaseRequestDetail = {
     status_color: string;
     channel: string;
     channel_label: string;
-    /** Whether sending a quote reaches the customer, or only records it. */
-    reaches_customer: boolean;
+    /** By what means a quote reaches this customer. Empty: by none. */
+    delivery_channels: string[];
     customer_comment: string | null;
     created_at: string | null;
     updated_at: string | null;

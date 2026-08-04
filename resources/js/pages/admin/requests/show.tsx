@@ -626,9 +626,9 @@ function QuoteCard({
                                 it: only some channels can be written back to. */}
                             <p className="flex items-start gap-1.5 text-xs text-muted-foreground">
                                 <Send className="mt-0.5 size-3.5 shrink-0" />
-                                {request.reaches_customer
-                                    ? `Le client recevra le devis sur ${request.channel_label}.`
-                                    : `Aucun envoi automatique depuis ${request.channel_label} : transmettez le devis au ${request.customer.phone}.`}
+                                {request.delivery_channels.length > 0
+                                    ? `Le client recevra le devis ${request.delivery_channels.join(' et ')}.`
+                                    : `Aucun envoi automatique : transmettez le devis au ${request.customer.phone}.`}
                             </p>
 
                             <InputError message={errors.status} />

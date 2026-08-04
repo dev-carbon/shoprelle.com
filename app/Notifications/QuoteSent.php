@@ -2,21 +2,26 @@
 
 namespace App\Notifications;
 
-use App\Models\PurchaseItem;
 use App\Models\PurchaseRequest;
 use App\Notifications\Channels\TelegramChannel;
+use App\Notifications\Contracts\RoutesMail;
 use App\Notifications\Contracts\RoutesTelegram;
 use App\Notifications\Contracts\SendsTelegram;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
 /**
- * Hands the customer the quote, in the conversation they wrote to us from.
+ * Hands the customer the quote, wherever we know how to reach them.
  *
- * Only Telegram is delivered today. Email and WhatsApp join by adding their
- * channel to `via()`: the message is built here once, per channel, and the back
- * office keeps sending quotes exactly as before.
+ * Telegram answers the conversation the request came from; email goes to the
+ * address they left, which is optional and often absent. Both may fire at once,
+ * and neither firing is a normal outcome rather than a failure: a web customer
+ * who gave no address is carried by hand, and the back office says so.
+ *
+ * The figures are built once in `lines()` and worded per channel, so the two
+ * messages can never come to disagree about what was quoted.
  */
 class QuoteSent extends Notification implements SendsTelegram, ShouldQueue
 {
@@ -27,46 +32,38 @@ class QuoteSent extends Notification implements SendsTelegram, ShouldQueue
     ) {}
 
     /**
-     * @return list<class-string>
+     * @return list<string|class-string>
      */
     public function via(object $notifiable): array
     {
-        // An unreachable customer is not an error: web requests have no thread
-        // to answer, and their quote is carried by hand for now.
-        return $notifiable instanceof RoutesTelegram
-            && $notifiable->routeNotificationForTelegram() !== null
-                ? [TelegramChannel::class]
-                : [];
+        $channels = [];
+
+        if ($notifiable instanceof RoutesTelegram && $notifiable->routeNotificationForTelegram() !== null) {
+            $channels[] = TelegramChannel::class;
+        }
+
+        if ($notifiable instanceof RoutesMail && $notifiable->routeNotificationForMail() !== null) {
+            $channels[] = 'mail';
+        }
+
+        return $channels;
     }
 
     /**
      * The quote as the customer reads it: every line, then what it adds up to.
-     *
-     * The purchase cost and the exchange rate are deliberately absent — they are
-     * back-office figures, and this message is the one thing the customer sees.
      */
     public function toTelegram(object $notifiable): string
     {
-        $request = $this->purchaseRequest->loadMissing(['customer', 'items']);
-        $currency = (string) $request->quote_currency;
-
-        $lines = $request->items
-            ->map(fn (PurchaseItem $item, int $index): string => sprintf(
-                '• %s (×%d) : %s',
-                $item->product_name ?? 'Produit n°'.($index + 1),
-                $item->quantity,
-                $this->money($item->quoted_amount, $currency),
-            ))
-            ->implode("\n");
+        $request = $this->request();
 
         $message = sprintf(
             "Bonjour %s, voici le devis de votre demande %s.\n\n%s\n\nProduits : %s\nLivraison : %s\nTotal : %s",
             $request->customer->first_name,
             $request->reference,
-            $lines,
-            $this->money($request->quote_items_amount, $currency),
-            $this->money($request->quote_shipping_amount, $currency),
-            $this->money($request->quote_total_amount, $currency),
+            implode("\n", array_map(fn (string $line): string => '• '.$line, $this->lines())),
+            $this->money($request->quote_items_amount),
+            $this->money($request->quote_shipping_amount),
+            $this->money($request->quote_total_amount),
         );
 
         if ($request->quote_notes !== null) {
@@ -77,14 +74,85 @@ class QuoteSent extends Notification implements SendsTelegram, ShouldQueue
     }
 
     /**
+     * The same quote, for the address the customer left us.
+     *
+     * The mail carries the figures in full rather than a link to them: an email
+     * that says only "you have a quote" is an email that has to be trusted
+     * before it is useful, and this one is often read on a slow connection.
+     */
+    public function toMail(object $notifiable): MailMessage
+    {
+        $request = $this->request();
+
+        $mail = (new MailMessage)
+            ->subject(sprintf('Votre devis Shoprelle — %s', $request->reference))
+            ->greeting(sprintf('Bonjour %s,', $request->customer->first_name))
+            ->line(sprintf('Voici le devis de votre demande %s.', $request->reference));
+
+        foreach ($this->lines() as $line) {
+            $mail->line($line);
+        }
+
+        $mail->line(sprintf(
+            '**Produits : %s — Livraison : %s — Total : %s**',
+            $this->money($request->quote_items_amount),
+            $this->money($request->quote_shipping_amount),
+            $this->money($request->quote_total_amount),
+        ));
+
+        if ($request->quote_notes !== null) {
+            $mail->line($request->quote_notes);
+        }
+
+        return $mail
+            ->action('Voir mes demandes', route('orders.index'))
+            // Said here because the page will ask for it and the code cannot be
+            // resent: it is stored hashed, and nobody can read it back.
+            ->line("L'accès demande votre numéro de téléphone et le code reçu lors de votre première demande.")
+            ->salutation('À très vite, l\'équipe Shoprelle');
+    }
+
+    /**
+     * One line per product: what it is, how many, and what it is billed at.
+     *
+     * @return list<string>
+     */
+    private function lines(): array
+    {
+        $lines = [];
+        $position = 0;
+
+        foreach ($this->request()->items as $item) {
+            $position++;
+
+            $lines[] = sprintf(
+                '%s (×%d) : %s',
+                $item->product_name ?? 'Produit n°'.$position,
+                $item->quantity,
+                $this->money($item->quoted_amount),
+            );
+        }
+
+        return $lines;
+    }
+
+    /**
+     * The request with everything the message reads, loaded once.
+     */
+    private function request(): PurchaseRequest
+    {
+        return $this->purchaseRequest->loadMissing(['customer', 'items']);
+    }
+
+    /**
      * An amount as it is read aloud: grouped thousands, no trailing cents on a
      * round figure, and the currency spelled out.
      */
-    private function money(?string $amount, string $currency): string
+    private function money(?string $amount): string
     {
         $value = (float) $amount;
         $decimals = fmod($value, 1.0) === 0.0 ? 0 : 2;
 
-        return number_format($value, $decimals, ',', ' ').' '.$currency;
+        return number_format($value, $decimals, ',', ' ').' '.$this->purchaseRequest->quote_currency;
     }
 }

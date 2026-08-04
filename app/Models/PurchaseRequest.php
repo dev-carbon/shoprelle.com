@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Chatbot\Channel;
 use App\Enums\PurchaseRequestStatus;
+use App\Notifications\Contracts\RoutesMail;
 use App\Notifications\Contracts\RoutesTelegram;
 use Database\Factories\PurchaseRequestFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
@@ -66,7 +67,7 @@ use Illuminate\Support\Str;
     'quote_notes',
     'quote_sent_at',
 ])]
-class PurchaseRequest extends Model implements RoutesTelegram
+class PurchaseRequest extends Model implements RoutesMail, RoutesTelegram
 {
     /** @use HasFactory<PurchaseRequestFactory> */
     use HasFactory;
@@ -92,6 +93,19 @@ class PurchaseRequest extends Model implements RoutesTelegram
         return $this->channel === Channel::Telegram->value
             ? $this->channel_identifier
             : null;
+    }
+
+    /**
+     * The address the customer left, which the assistant only ever offers.
+     *
+     * Blank rather than null is treated as absent: an empty string would be
+     * accepted as a recipient and the message would go nowhere.
+     */
+    public function routeNotificationForMail(): ?string
+    {
+        $email = trim((string) $this->customer->email);
+
+        return $email === '' ? null : $email;
     }
 
     /**

@@ -29,9 +29,16 @@ class PurchaseRequestDetailResource extends JsonResource
             'status_color' => $this->status->color(),
             'channel' => $this->channel,
             'channel_label' => Channel::tryFrom($this->channel)?->label() ?? $this->channel,
-            // Whether sending a quote actually reaches the customer, or only
-            // records it for an administrator to pass on by hand.
-            'reaches_customer' => $this->routeNotificationForTelegram() !== null,
+            // By what means sending a quote actually reaches this customer.
+            // Empty when it reaches nobody, and an administrator has to carry
+            // it by hand — which the screen then says plainly.
+            // Worded with their preposition rather than named: the screen joins
+            // them into one sentence, and "sur Telegram" and "par email" do not
+            // take the same one.
+            'delivery_channels' => array_values(array_filter([
+                $this->routeNotificationForTelegram() !== null ? 'sur Telegram' : null,
+                $this->routeNotificationForMail() !== null ? 'par email' : null,
+            ])),
             'customer_comment' => $this->customer_comment,
             'created_at' => $this->created_at?->toIso8601String(),
             'updated_at' => $this->updated_at?->toIso8601String(),

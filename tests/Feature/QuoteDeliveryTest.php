@@ -2,12 +2,16 @@
 
 use App\Chatbot\Channel;
 use App\DataTransferObjects\QuoteData;
+use App\Models\Customer;
 use App\Models\PurchaseItem;
 use App\Models\PurchaseRequest;
 use App\Models\User;
+use App\Notifications\Channels\TelegramChannel;
+use App\Notifications\QuoteSent;
 use App\Services\PurchaseRequestStatusService;
 use Illuminate\Http\Client\Request;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Notification;
 
 beforeEach(function () {
     config()->set('services.telegram.token', 'test-token');
@@ -21,10 +25,15 @@ beforeEach(function () {
 
 /**
  * A request written from the given channel, carrying two products to price.
+ *
+ * The address is stated rather than left to the factory, which makes it
+ * optional: whether a customer left one is exactly what these tests turn on.
  */
-function requestFrom(Channel $channel, ?string $identifier = null): PurchaseRequest
+function requestFrom(Channel $channel, ?string $identifier = null, ?string $email = null): PurchaseRequest
 {
-    $request = PurchaseRequest::factory()->create([
+    $customer = Customer::factory()->create(['email' => $email]);
+
+    $request = PurchaseRequest::factory()->for($customer)->create([
         'channel' => $channel->value,
         'channel_identifier' => $identifier,
     ]);
@@ -139,6 +148,64 @@ it('sends nothing when a Telegram request predates the chat being recorded', fun
     quoteRequest(requestFrom(Channel::Telegram, identifier: null));
 
     Http::assertNothingSent();
+});
+
+it('emails the quote to the address the customer left', function () {
+    Notification::fake();
+
+    $request = requestFrom(Channel::Web, email: 'awa@example.com');
+
+    quoteRequest($request);
+
+    Notification::assertSentTo(
+        $request,
+        QuoteSent::class,
+        fn (QuoteSent $notification, array $channels): bool => in_array('mail', $channels, strict: true),
+    );
+});
+
+it('does not try to email a customer who never gave an address', function () {
+    Notification::fake();
+
+    $request = requestFrom(Channel::Web);
+
+    quoteRequest($request);
+
+    // Nothing at all: no thread to answer, and no address to write to. A
+    // notification with no channel is not recorded as sent, which is the
+    // truthful outcome rather than an empty delivery.
+    Notification::assertNothingSentTo($request);
+});
+
+it('writes and posts both when the customer has an address and a conversation', function () {
+    Notification::fake();
+
+    $request = requestFrom(Channel::Telegram, '4242', 'awa@example.com');
+
+    quoteRequest($request);
+
+    Notification::assertSentTo(
+        $request,
+        QuoteSent::class,
+        fn (QuoteSent $notification, array $channels): bool => in_array('mail', $channels, strict: true)
+            && in_array(TelegramChannel::class, $channels, strict: true),
+    );
+});
+
+it('words the email with every line and what they add up to', function () {
+    $request = requestFrom(Channel::Web, email: 'awa@example.com');
+
+    quoteRequest($request, 'Délai estimé : 3 semaines.');
+
+    $mail = (new QuoteSent($request->refresh()))->toMail($request);
+
+    expect($mail->subject)->toContain($request->reference)
+        ->and($mail->introLines)->toContain('Nike Air Max (×2) : 45 000 XAF')
+        ->and($mail->introLines)->toContain('Sac Zara (×1) : 12 000 XAF')
+        ->and($mail->introLines)->toContain('**Produits : 57 000 XAF — Livraison : 8 000 XAF — Total : 65 000 XAF**')
+        ->and($mail->introLines)->toContain('Délai estimé : 3 semaines.')
+        // Le devis, pas ce qu'il nous coûte.
+        ->and($mail->actionUrl)->toBe(route('orders.index'));
 });
 
 it('records the quote even when Telegram refuses the message', function () {
