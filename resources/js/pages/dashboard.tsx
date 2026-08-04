@@ -35,9 +35,11 @@ export default function Dashboard({
         <>
             <Head title="Tableau de bord" />
 
-            <div className="flex h-full flex-1 flex-col gap-4 p-4">
+            <div className="flex h-full flex-1 flex-col gap-6 p-4 sm:p-6">
                 <div>
-                    <h1 className="text-xl font-semibold">Tableau de bord</h1>
+                    <h1 className="font-display text-2xl font-extrabold tracking-tight">
+                        Tableau de bord
+                    </h1>
                     <p className="text-sm text-muted-foreground">
                         Vue d'ensemble des demandes d'achat.
                     </p>
@@ -174,14 +176,19 @@ function Stat({
             className="animate-rise transition-shadow duration-200 hover:shadow-md"
             style={{ animationDelay: `${delay}ms` }}
         >
-            <CardContent className="flex items-center justify-between">
+            <CardContent className="flex items-center justify-between gap-4">
                 <div>
                     <p className="text-sm text-muted-foreground">{label}</p>
-                    <p className="mt-1 text-2xl font-semibold tabular-nums">
+                    {/* Le chiffre est ce qu'on vient lire : il parle dans la
+                        voix des titres du site, en chiffres tabulaires pour
+                        que la colonne ne bouge pas d'un jour à l'autre. */}
+                    <p className="mt-1 font-display text-3xl font-black tabular-nums">
                         {value}
                     </p>
                 </div>
-                <Icon className="size-5 text-muted-foreground" />
+                <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-accent text-accent-foreground">
+                    <Icon className="size-5" />
+                </span>
             </CardContent>
         </Card>
     );

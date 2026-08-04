@@ -46,11 +46,14 @@ export default function OrdersIndex({ customer, requests }: Props) {
                     {/* Le prénom en bleu et non en or : c'est un nom propre,
                         donc de l'information, et l'or ne porte pas de
                         l'information sur un fond clair. */}
-                    <h1 className="mt-6 font-display text-2xl font-extrabold tracking-tight">
+                    {/* La même échelle que les titres de la vitrine : cet
+                        espace est le même site, et un titre timide le faisait
+                        passer pour une annexe. */}
+                    <h1 className="mt-6 font-display text-title font-black">
                         Bonjour{' '}
                         <Accent tone="blue">{customer.first_name}</Accent>
                     </h1>
-                    <p className="mt-3 text-sm text-muted-foreground">
+                    <p className="mt-4 text-body text-muted-foreground">
                         {requests.length === 0
                             ? 'Aucune demande pour le moment.'
                             : `${requests.length} demande${requests.length > 1 ? 's' : ''} au ${customer.phone}.`}

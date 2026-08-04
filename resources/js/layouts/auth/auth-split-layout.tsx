@@ -81,7 +81,9 @@ export default function AuthSplitLayout({
                     </Link>
 
                     <div className="flex animate-rise flex-col gap-2 text-center">
-                        <h1 className="text-subtitle font-semibold">{title}</h1>
+                        <h1 className="font-display text-subtitle font-extrabold">
+                            {title}
+                        </h1>
                         {description && (
                             <p className="text-sm text-balance text-muted-foreground">
                                 {description}

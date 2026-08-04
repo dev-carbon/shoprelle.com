@@ -105,7 +105,9 @@ export default function OrderShow({ request }: Props) {
                     </Link>
 
                     <div className="mt-6 flex flex-wrap items-center gap-3">
-                        <h1 className="font-mono text-xl font-semibold">
+                        {/* La référence reste en mono — c'est un code, pas un
+                            mot — mais à la taille d'un titre de page. */}
+                        <h1 className="font-mono text-2xl font-bold tracking-tight sm:text-3xl">
                             {request.reference}
                         </h1>
                         <StatusBadge

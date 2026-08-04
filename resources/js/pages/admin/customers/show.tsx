@@ -70,10 +70,10 @@ export default function CustomerShow({ customer }: Props) {
         <>
             <Head title={customer.full_name} />
 
-            <div className="flex h-full flex-1 flex-col gap-4 p-4">
+            <div className="flex h-full flex-1 flex-col gap-6 p-4 sm:p-6">
                 <header className="flex flex-wrap items-start justify-between gap-3">
                     <div>
-                        <h1 className="text-xl font-semibold">
+                        <h1 className="font-display text-2xl font-extrabold tracking-tight">
                             {customer.full_name}
                         </h1>
                         <p className="mt-1 text-sm text-muted-foreground">

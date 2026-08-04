@@ -41,9 +41,11 @@ export default function RequestsIndex({
         <>
             <Head title="Demandes" />
 
-            <div className="flex h-full flex-1 flex-col gap-4 p-4">
+            <div className="flex h-full flex-1 flex-col gap-6 p-4 sm:p-6">
                 <div>
-                    <h1 className="text-xl font-semibold">Demandes d'achat</h1>
+                    <h1 className="font-display text-2xl font-extrabold tracking-tight">
+                        Demandes d'achat
+                    </h1>
                     <p className="text-sm text-muted-foreground">
                         Toutes les demandes transmises par les clients.
                     </p>

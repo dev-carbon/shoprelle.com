@@ -71,11 +71,11 @@ export default function RequestShow({
         <>
             <Head title={`Demande ${request.reference}`} />
 
-            <div className="flex h-full flex-1 flex-col gap-4 p-4">
+            <div className="flex h-full flex-1 flex-col gap-6 p-4 sm:p-6">
                 <header className="flex flex-wrap items-start justify-between gap-3">
                     <div>
                         <div className="flex flex-wrap items-center gap-2">
-                            <h1 className="font-mono text-xl font-semibold">
+                            <h1 className="font-mono text-2xl font-bold tracking-tight">
                                 {request.reference}
                             </h1>
                             <StatusBadge

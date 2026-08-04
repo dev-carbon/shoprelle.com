@@ -21,10 +21,12 @@ export default function StatisticsPage({ statistics, periods }: Props) {
         <>
             <Head title="Statistiques" />
 
-            <div className="flex h-full flex-1 flex-col gap-4 p-4">
+            <div className="flex h-full flex-1 flex-col gap-6 p-4 sm:p-6">
                 <div className="flex flex-wrap items-end justify-between gap-3">
                     <div>
-                        <h1 className="text-xl font-semibold">Statistiques</h1>
+                        <h1 className="font-display text-2xl font-extrabold tracking-tight">
+                            Statistiques
+                        </h1>
                         <p className="text-sm text-muted-foreground">
                             Activité sur les {statistics.period_days} derniers
                             jours.

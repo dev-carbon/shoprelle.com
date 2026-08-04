@@ -4,13 +4,7 @@ import { KeyRound } from 'lucide-react';
 import InputError from '@/components/input-error';
 import { Accent, Eyebrow } from '@/components/section-heading';
 import { Button } from '@/components/ui/button';
-import {
-    Card,
-    CardContent,
-    CardDescription,
-    CardHeader,
-    CardTitle,
-} from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Spinner } from '@/components/ui/spinner';
@@ -23,20 +17,28 @@ export default function OrdersAccess() {
         <CustomerLayout>
             <Head title="Mes demandes" />
 
-            <div className="mx-auto mb-10 max-w-md">
+            {/* L'en-tête de page à part entière, sur l'échelle du site : le
+                sur-titre flottait seul au-dessus de la carte, et le titre de la
+                page vivait dans la carte comme un intitulé de formulaire. Une
+                page se présente d'abord, son formulaire vient ensuite. */}
+            <header className="mx-auto max-w-md animate-rise text-center">
                 <Eyebrow tone="gold">Votre espace</Eyebrow>
-            </div>
 
-            <Card className="mx-auto max-w-md animate-rise">
+                <h1 className="mt-6 font-display text-title font-black">
+                    Mes <Accent tone="blue">demandes</Accent>
+                </h1>
+                <p className="mt-4 text-body text-muted-foreground">
+                    Retrouvez vos demandes et vos devis avec le numéro utilisé
+                    pour les passer et votre code d'accès.
+                </p>
+            </header>
+
+            <Card className="mx-auto mt-10 max-w-md animate-rise">
                 <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                        <KeyRound className="size-4 text-accent-brand-ink" />
-                        Mes <Accent tone="gold">demandes</Accent>
+                    <CardTitle className="flex items-center gap-2 text-sm">
+                        <KeyRound className="size-4 text-muted-foreground" />
+                        Identifiez-vous
                     </CardTitle>
-                    <CardDescription>
-                        Retrouvez vos demandes et vos devis avec le numéro
-                        utilisé pour les passer et votre code d'accès.
-                    </CardDescription>
                 </CardHeader>
 
                 <CardContent>

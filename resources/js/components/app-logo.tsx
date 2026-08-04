@@ -7,11 +7,14 @@ export default function AppLogo() {
 
     return (
         <>
-            <div className="flex aspect-square size-8 items-center justify-center rounded-md bg-sidebar-primary text-sidebar-primary-foreground">
-                <AppLogoIcon className="size-5 text-white dark:text-black" />
+            {/* La même identité que partout ailleurs sur le site : la pastille
+                or du logo, l'encre marine dessus. Le back-office est le même
+                produit que la vitrine, et c'est son logo qui le dit en premier. */}
+            <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-accent-brand">
+                <AppLogoIcon className="size-4 text-accent-brand-foreground" />
             </div>
             <div className="ml-1 grid flex-1 text-left text-sm">
-                <span className="mb-0.5 truncate leading-tight font-semibold">
+                <span className="mb-0.5 truncate font-display leading-tight font-extrabold tracking-tight">
                     {name}
                 </span>
             </div>

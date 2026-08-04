@@ -30,6 +30,7 @@ import {
     MARKETPLACE_LOGOS,
 } from '@/components/marketplace-logos';
 import { MarketplaceMarquee } from '@/components/marketplace-marquee';
+import { MobileNav } from '@/components/mobile-nav';
 import { OrderFab } from '@/components/order-fab';
 import { OrderMenu } from '@/components/order-menu';
 import { PAYMENT_LOGOS } from '@/components/payment-logos';
@@ -662,6 +663,12 @@ export default function Welcome({
                                 </Button>
                             }
                         />
+
+                        {/* Le menu, là où la barre ne porte plus les ancres.
+                            Dernier de la rangée : c'est la place où tous les
+                            sites le mettent, et un menu se trouve avant de se
+                            lire. */}
+                        <MobileNav items={NAVIGATION} />
                     </div>
                 </div>
             </header>

@@ -48,9 +48,11 @@ export default function ReviewsIndex({ reviews: page, summary }: Props) {
         <>
             <Head title="Avis" />
 
-            <div className="flex h-full flex-1 flex-col gap-4 p-4">
+            <div className="flex h-full flex-1 flex-col gap-6 p-4 sm:p-6">
                 <div>
-                    <h1 className="text-xl font-semibold">Avis</h1>
+                    <h1 className="font-display text-2xl font-extrabold tracking-tight">
+                        Avis
+                    </h1>
                     <p className="text-sm text-muted-foreground">
                         Ce que les clients ont dit à l'assistant.
                     </p>

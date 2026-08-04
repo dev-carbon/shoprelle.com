@@ -74,10 +74,12 @@ export default function ProductsIndex({
         <>
             <Head title="Produits" />
 
-            <div className="flex h-full flex-1 flex-col gap-6 p-4">
+            <div className="flex h-full flex-1 flex-col gap-6 p-4 sm:p-6">
                 <div className="flex flex-wrap items-start justify-between gap-4">
                     <div>
-                        <h1 className="text-xl font-semibold">Produits</h1>
+                        <h1 className="font-display text-2xl font-extrabold tracking-tight">
+                            Produits
+                        </h1>
                         <p className="text-sm text-muted-foreground">
                             La sélection montrée sur la page d'accueil. Les prix
                             y sont indicatifs — seul le devis engage.

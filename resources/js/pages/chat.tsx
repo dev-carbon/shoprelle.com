@@ -1,5 +1,5 @@
 import { Head, Link, router, usePage } from '@inertiajs/react';
-import { CheckCircle2, RotateCcw } from 'lucide-react';
+import { ArrowRight, Check, CheckCircle2, Copy, RotateCcw } from 'lucide-react';
 import { useEffect, useLayoutEffect, useRef } from 'react';
 
 import AppLogoIcon from '@/components/app-logo-icon';
@@ -10,8 +10,10 @@ import { ChatSummary } from '@/components/chat/chat-summary';
 import { ThemeSwitcher } from '@/components/theme-switcher';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
+import { useClipboard } from '@/hooks/use-clipboard';
 import { home } from '@/routes';
 import { restart } from '@/routes/chat';
+import { index as orders } from '@/routes/orders';
 import type { Conversation } from '@/types';
 
 type Props = {
@@ -25,6 +27,69 @@ type Props = {
  */
 const useIsomorphicLayoutEffect =
     typeof window !== 'undefined' ? useLayoutEffect : useEffect;
+
+/**
+ * La carte qui clôt la conversation, avec la référence en or.
+ *
+ * La référence est la seule chose que le visiteur emporte, et on la lui
+ * demandait des yeux : à recopier à la main depuis un téléphone, c'est elle
+ * qu'on perd. Le bouton la met dans le presse-papiers, et la confirmation se
+ * joue dans le bouton lui-même — un toast par-dessus une conversation serait
+ * un message de plus.
+ *
+ * Le lien vers « Mes demandes » part d'ici parce que c'est ici qu'on apprend
+ * que cet espace existe : au moment où l'on vient de recevoir la clé qui y
+ * donne accès.
+ */
+function ReferenceCard({ reference }: { reference: string }) {
+    const [copied, copy] = useClipboard();
+
+    return (
+        <div className="animate-rise overflow-hidden rounded-3xl border bg-card shadow-md">
+            <div className="p-6">
+                <p className="flex items-center gap-2 text-sm font-medium text-success">
+                    <CheckCircle2 className="size-4" />
+                    Demande enregistrée
+                </p>
+                <p className="mt-2 text-sm text-muted-foreground">
+                    Notez cette référence : elle vous permet de suivre votre
+                    demande à tout moment.
+                </p>
+            </div>
+
+            {/* The reference is what the visitor leaves with, so it gets the
+                brand gold to itself. */}
+            <div className="flex items-center justify-between gap-4 bg-accent-brand px-6 py-5 text-accent-brand-foreground">
+                <p className="font-mono text-2xl font-bold tracking-tight">
+                    {reference}
+                </p>
+
+                <button
+                    type="button"
+                    onClick={() => copy(reference)}
+                    className="inline-flex shrink-0 items-center gap-2 rounded-xl px-3 py-2 text-sm font-semibold transition-colors outline-none hover:bg-black/10 focus-visible:ring-[3px] focus-visible:ring-black/30"
+                >
+                    {copied === reference ? (
+                        <Check className="size-4" />
+                    ) : (
+                        <Copy className="size-4" />
+                    )}
+                    {copied === reference ? 'Copié' : 'Copier'}
+                </button>
+            </div>
+
+            <div className="border-t p-6">
+                <Link
+                    href={orders()}
+                    className="inline-flex items-center gap-1.5 text-sm font-semibold text-primary underline-offset-4 hover:underline"
+                >
+                    Suivre ma demande dans mon espace
+                    <ArrowRight className="size-4" />
+                </Link>
+            </div>
+        </div>
+    );
+}
 
 export default function Chat({ conversation }: Props) {
     const { errors } = usePage().props;
@@ -124,26 +189,7 @@ export default function Chat({ conversation }: Props) {
                     )}
 
                     {conversation.completed && conversation.reference && (
-                        <div className="animate-rise overflow-hidden rounded-3xl border bg-card shadow-md">
-                            <div className="p-6">
-                                <p className="flex items-center gap-2 text-sm font-medium text-success">
-                                    <CheckCircle2 className="size-4" />
-                                    Demande enregistrée
-                                </p>
-                                <p className="mt-2 text-sm text-muted-foreground">
-                                    Notez cette référence : elle vous permet de
-                                    suivre votre demande à tout moment.
-                                </p>
-                            </div>
-
-                            {/* The reference is what the visitor leaves with,
-                                so it gets the brand gold to itself. */}
-                            <div className="bg-accent-brand px-6 py-5 text-accent-brand-foreground">
-                                <p className="font-mono text-2xl font-bold tracking-tight">
-                                    {conversation.reference}
-                                </p>
-                            </div>
-                        </div>
+                        <ReferenceCard reference={conversation.reference} />
                     )}
                 </div>
             </main>
