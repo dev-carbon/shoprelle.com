@@ -127,6 +127,7 @@ export const CONVERSATION_SLOT: PhotoSlot = {
  * c'est le seul texte que rencontre un lecteur d'écran.
  */
 const CONVERSATION_ALTS: readonly string[] = [
+    "La fiche d'un pantalon sur Bershka, à 29,99 €, ouverte dans le navigateur du téléphone.",
     "La fiche d'une chemise sur Bershka, à 29,99 €, telle qu'on la trouve avant de nous l'envoyer.",
     'Le lien du produit collé dans la conversation, puis la couleur, la taille et la quantité demandées.',
     'La fin de la demande : le pays et la ville de livraison, le numéro de téléphone, le nom, puis le récapitulatif.',
