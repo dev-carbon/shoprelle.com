@@ -19,7 +19,7 @@ import { cn } from '@/lib/utils';
  * place that says so.
  */
 const {
-    view: VIEW,
+    view: ATLAS_VIEW,
     hub: HUB_POINT,
     anchors: ANCHORS,
     shapes: SHAPES,
@@ -30,6 +30,34 @@ const {
     anchors: Record<string, [number, number]>;
     shapes: Record<string, string>;
 };
+
+/**
+ * Le cadre effectivement dessiné : celui de l'atlas, resserré.
+ *
+ * L'atlas cadre le monde entier, alors que tout ce qui bouge ici tient dans une
+ * bande étroite entre la France et le golfe de Guinée — le reste n'est que du
+ * contexte. Resserrer autour d'elle grossit ce qu'on vient regarder sans
+ * toucher à la projection : rien n'est reprojeté, on regarde la même image de
+ * plus près.
+ *
+ * Le rapport hauteur/largeur est conservé, ce qui est la condition de tout le
+ * reste : les marqueurs sont du HTML posé en pourcentages de ce cadre, et ils
+ * ne retombent sur le bon pays que parce que la boîte de l'`<svg>` et son
+ * `viewBox` ont exactement la même forme.
+ *
+ * Le point visé n'est pas le centre du cadre mais celui du trafic, qui se tient
+ * plus haut : centrer sur le cadre aurait grossi l'Atlantique sud.
+ */
+const ZOOM = 1.2;
+
+const FOCUS: [number, number] = [500, 190];
+
+const VIEW: [number, number, number, number] = (() => {
+    const width = ATLAS_VIEW[2] / ZOOM;
+    const height = ATLAS_VIEW[3] / ZOOM;
+
+    return [FOCUS[0] - width / 2, FOCUS[1] - height / 2, width, height];
+})();
 
 const VIEW_BOX = VIEW.join(' ');
 

@@ -151,51 +151,66 @@ export function HeroShowcase({
                     ))}
                 </div>
 
-                {/* La vignette du devis — illustrative, et cachée aux lecteurs
-                    d'écran pour cette raison. Elle chevauche le bord gauche de
-                    la photo : entièrement dedans elle se lirait comme une
-                    incrustation, entièrement dehors comme une carte de plus. */}
-                <div
-                    aria-hidden
-                    className="absolute top-6 left-3 flex animate-float items-center gap-3 rounded-2xl border panel-tile p-3 pr-5 shadow-xl shadow-black/15 sm:-left-6"
-                >
-                    <img
-                        src={jacket}
-                        alt=""
-                        width={48}
-                        height={48}
-                        className="size-12 shrink-0 rounded-xl object-cover"
-                    />
+                {/* Les deux vignettes.
 
-                    <div>
-                        <p className="flex items-center gap-1.5 text-xs font-semibold text-success">
-                            <Check className="size-3.5" />
-                            Devis validé
-                        </p>
-                        <p className="mt-1 font-display text-sm font-extrabold tabular-nums">
-                            24 500 XAF
-                        </p>
+                    Elles chevauchent les bords de la photo à partir de `sm`,
+                    où le cadre a de la marge à gauche et à droite : entièrement
+                    dedans elles se liraient comme des incrustations,
+                    entièrement dehors comme deux cartes de plus.
+
+                    Sur un téléphone cette marge n'existe pas, et flotter ne
+                    voulait plus dire que couvrir : les deux vignettes mangeaient
+                    le tiers d'une photo qui est la seule preuve de la page.
+                    Elles passent donc en dessous, posées côte à côte. Le
+                    conteneur disparaît en `display: contents` dès `sm` — les
+                    vignettes redeviennent alors des enfants directs du
+                    `<figure>`, qui est ce par rapport à quoi elles se
+                    positionnent. */}
+                <div className="mt-5 flex flex-wrap gap-3 sm:contents">
+                    {/* Illustrative, et cachée aux lecteurs d'écran pour cette
+                        raison : le produit et le montant sont des exemples. */}
+                    <div
+                        aria-hidden
+                        className="flex items-center gap-3 rounded-2xl border panel-tile p-3 pr-5 shadow-xl shadow-black/15 sm:absolute sm:top-6 sm:-left-6 sm:animate-float"
+                    >
+                        <img
+                            src={jacket}
+                            alt=""
+                            width={48}
+                            height={48}
+                            className="size-12 shrink-0 rounded-xl object-cover"
+                        />
+
+                        <div>
+                            <p className="flex items-center gap-1.5 text-xs font-semibold text-success">
+                                <Check className="size-3.5" />
+                                Devis validé
+                            </p>
+                            <p className="mt-1 font-display text-sm font-extrabold tabular-nums">
+                                24 500 XAF
+                            </p>
+                        </div>
                     </div>
-                </div>
 
-                {/* La vignette des pays — un fait, donc lue. */}
-                <div className="absolute right-3 bottom-6 flex animate-float-slow items-center gap-3 rounded-2xl border panel-tile p-3 pr-5 shadow-xl shadow-black/15 sm:-right-6">
-                    <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary text-primary-foreground">
-                        <BadgeCheck className="size-5" />
-                    </span>
+                    {/* Un fait, donc lue. */}
+                    <div className="flex items-center gap-3 rounded-2xl border panel-tile p-3 pr-5 shadow-xl shadow-black/15 sm:absolute sm:-right-6 sm:bottom-6 sm:animate-float-slow">
+                        <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary text-primary-foreground">
+                            <BadgeCheck className="size-5" />
+                        </span>
 
-                    <div>
-                        <p className="font-display text-sm font-extrabold tabular-nums">
-                            {countries} pays desservis
-                        </p>
-                        <p
-                            aria-hidden
-                            className="mt-1 text-lg leading-none tracking-widest"
-                        >
-                            {destinationCodes.map((code) => (
-                                <span key={code}>{flagFor(code)}</span>
-                            ))}
-                        </p>
+                        <div>
+                            <p className="font-display text-sm font-extrabold tabular-nums">
+                                {countries} pays desservis
+                            </p>
+                            <p
+                                aria-hidden
+                                className="mt-1 text-lg leading-none tracking-widest"
+                            >
+                                {destinationCodes.map((code) => (
+                                    <span key={code}>{flagFor(code)}</span>
+                                ))}
+                            </p>
+                        </div>
                     </div>
                 </div>
             </figure>
