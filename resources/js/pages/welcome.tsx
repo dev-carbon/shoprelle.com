@@ -365,6 +365,8 @@ function ChannelCard({
     brand,
     href,
     external,
+    featured,
+    children,
 }: {
     /* Assez large pour une Lucide comme pour un glyphe maison. */
     icon: ComponentType<{ className?: string }>;
@@ -381,6 +383,13 @@ function ChannelCard({
     brand?: string;
     href?: string;
     external?: boolean;
+    /**
+     * La carte majeure du bento : plus large, plus haute, et la seule à
+     * pouvoir porter un aperçu (`children`). Un seul canal y a droit — celui
+     * qui est toujours disponible, sans rien installer.
+     */
+    featured?: boolean;
+    children?: ReactNode;
 }) {
     const body = (
         <>
@@ -397,7 +406,12 @@ function ChannelCard({
                     <Icon className="size-5" />
                 </span>
                 <div className="min-w-0">
-                    <p className="font-display text-lg font-extrabold">
+                    <p
+                        className={cn(
+                            'font-display font-extrabold',
+                            featured ? 'text-xl' : 'text-lg',
+                        )}
+                    >
                         {name}
                     </p>
                     <p
@@ -415,6 +429,8 @@ function ChannelCard({
                 {description}
             </p>
 
+            {children}
+
             {href && (
                 <p className="mt-auto inline-flex items-center gap-1.5 pt-8 text-sm font-semibold text-primary">
                     Ouvrir
@@ -426,8 +442,10 @@ function ChannelCard({
 
     // `h-full` and a column layout, so two cards with descriptions of
     // different lengths still line up and both actions sit on the same line.
-    const shell =
-        'flex h-full flex-col rounded-3xl border bg-card p-7 shadow-sm sm:p-8';
+    const shell = cn(
+        'flex h-full flex-col rounded-3xl border bg-card shadow-sm',
+        featured ? 'p-8 sm:p-10' : 'p-7 sm:p-8',
+    );
 
     if (!href) {
         return <div className={cn(shell, 'opacity-70')}>{body}</div>;
@@ -1412,10 +1430,10 @@ export default function Welcome({
                     is where the conversation happens, and the answer is
                     "wherever you already are".
 
-                    Titre centré et trois cartes de front, au lieu d'un titre à
-                    gauche et de trois cartes tassées dans les sept douzièmes
-                    restants. Les canaux sont des égaux : les mettre en colonne
-                    à côté d'un titre en désignait un premier. */}
+                    Titre centré, puis un bento : le chat web en carte majeure,
+                    les deux relais empilés à côté. Les canaux ne sont pas des
+                    égaux — le chat web est le seul toujours disponible — et la
+                    grille le dit par la place, pas par une phrase. */}
                 <section
                     id="assistant"
                     className={cn('relative overflow-hidden border-b', BAND)}
@@ -1450,7 +1468,15 @@ export default function Welcome({
                             </p>
                         </Reveal>
 
-                        <div className="mt-16 grid w-full gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                        {/* ── Un bento, pas trois cartes de front ─────────────
+                            Les trois canaux ne sont pas égaux : le chat web est
+                            toujours là, sans rien installer — c'est le produit.
+                            Les deux autres n'existent que si quelqu'un les a
+                            branchés. La grille le dit par la place qu'elle
+                            donne, comme celle des engagements plus bas : la
+                            carte majeure à gauche, les deux relais empilés à
+                            droite, à la même hauteur totale. */}
+                        <div className="mt-16 grid w-full gap-6 lg:grid-cols-[7fr_5fr]">
                             <Reveal className="h-full">
                                 <ChannelCard
                                     icon={MessagesSquare}
@@ -1458,45 +1484,72 @@ export default function Welcome({
                                     badge="Disponible maintenant"
                                     description="Ici même, dans votre navigateur. Rien à installer, aucun compte à créer : la conversation commence tout de suite."
                                     href={chat().url}
-                                />
+                                    featured
+                                >
+                                    {/* L'aperçu : les trois premières répliques
+                                        du vrai parcours — le lien collé, la
+                                        couleur demandée — pas une conversation
+                                        inventée. Décoratif, donc muet pour un
+                                        lecteur d'écran : le texte de la carte
+                                        dit déjà tout. */}
+                                    <div
+                                        aria-hidden
+                                        className="mt-8 space-y-2.5 rounded-2xl bg-muted/50 p-4 sm:p-5"
+                                    >
+                                        <p className="w-fit max-w-[85%] rounded-2xl rounded-bl-md border bg-card px-3.5 py-2 text-xs">
+                                            Envoyez le lien du produit qui vous
+                                            fait envie.
+                                        </p>
+                                        <p className="ml-auto w-fit max-w-[85%] rounded-2xl rounded-br-md bg-primary px-3.5 py-2 text-xs text-primary-foreground">
+                                            https://www.shein.com/…
+                                        </p>
+                                        <p className="w-fit max-w-[85%] rounded-2xl rounded-bl-md border bg-card px-3.5 py-2 text-xs">
+                                            Parfait ! Quelle couleur
+                                            souhaitez-vous ?
+                                        </p>
+                                    </div>
+                                </ChannelCard>
                             </Reveal>
 
-                            <Reveal delay={120} className="h-full">
-                                <ChannelCard
-                                    icon={Send}
-                                    name="Telegram"
-                                    badge={
-                                        telegramUrl
-                                            ? 'Disponible maintenant'
-                                            : 'Bientôt disponible'
-                                    }
-                                    description="Le même assistant, dans votre messagerie. Vous gardez l'historique de vos demandes dans une conversation que vous n'avez pas à rouvrir."
-                                    href={telegramUrl ?? undefined}
-                                    external
-                                />
-                            </Reveal>
+                            <div className="grid gap-6">
+                                <Reveal delay={120} className="h-full">
+                                    <ChannelCard
+                                        icon={Send}
+                                        name="Telegram"
+                                        badge={
+                                            telegramUrl
+                                                ? 'Disponible maintenant'
+                                                : 'Bientôt disponible'
+                                        }
+                                        description="Le même assistant, dans votre messagerie. Vous gardez l'historique de vos demandes dans une conversation que vous n'avez pas à rouvrir."
+                                        href={telegramUrl ?? undefined}
+                                        external
+                                    />
+                                </Reveal>
 
-                            {/* WhatsApp n'est pas l'assistant, et la carte ne
-                                doit jamais le laisser croire : derrière ce
-                                lien il y a une personne, pas le robot. C'est
-                                la même promesse que le reste de la page — « une
-                                personne lit chaque demande » — mais elle se
-                                tient dans un fil que le client garde. */}
-                            <Reveal delay={240} className="h-full">
-                                <ChannelCard
-                                    icon={WhatsAppIcon}
-                                    brand={WHATSAPP_GREEN}
-                                    name="WhatsApp"
-                                    badge={
-                                        whatsappUrl
-                                            ? 'Disponible maintenant'
-                                            : 'Bientôt disponible'
-                                    }
-                                    description="Écrivez-nous sur WhatsApp : une personne vous répond et vous accompagne jusqu'à la commande."
-                                    href={whatsappUrl ?? undefined}
-                                    external
-                                />
-                            </Reveal>
+                                {/* WhatsApp n'est pas l'assistant, et la carte
+                                    ne doit jamais le laisser croire : derrière
+                                    ce lien il y a une personne, pas le robot.
+                                    C'est la même promesse que le reste de la
+                                    page — « une personne lit chaque demande » —
+                                    mais elle se tient dans un fil que le client
+                                    garde. */}
+                                <Reveal delay={240} className="h-full">
+                                    <ChannelCard
+                                        icon={WhatsAppIcon}
+                                        brand={WHATSAPP_GREEN}
+                                        name="WhatsApp"
+                                        badge={
+                                            whatsappUrl
+                                                ? 'Disponible maintenant'
+                                                : 'Bientôt disponible'
+                                        }
+                                        description="Écrivez-nous sur WhatsApp : une personne vous répond et vous accompagne jusqu'à la commande."
+                                        href={whatsappUrl ?? undefined}
+                                        external
+                                    />
+                                </Reveal>
+                            </div>
                         </div>
                     </div>
                 </section>
@@ -1550,8 +1603,15 @@ export default function Welcome({
                             the section next door already says what we do well,
                             and what is missing from the page is what goes wrong
                             without it. Every line on the right is something
-                            claimed elsewhere on this page, not a new promise. */}
-                        <div className="grid gap-6 sm:grid-cols-2">
+                            claimed elsewhere on this page, not a new promise.
+
+                            Asymétriques, et non à parts égales : le problème et
+                            sa réponse ne pèsent pas pareil. La carte « Sans »
+                            est étroite, en pointillés, presque un aparté ; la
+                            carte « Avec » est large, pleine, ombrée — c'est
+                            elle qu'on est venu lire, et la grille le dit avant
+                            la première ligne. */}
+                        <div className="grid gap-6 sm:grid-cols-[5fr_7fr]">
                             <Reveal
                                 from="right"
                                 className="rounded-3xl border border-dashed p-7 sm:p-8"
@@ -1575,9 +1635,11 @@ export default function Welcome({
                             <Reveal
                                 from="right"
                                 delay={100}
-                                className="rounded-3xl border bg-card p-7 shadow-sm sm:p-8"
+                                className="rounded-3xl border bg-card p-7 shadow-md sm:p-9"
                             >
-                                <p className="font-display text-eyebrow font-extrabold uppercase">
+                                {/* L'or du chapitre, repris sur le libellé : le
+                                    même ton que le sur-titre de la section. */}
+                                <p className="font-display text-eyebrow font-extrabold text-accent-brand-ink uppercase">
                                     Avec Shoprelle
                                 </p>
                                 <ul className="mt-6 space-y-4">
@@ -1814,12 +1876,20 @@ export default function Welcome({
                                     name="questions-frequentes"
                                     className="group border-b"
                                 >
-                                    <summary className="flex cursor-pointer list-none items-center justify-between gap-6 py-7 font-display text-lg font-extrabold transition-colors hover:text-primary focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ring [&::-webkit-details-marker]:hidden">
+                                    {/* Le survol est en or, pas en bleu : la
+                                        section est un chapitre or — sur-titre
+                                        et mot du titre — et un bleu au survol
+                                        y parlait une autre langue. Même coût
+                                        assumé que les mots `Accent` : cet or
+                                        se voit plus qu'il ne se lit sur fond
+                                        clair, et la question a déjà été lue
+                                        avant d'être survolée. */}
+                                    <summary className="flex cursor-pointer list-none items-center justify-between gap-6 py-7 font-display text-lg font-extrabold transition-colors hover:text-accent-brand-ink focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ring [&::-webkit-details-marker]:hidden">
                                         {item.question}
 
                                         <ChevronDown
                                             aria-hidden
-                                            className="size-5 shrink-0 text-muted-foreground transition-transform duration-300 group-open:rotate-180"
+                                            className="size-5 shrink-0 text-muted-foreground transition-[transform,color] duration-300 group-open:rotate-180 group-hover:text-accent-brand-ink"
                                         />
                                     </summary>
 
@@ -1860,38 +1930,63 @@ export default function Welcome({
                             </p>
                         </Reveal>
 
+                        {/* Deux tuiles au lieu d'une liste de liens : les deux
+                            portes ne mènent pas au même endroit — écrire pour
+                            une question neuve, ou retrouver une demande qui
+                            existe déjà — et deux cartes égales disent « choisis
+                            ta porte » là où une pile disait « lis tout ». La
+                            même coquille que les cartes des canaux, pour que la
+                            page n'ait qu'une seule espèce de carte cliquable. */}
                         <Reveal
                             from="right"
                             delay={140}
-                            className="flex flex-col gap-8"
+                            className="grid gap-6 sm:grid-cols-2"
                         >
-                            <div>
-                                <p className="text-sm text-muted-foreground">
+                            <a
+                                href={`mailto:${contact.email}`}
+                                className="group flex card-lift flex-col rounded-3xl border bg-card p-7 shadow-sm sm:p-8"
+                            >
+                                <span className="flex size-12 shrink-0 items-center justify-center rounded-2xl bg-primary text-primary-foreground">
+                                    <Mail className="size-5" />
+                                </span>
+
+                                <p className="mt-6 font-display text-lg font-extrabold">
                                     Par email
                                 </p>
-                                <a
-                                    href={`mailto:${contact.email}`}
-                                    className="mt-2 inline-flex items-center gap-3 font-display text-subtitle font-extrabold text-primary underline-offset-4 transition-colors hover:underline"
-                                >
-                                    <Mail className="size-5 shrink-0" />
+                                {/* `break-all` : une adresse ne se coupe pas
+                                    sur une espace, et une tuile de téléphone
+                                    est plus étroite qu'une adresse longue. */}
+                                <p className="mt-2 text-body break-all text-muted-foreground">
                                     {contact.email}
-                                </a>
-                            </div>
+                                </p>
 
-                            <div className="border-t pt-8">
-                                <p className="text-body text-muted-foreground">
-                                    Vous avez déjà une demande en cours ?
+                                <p className="mt-auto inline-flex items-center gap-1.5 pt-8 text-sm font-semibold text-primary">
+                                    Écrire
+                                    <ArrowRight className="size-4 transition-transform group-hover:translate-x-0.5" />
+                                </p>
+                            </a>
+
+                            <Link
+                                href={chat()}
+                                className="group flex card-lift flex-col rounded-3xl border bg-card p-7 shadow-sm sm:p-8"
+                            >
+                                <span className="flex size-12 shrink-0 items-center justify-center rounded-2xl bg-primary text-primary-foreground">
+                                    <MessagesSquare className="size-5" />
+                                </span>
+
+                                <p className="mt-6 font-display text-lg font-extrabold">
+                                    Une demande en cours ?
+                                </p>
+                                <p className="mt-2 text-body text-muted-foreground">
                                     L'assistant la retrouve avec votre référence
                                     et vous donne son statut tout de suite.
                                 </p>
-                                <Link
-                                    href={chat()}
-                                    className="mt-4 inline-flex items-center gap-1.5 font-semibold text-primary underline-offset-4 hover:underline"
-                                >
+
+                                <p className="mt-auto inline-flex items-center gap-1.5 pt-8 text-sm font-semibold text-primary">
                                     Suivre ma demande
-                                    <ArrowRight className="size-4" />
-                                </Link>
-                            </div>
+                                    <ArrowRight className="size-4 transition-transform group-hover:translate-x-0.5" />
+                                </p>
+                            </Link>
                         </Reveal>
                     </div>
                 </section>

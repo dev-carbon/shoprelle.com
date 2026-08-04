@@ -71,90 +71,101 @@ export default function Dashboard({
                     />
                 </div>
 
-                <Card>
-                    <CardHeader>
-                        <CardTitle>Répartition par statut</CardTitle>
-                    </CardHeader>
-                    <CardContent className="flex flex-wrap gap-2">
-                        {statuses.map((status) => (
-                            <Link
-                                key={status.value}
-                                href={index({
-                                    query: { status: status.value },
-                                })}
-                                className="inline-flex items-center gap-2 rounded-lg border bg-card px-3 py-2 transition-colors hover:border-foreground/20"
-                            >
-                                <StatusBadge
-                                    label={status.label}
-                                    color={status.color}
-                                />
-                                <span className="text-sm font-semibold tabular-nums">
-                                    {statistics.by_status[status.value] ?? 0}
-                                </span>
-                            </Link>
-                        ))}
-                    </CardContent>
-                </Card>
+                {/* Le tableau porte la largeur, la répartition le borde.
+                    Empilées, les deux cartes prenaient chacune tout l'écran
+                    pour un contenu qui n'en demandait pas tant ; côte à côte,
+                    la page du matin tient sur un seul écran. La répartition
+                    passe en liste : dans une colonne, des lignes se comparent,
+                    des pastilles en vrac se cherchent. */}
+                <div className="grid items-start gap-6 lg:grid-cols-3">
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>Répartition par statut</CardTitle>
+                        </CardHeader>
+                        <CardContent className="flex flex-col gap-1">
+                            {statuses.map((status) => (
+                                <Link
+                                    key={status.value}
+                                    href={index({
+                                        query: { status: status.value },
+                                    })}
+                                    className="flex items-center justify-between gap-2 rounded-lg px-2.5 py-2 transition-colors hover:bg-accent"
+                                >
+                                    <StatusBadge
+                                        label={status.label}
+                                        color={status.color}
+                                    />
+                                    <span className="text-sm font-semibold tabular-nums">
+                                        {statistics.by_status[status.value] ??
+                                            0}
+                                    </span>
+                                </Link>
+                            ))}
+                        </CardContent>
+                    </Card>
 
-                <Card>
-                    <CardHeader>
-                        <CardTitle>Dernières demandes</CardTitle>
-                    </CardHeader>
-                    <CardContent className="px-0">
-                        <Table>
-                            <TableHeader>
-                                <TableRow>
-                                    <TableHead className="pl-6">
-                                        Référence
-                                    </TableHead>
-                                    <TableHead>Client</TableHead>
-                                    <TableHead>Destination</TableHead>
-                                    <TableHead className="pr-6">
-                                        Statut
-                                    </TableHead>
-                                </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                                {latestRequests.length === 0 && (
+                    <Card className="lg:col-span-2">
+                        <CardHeader>
+                            <CardTitle>Dernières demandes</CardTitle>
+                        </CardHeader>
+                        <CardContent className="px-0">
+                            <Table>
+                                <TableHeader>
                                     <TableRow>
-                                        <TableCell
-                                            colSpan={4}
-                                            className="py-10 text-center text-sm text-muted-foreground"
-                                        >
-                                            Aucune demande pour le moment.
-                                        </TableCell>
+                                        <TableHead className="pl-6">
+                                            Référence
+                                        </TableHead>
+                                        <TableHead>Client</TableHead>
+                                        <TableHead>Destination</TableHead>
+                                        <TableHead className="pr-6">
+                                            Statut
+                                        </TableHead>
                                     </TableRow>
-                                )}
-
-                                {latestRequests.map((request) => (
-                                    <TableRow key={request.reference}>
-                                        <TableCell className="pl-6 font-mono text-xs font-medium">
-                                            <Link
-                                                href={show(request.reference)}
-                                                className="hover:underline"
+                                </TableHeader>
+                                <TableBody>
+                                    {latestRequests.length === 0 && (
+                                        <TableRow>
+                                            <TableCell
+                                                colSpan={4}
+                                                className="py-10 text-center text-sm text-muted-foreground"
                                             >
-                                                {request.reference}
-                                            </Link>
-                                        </TableCell>
-                                        <TableCell>
-                                            {request.customer_name}
-                                        </TableCell>
-                                        <TableCell className="text-sm text-muted-foreground">
-                                            {request.city},{' '}
-                                            {request.country_label}
-                                        </TableCell>
-                                        <TableCell className="pr-6">
-                                            <StatusBadge
-                                                label={request.status_label}
-                                                color={request.status_color}
-                                            />
-                                        </TableCell>
-                                    </TableRow>
-                                ))}
-                            </TableBody>
-                        </Table>
-                    </CardContent>
-                </Card>
+                                                Aucune demande pour le moment.
+                                            </TableCell>
+                                        </TableRow>
+                                    )}
+
+                                    {latestRequests.map((request) => (
+                                        <TableRow key={request.reference}>
+                                            <TableCell className="pl-6 font-mono text-xs font-medium">
+                                                <Link
+                                                    href={show(
+                                                        request.reference,
+                                                    )}
+                                                    className="hover:underline"
+                                                >
+                                                    {request.reference}
+                                                </Link>
+                                            </TableCell>
+                                            <TableCell>
+                                                {request.customer_name}
+                                            </TableCell>
+                                            <TableCell className="text-sm text-muted-foreground">
+                                                {request.city},{' '}
+                                                {request.country_label}
+                                            </TableCell>
+                                            <TableCell className="pr-6">
+                                                <StatusBadge
+                                                    label={request.status_label}
+                                                    color={request.status_color}
+                                                />
+                                            </TableCell>
+                                        </TableRow>
+                                    ))}
+                                </TableBody>
+                            </Table>
+                        </CardContent>
+                    </Card>
+                </div>
             </div>
         </>
     );
