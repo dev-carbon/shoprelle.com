@@ -51,6 +51,7 @@ import { SHOW_PROCESS_PHOTOS } from '@/lib/photos';
 import { cn } from '@/lib/utils';
 import { dashboard, login } from '@/routes';
 import { link, show as chat } from '@/routes/chat';
+import { index as orders } from '@/routes/orders';
 
 /**
  * The map is the single heaviest thing on this page — the projection library
@@ -613,6 +614,21 @@ export default function Welcome({
                         belongs to the visitor, and a door marked for somebody
                         else is one more thing for them to read past. */}
                     <div className="flex items-center gap-2">
+                        {/* La porte des clients qui reviennent.
+
+                            Elle est dans la barre et pas seulement au pied de
+                            page : quelqu'un qui vient relire son devis n'a
+                            aucune raison de faire défiler toute une page de
+                            vente pour retrouver l'entrée. Discrète, parce que
+                            la page appartient d'abord à qui ne connaît pas
+                            encore le service. */}
+                        <Link
+                            href={orders()}
+                            className="hidden rounded-full px-3.5 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground sm:inline-flex"
+                        >
+                            Mes demandes
+                        </Link>
+
                         <ThemeSwitcher />
 
                         {/* Le même menu que le bouton flottant : le header
@@ -1722,6 +1738,18 @@ export default function Welcome({
                                 className="transition-colors hover:text-foreground"
                             >
                                 Suivre ma demande
+                            </Link>
+                        </li>
+                        {/* Deux portes, et elles n'ouvrent pas sur la même
+                            chose : le suivi ci-dessus demande une référence et
+                            répond sur une demande ; celle-ci demande le code
+                            d'accès et rend tout l'historique, devis compris. */}
+                        <li>
+                            <Link
+                                href={orders()}
+                                className="transition-colors hover:text-foreground"
+                            >
+                                Mes demandes et devis
                             </Link>
                         </li>
                         {telegramUrl && (

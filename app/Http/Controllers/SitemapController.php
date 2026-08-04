@@ -17,12 +17,18 @@ class SitemapController extends Controller
      * Only the pages a visitor may land on cold. Everything behind a session is
      * excluded here and in robots.txt both: a crawler that follows those
      * collects nothing but redirects to a login form.
+     *
+     * "Mes demandes" belongs here despite what it leads to: unidentified, it is
+     * a form anybody may land on, and a returning customer looking for it is
+     * exactly the kind of search that should find it. What sits behind it — one
+     * request per address — is what robots.txt turns away.
      */
     public function __invoke(): Response
     {
         $pages = [
             ['route' => 'home', 'priority' => '1.0'],
             ['route' => 'chat.show', 'priority' => '0.8'],
+            ['route' => 'orders.index', 'priority' => '0.5'],
         ];
 
         $urls = array_map(

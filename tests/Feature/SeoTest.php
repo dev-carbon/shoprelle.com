@@ -51,9 +51,21 @@ it('lists only the public pages in the sitemap', function () {
     $response->assertOk()
         ->assertHeader('Content-Type', 'application/xml')
         ->assertSee(route('home'), escape: false)
-        ->assertSee(route('chat.show'), escape: false);
+        ->assertSee(route('chat.show'), escape: false)
+        // Le formulaire, que n'importe qui peut ouvrir et qu'un client qui
+        // revient a le droit de trouver dans un moteur.
+        ->assertSee(route('orders.index'), escape: false);
 
     // Rien derrière une session : un moteur qui suit ces adresses ne récolte
     // que des redirections vers un formulaire de connexion.
     $response->assertDontSee('/admin')->assertDontSee('/dashboard');
+});
+
+it('turns crawlers away from the requests themselves, not from the form', function () {
+    $robots = file_get_contents(public_path('robots.txt'));
+
+    // La barre finale est ce qui sépare les deux : sans elle, la règle
+    // fermerait aussi le formulaire que le sitemap vient d'annoncer.
+    expect($robots)->toContain('Disallow: /mes-demandes/')
+        ->and($robots)->not->toContain("Disallow: /mes-demandes\n");
 });

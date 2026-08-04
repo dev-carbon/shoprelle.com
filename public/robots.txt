@@ -11,4 +11,9 @@ Disallow: /dashboard
 Disallow: /settings
 Disallow: /telegram
 
+# La barre finale n'est pas une coquille : /mes-demandes est le formulaire, que
+# n'importe qui peut ouvrir et qu'un client qui revient a le droit de trouver.
+# Ce qui est derrière — une demande par adresse — n'appartient qu'à son client.
+Disallow: /mes-demandes/
+
 Sitemap: https://shoprelle.com/sitemap.xml
