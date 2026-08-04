@@ -6,7 +6,7 @@ use App\Enums\PurchaseRequestStatus;
 use App\Models\Payment;
 use App\Models\PurchaseItem;
 use App\Models\PurchaseRequest;
-use App\Services\PaymentWallets;
+use App\Services\AcceptedPayments;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -66,8 +66,8 @@ class CustomerRequestResource extends JsonResource
             // quelque chose à régler. Avant l'acceptation il n'y a rien à payer,
             // et un numéro affiché trop tôt se lit comme une facture.
             'payment_instructions' => $this->awaitsPayment() ? [
-                'wallets' => PaymentWallets::payable(),
-                'account_name' => PaymentWallets::accountName(),
+                'methods' => AcceptedPayments::payable(),
+                'account_name' => AcceptedPayments::accountName(),
                 'amount' => $this->balance(),
                 'currency' => $this->quote_currency,
             ] : null,

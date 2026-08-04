@@ -265,3 +265,20 @@ it('falls back to a neutral name when the reviewer was never identified', functi
             ->where('reviews.0.place', null)
         );
 });
+
+it('names every accepted payment method, configured or not', function () {
+    config()->set('shoprelle.payment.methods', [
+        ['name' => 'MTN Mobile Money', 'account' => '+237670000000', 'colour' => '#FFCC00'],
+        ['name' => 'PayPal', 'account' => null, 'colour' => '#003087'],
+    ]);
+
+    // Nommer un moyen informe ; c'est en donner le compte qui engage. PayPal
+    // est donc annoncé sans qu'aucune adresse ne soit renseignée.
+    $this->get(route('home'))
+        ->assertInertia(fn ($page) => $page
+            ->has('paymentMethods', 2)
+            ->where('paymentMethods.1.name', 'PayPal')
+            ->missing('paymentMethods.0.account')
+        )
+        ->assertDontSee('237670000000');
+});

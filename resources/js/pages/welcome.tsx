@@ -272,8 +272,8 @@ type Props = {
     stats: NetworkStats;
     reviews: Review[];
     social: Partial<Record<SocialNetwork, string>>;
-    /** Les portefeuilles annonçables : ceux dont on connaît le numéro. */
-    paymentWallets: { name: string; colour: string }[];
+    /** Les moyens de paiement acceptés, sans leurs coordonnées. */
+    paymentMethods: { name: string; colour: string }[];
 };
 
 /**
@@ -504,7 +504,7 @@ export default function Welcome({
     stats,
     reviews,
     social,
-    paymentWallets,
+    paymentMethods,
 }: Props) {
     const { auth } = usePage().props;
     const scrolled = useScrolled();
@@ -1496,12 +1496,16 @@ export default function Welcome({
                             presque tout le monde ici — a besoin de le savoir
                             pour se sentir concerné par le reste de la page.
 
-                            Les numéros, eux, n'y sont pas : ils sont donnés au
-                            client qui a accepté son devis, sur sa propre page.
-                            Un numéro de collecte affiché en clair sur une page
-                            publique est une invitation à s'en servir au nom du
-                            service. */}
-                        {paymentWallets.length > 0 && (
+                            Les coordonnées, elles, n'y sont pas : elles sont
+                            données au client qui a accepté son devis, sur sa
+                            propre page. Un numéro de collecte affiché en clair
+                            sur une page publique est une invitation à s'en
+                            servir au nom du service.
+
+                            Tous les moyens sont nommés, y compris ceux dont
+                            aucun compte n'est encore renseigné : cette liste
+                            informe, elle ne promet pas un numéro. */}
+                        {paymentMethods.length > 0 && (
                             <Reveal
                                 delay={160}
                                 className="mt-10 flex flex-wrap items-center justify-center gap-x-6 gap-y-3 rounded-3xl border bg-card px-8 py-6 text-center shadow-sm"
@@ -1510,19 +1514,19 @@ export default function Welcome({
                                     Vous réglez par
                                 </span>
 
-                                {paymentWallets.map((wallet) => (
+                                {paymentMethods.map((method) => (
                                     <span
-                                        key={wallet.name}
+                                        key={method.name}
                                         className="flex items-center gap-2 font-display text-sm font-extrabold"
                                     >
                                         <span
                                             aria-hidden
                                             style={{
-                                                backgroundColor: wallet.colour,
+                                                backgroundColor: method.colour,
                                             }}
                                             className="size-4 rounded-md"
                                         />
-                                        {wallet.name}
+                                        {method.name}
                                     </span>
                                 ))}
                             </Reveal>

@@ -53,7 +53,7 @@ type Props = {
         items: Item[];
         /** Non nul seulement entre l'acceptation et le règlement complet. */
         payment_instructions: {
-            wallets: { name: string; number: string; colour: string }[];
+            methods: { name: string; account: string; colour: string }[];
             account_name: string | null;
             amount: string | null;
             currency: string | null;
@@ -340,7 +340,7 @@ function PaymentInstructions({
     instructions: NonNullable<Props['request']['payment_instructions']>;
     reference: string;
 }) {
-    if (instructions.wallets.length === 0) {
+    if (instructions.methods.length === 0) {
         return null;
     }
 
@@ -359,22 +359,26 @@ function PaymentInstructions({
 
             <CardContent className="space-y-4">
                 <ul className="space-y-2">
-                    {instructions.wallets.map((wallet) => (
+                    {instructions.methods.map((method) => (
                         <li
-                            key={wallet.name}
+                            key={method.name}
                             className="flex items-center gap-3 rounded-xl border p-3"
                         >
                             <span
                                 aria-hidden
-                                style={{ backgroundColor: wallet.colour }}
+                                style={{ backgroundColor: method.colour }}
                                 className="size-9 shrink-0 rounded-lg"
                             />
                             <div className="min-w-0">
                                 <p className="text-sm font-medium">
-                                    {wallet.name}
+                                    {method.name}
                                 </p>
-                                <p className="font-mono text-base font-semibold">
-                                    {wallet.number}
+                                {/* Un numéro pour les portefeuilles mobiles,
+                                    une adresse pour PayPal : affiché tel quel,
+                                    et en chasse fixe parce qu'il sera recopié
+                                    caractère par caractère. */}
+                                <p className="font-mono text-base font-semibold break-all">
+                                    {method.account}
                                 </p>
                             </div>
                         </li>

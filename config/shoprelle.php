@@ -179,32 +179,41 @@ return [
     | Payment
     |--------------------------------------------------------------------------
     |
-    | Les portefeuilles par lesquels un client règle son devis. Le nom est
-    | annoncé sur la vitrine — savoir qu'on pourra payer par MTN ou Orange se
-    | décide avant de commander, pas après — mais le numéro n'est donné qu'au
-    | client qui a accepté son devis, sur sa propre page.
+    | Les moyens par lesquels un client règle son devis. Les deux publics n'ont
+    | pas les mêmes besoins, et la liste sert les deux :
     |
-    | Un portefeuille sans numéro n'est pas annoncé du tout : même règle que la
-    | carte Telegram de l'accueil, qui ne s'affiche que si quelqu'un écoute
-    | derrière. Promettre un moyen de paiement qu'on ne sait pas encaisser est
-    | la première chose qui fait douter d'un service qui manipule de l'argent.
+    |   — la vitrine annonce les noms, tous, sans coordonnées. « Est-ce que je
+    |     pourrai payer avec mon MoMo ? » se demande avant de commander, et la
+    |     réponse est une information, pas un engagement sur un numéro.
+    |   — la page du client qui vient d'accepter son devis donne le compte où
+    |     envoyer l'argent, et là seuls les moyens réellement renseignés ont
+    |     quelque chose à dire.
+    |
+    | Le `compte` est un numéro pour les portefeuilles mobiles et une adresse
+    | pour PayPal ; c'est la seule raison pour laquelle il ne s'appelle pas
+    | « numéro ».
     |
     */
 
     'payment' => [
-        'wallets' => [
+        'methods' => [
             [
                 'name' => 'MTN Mobile Money',
-                'number' => env('SHOPRELLE_PAYMENT_MTN'),
-                // Le jaune et l'orange des deux opérateurs. Ils ne servent
-                // qu'à une pastille : le logo lui-même est une marque
-                // déposée, et rien ici ne prétend le reproduire.
+                'account' => env('SHOPRELLE_PAYMENT_MTN'),
+                // Les couleurs des trois marques. Elles ne servent qu'à une
+                // pastille : le logo lui-même est déposé, et rien ici ne
+                // prétend le reproduire.
                 'colour' => '#FFCC00',
             ],
             [
                 'name' => 'Orange Money',
-                'number' => env('SHOPRELLE_PAYMENT_ORANGE'),
+                'account' => env('SHOPRELLE_PAYMENT_ORANGE'),
                 'colour' => '#FF7900',
+            ],
+            [
+                'name' => 'PayPal',
+                'account' => env('SHOPRELLE_PAYMENT_PAYPAL'),
+                'colour' => '#003087',
             ],
         ],
 

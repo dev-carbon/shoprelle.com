@@ -3,7 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Review;
-use App\Services\PaymentWallets;
+use App\Services\AcceptedPayments;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -30,9 +30,10 @@ class HomeController extends Controller
             'stats' => $this->stats(),
             'reviews' => $this->reviews(),
             'social' => array_filter(config('shoprelle.social')),
-            // Les noms seulement : les numéros de collecte n'ont rien à faire
-            // sur une page publique.
-            'paymentWallets' => PaymentWallets::announced(),
+            // Les noms seulement, et tous : c'est une information — savoir
+            // qu'on pourra payer par MoMo se demande avant de commander. Les
+            // coordonnées, elles, n'ont rien à faire sur une page publique.
+            'paymentMethods' => AcceptedPayments::announced(),
         ]);
     }
 

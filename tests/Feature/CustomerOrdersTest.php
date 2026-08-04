@@ -227,9 +227,9 @@ it('closes a session whose access code has since been reissued', function () {
 it('accepts a quote and then says how to pay it', function () {
     Notification::fake();
 
-    config()->set('shoprelle.payment.wallets', [
-        ['name' => 'MTN Mobile Money', 'number' => '+237 6 70 00 00 00', 'colour' => '#FFCC00'],
-        ['name' => 'Orange Money', 'number' => null, 'colour' => '#FF7900'],
+    config()->set('shoprelle.payment.methods', [
+        ['name' => 'MTN Mobile Money', 'account' => '+237 6 70 00 00 00', 'colour' => '#FFCC00'],
+        ['name' => 'Orange Money', 'account' => null, 'colour' => '#FF7900'],
     ]);
     config()->set('shoprelle.payment.account_name', 'Shoprelle SARL');
 
@@ -248,18 +248,19 @@ it('accepts a quote and then says how to pay it', function () {
     $this->get(route('orders.show', $request->reference))
         ->assertInertia(fn ($page) => $page
             ->where('request.awaits_decision', false)
-            // Seul le portefeuille dont on connaît le numéro est proposé : en
-            // annoncer un qu'on ne sait pas encaisser serait un guichet fermé.
-            ->has('request.payment_instructions.wallets', 1)
-            ->where('request.payment_instructions.wallets.0.number', '+237 6 70 00 00 00')
+            // Seul le moyen dont on connaît le compte est proposé : la
+            // vitrine peut nommer les autres, mais un écran de règlement ne
+            // sert à rien sans un endroit où envoyer l'argent.
+            ->has('request.payment_instructions.methods', 1)
+            ->where('request.payment_instructions.methods.0.account', '+237 6 70 00 00 00')
             ->where('request.payment_instructions.account_name', 'Shoprelle SARL')
             ->where('request.payment_instructions.amount', '60000.00')
         );
 });
 
 it('keeps the collection numbers to itself until the quote is accepted', function () {
-    config()->set('shoprelle.payment.wallets', [
-        ['name' => 'MTN Mobile Money', 'number' => '+237670000000', 'colour' => '#FFCC00'],
+    config()->set('shoprelle.payment.methods', [
+        ['name' => 'MTN Mobile Money', 'account' => '+237670000000', 'colour' => '#FFCC00'],
     ]);
 
     $request = PurchaseRequest::factory()->for($this->customer)->quoted()->create();
