@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Review;
+use App\Services\PaymentWallets;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -29,6 +30,9 @@ class HomeController extends Controller
             'stats' => $this->stats(),
             'reviews' => $this->reviews(),
             'social' => array_filter(config('shoprelle.social')),
+            // Les noms seulement : les numéros de collecte n'ont rien à faire
+            // sur une page publique.
+            'paymentWallets' => PaymentWallets::announced(),
         ]);
     }
 

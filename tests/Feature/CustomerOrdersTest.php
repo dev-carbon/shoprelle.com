@@ -1,11 +1,14 @@
 <?php
 
+use App\Enums\PurchaseRequestStatus;
 use App\Models\Customer;
 use App\Models\Payment;
 use App\Models\PurchaseItem;
 use App\Models\PurchaseRequest;
 use App\Models\User;
+use App\Notifications\PurchaseRequestStatusChanged;
 use Database\Factories\CustomerFactory;
+use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\RateLimiter;
 
 beforeEach(function () {
@@ -219,4 +222,134 @@ it('closes a session whose access code has since been reissued', function () {
 
     $this->get(route('orders.index'))
         ->assertInertia(fn ($page) => $page->component('orders/access'));
+});
+
+it('accepts a quote and then says how to pay it', function () {
+    Notification::fake();
+
+    config()->set('shoprelle.payment.wallets', [
+        ['name' => 'MTN Mobile Money', 'number' => '+237 6 70 00 00 00', 'colour' => '#FFCC00'],
+        ['name' => 'Orange Money', 'number' => null, 'colour' => '#FF7900'],
+    ]);
+    config()->set('shoprelle.payment.account_name', 'Shoprelle SARL');
+
+    $request = PurchaseRequest::factory()->for($this->customer)->quoted()->create();
+    PurchaseItem::factory()->for($request)->create();
+
+    identify();
+
+    $this->post(route('orders.quote.accept', $request->reference))
+        ->assertRedirect(route('orders.show', $request->reference));
+
+    expect($request->refresh()->status)->toBe(PurchaseRequestStatus::QuoteAccepted)
+        ->and($request->statusHistories()->latest()->first()->comment)
+        ->toBe('Devis accepté par le client.');
+
+    $this->get(route('orders.show', $request->reference))
+        ->assertInertia(fn ($page) => $page
+            ->where('request.awaits_decision', false)
+            // Seul le portefeuille dont on connaît le numéro est proposé : en
+            // annoncer un qu'on ne sait pas encaisser serait un guichet fermé.
+            ->has('request.payment_instructions.wallets', 1)
+            ->where('request.payment_instructions.wallets.0.number', '+237 6 70 00 00 00')
+            ->where('request.payment_instructions.account_name', 'Shoprelle SARL')
+            ->where('request.payment_instructions.amount', '60000.00')
+        );
+});
+
+it('keeps the collection numbers to itself until the quote is accepted', function () {
+    config()->set('shoprelle.payment.wallets', [
+        ['name' => 'MTN Mobile Money', 'number' => '+237670000000', 'colour' => '#FFCC00'],
+    ]);
+
+    $request = PurchaseRequest::factory()->for($this->customer)->quoted()->create();
+    PurchaseItem::factory()->for($request)->create();
+
+    identify();
+
+    $this->get(route('orders.show', $request->reference))
+        ->assertInertia(fn ($page) => $page
+            ->where('request.awaits_decision', true)
+            ->where('request.payment_instructions', null)
+        )
+        ->assertDontSee('237670000000');
+});
+
+it('sends a refused quote back to be redone, with the reason', function () {
+    Notification::fake();
+
+    $request = PurchaseRequest::factory()->for($this->customer)->quoted()->create();
+
+    identify();
+
+    $this->post(route('orders.quote.decline', $request->reference), [
+        'reason' => 'La livraison est trop chère.',
+    ])->assertRedirect(route('orders.show', $request->reference));
+
+    // En attente et non annulée : un devis refusé est presque toujours un
+    // devis à refaire, et la raison est ce qui dit quoi refaire.
+    expect($request->refresh()->status)->toBe(PurchaseRequestStatus::Pending)
+        ->and($request->statusHistories()->latest()->first()->comment)
+        ->toBe('Devis refusé par le client : La livraison est trop chère.');
+});
+
+it('accepts a refusal without a reason', function () {
+    Notification::fake();
+
+    $request = PurchaseRequest::factory()->for($this->customer)->quoted()->create();
+
+    identify();
+
+    $this->post(route('orders.quote.decline', $request->reference))->assertRedirect();
+
+    expect($request->refresh()->statusHistories()->latest()->first()->comment)
+        ->toBe('Devis refusé par le client.');
+});
+
+it('tells the back office when a customer answers', function () {
+    Notification::fake();
+
+    $admin = User::factory()->admin()->create();
+    $request = PurchaseRequest::factory()->for($this->customer)->quoted()->create();
+
+    identify();
+    $this->post(route('orders.quote.accept', $request->reference));
+
+    Notification::assertSentTo($admin, PurchaseRequestStatusChanged::class);
+});
+
+it('does not let a customer answer a quote that is no longer awaiting one', function () {
+    Notification::fake();
+
+    $request = PurchaseRequest::factory()->for($this->customer)
+        ->status(PurchaseRequestStatus::Shipped)
+        ->create();
+
+    identify();
+
+    // Deux onglets restés ouverts : la page se recharge sur l'état réel plutôt
+    // que de reprocher au client d'avoir cliqué.
+    $this->post(route('orders.quote.accept', $request->reference))
+        ->assertRedirect(route('orders.show', $request->reference));
+
+    expect($request->refresh()->status)->toBe(PurchaseRequestStatus::Shipped);
+});
+
+it('refuses to let anyone answer a quote that is not theirs', function () {
+    $theirs = PurchaseRequest::factory()->quoted()->create();
+
+    identify();
+
+    $this->post(route('orders.quote.accept', $theirs->reference))->assertNotFound();
+
+    expect($theirs->refresh()->status)->toBe(PurchaseRequestStatus::QuoteSent);
+});
+
+it('sends an unidentified visitor back to the form rather than accepting', function () {
+    $request = PurchaseRequest::factory()->for($this->customer)->quoted()->create();
+
+    $this->post(route('orders.quote.accept', $request->reference))
+        ->assertRedirect(route('orders.index'));
+
+    expect($request->refresh()->status)->toBe(PurchaseRequestStatus::QuoteSent);
 });

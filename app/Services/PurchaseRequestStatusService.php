@@ -60,6 +60,48 @@ class PurchaseRequestStatusService
     }
 
     /**
+     * The customer says yes to the quote.
+     *
+     * No `User`: the author of this one is the customer, and the history says
+     * so in words rather than by pointing at an administrator who did nothing.
+     * The money has not moved yet — accepting is a promise, and the request
+     * stays on the customer's side of the court until it is paid.
+     *
+     * @throws InvalidStatusTransition when the request is not awaiting an answer
+     */
+    public function acceptQuote(PurchaseRequest $request): PurchaseRequest
+    {
+        return $this->transition(
+            $request,
+            PurchaseRequestStatus::QuoteAccepted,
+            comment: 'Devis accepté par le client.',
+        );
+    }
+
+    /**
+     * The customer says no.
+     *
+     * Back to "pending" rather than cancelled: a refused quote is almost always
+     * a quote to redo, and cancelling would close a request the customer never
+     * asked to end. The reason, when given, is the whole point — it is what
+     * tells an administrator what to change.
+     *
+     * @throws InvalidStatusTransition when the request is not awaiting an answer
+     */
+    public function declineQuote(PurchaseRequest $request, ?string $reason = null): PurchaseRequest
+    {
+        $reason = $reason === null ? null : trim($reason);
+
+        return $this->transition(
+            $request,
+            PurchaseRequestStatus::Pending,
+            comment: $reason === null || $reason === ''
+                ? 'Devis refusé par le client.'
+                : 'Devis refusé par le client : '.$reason,
+        );
+    }
+
+    /**
      * Record a quote and move the request to "quote sent" in one operation, so
      * a request can never carry amounts without the matching status.
      *

@@ -14,6 +14,7 @@ enum PurchaseRequestStatus: string
     case New = 'new';
     case Pending = 'pending';
     case QuoteSent = 'quote_sent';
+    case QuoteAccepted = 'quote_accepted';
     case PaymentReceived = 'payment_received';
     case Purchased = 'purchased';
     case Preparing = 'preparing';
@@ -30,6 +31,7 @@ enum PurchaseRequestStatus: string
             self::New => 'Nouveau',
             self::Pending => 'En attente',
             self::QuoteSent => 'Devis envoyé',
+            self::QuoteAccepted => 'Devis accepté',
             self::PaymentReceived => 'Paiement reçu',
             self::Purchased => 'Achat effectué',
             self::Preparing => 'En préparation',
@@ -50,8 +52,9 @@ enum PurchaseRequestStatus: string
     {
         return match ($this) {
             self::New => 'blue',
-            // Both mean "waiting on the customer", so they share a hue.
-            self::Pending, self::QuoteSent => 'amber',
+            // All three mean "waiting on the customer", so they share a hue:
+            // a quote accepted but unpaid is still a ball in their court.
+            self::Pending, self::QuoteSent, self::QuoteAccepted => 'amber',
             self::PaymentReceived => 'green',
             // Two internal handling stages, indistinguishable to the customer.
             self::Purchased, self::Preparing => 'cyan',
@@ -71,7 +74,13 @@ enum PurchaseRequestStatus: string
         return match ($this) {
             self::New => [self::Pending, self::QuoteSent, self::Cancelled],
             self::Pending => [self::QuoteSent, self::Cancelled],
-            self::QuoteSent => [self::PaymentReceived, self::Pending, self::Cancelled],
+            // Le paiement reste atteignable sans passer par l'acceptation :
+            // un client qui règle sans avoir cliqué a évidemment accepté, et
+            // le back-office ne doit pas avoir à cocher une case pour lui.
+            self::QuoteSent => [self::QuoteAccepted, self::PaymentReceived, self::Pending, self::Cancelled],
+            // Retour possible en attente : un devis accepté puis contesté se
+            // rechiffre, plutôt que de rester accepté sans que rien ne suive.
+            self::QuoteAccepted => [self::PaymentReceived, self::Pending, self::Cancelled],
             self::PaymentReceived => [self::Purchased, self::Cancelled],
             self::Purchased => [self::Preparing, self::Cancelled],
             self::Preparing => [self::Shipped, self::Cancelled],

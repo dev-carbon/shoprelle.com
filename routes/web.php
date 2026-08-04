@@ -14,6 +14,7 @@ use App\Http\Controllers\Admin\ReviewController;
 use App\Http\Controllers\Admin\StatisticsController;
 use App\Http\Controllers\ChatbotController;
 use App\Http\Controllers\CustomerAccessController;
+use App\Http\Controllers\CustomerQuoteController;
 use App\Http\Controllers\CustomerRequestController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\SitemapController;
@@ -73,6 +74,14 @@ Route::prefix('demande')->name('chat.')->group(function () {
 Route::prefix('mes-demandes')->name('orders.')->group(function () {
     Route::get('/', [CustomerRequestController::class, 'index'])->name('index');
     Route::get('{reference}', [CustomerRequestController::class, 'show'])->name('show');
+
+    // Répondre au devis. Sous le même préfixe et derrière la même session : la
+    // demande est retrouvée à partir du client identifié, jamais de la seule
+    // référence.
+    Route::post('{reference}/acceptation', [CustomerQuoteController::class, 'accept'])
+        ->name('quote.accept');
+    Route::post('{reference}/refus', [CustomerQuoteController::class, 'decline'])
+        ->name('quote.decline');
 
     Route::post('acces', [CustomerAccessController::class, 'store'])
         ->middleware('throttle:customer-access')

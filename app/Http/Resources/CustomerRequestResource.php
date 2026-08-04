@@ -2,9 +2,11 @@
 
 namespace App\Http\Resources;
 
+use App\Enums\PurchaseRequestStatus;
 use App\Models\Payment;
 use App\Models\PurchaseItem;
 use App\Models\PurchaseRequest;
+use App\Services\PaymentWallets;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -28,8 +30,13 @@ class CustomerRequestResource extends JsonResource
     {
         return [
             'reference' => $this->reference,
+            'status' => $this->status->value,
             'status_label' => $this->status->label(),
             'status_color' => $this->status->color(),
+            // Ce que le client peut encore faire de son devis. Décidé ici, à
+            // partir du cycle de vie lui-même, plutôt que redéduit dans l'écran
+            // à partir d'un statut — les deux auraient fini par diverger.
+            'awaits_decision' => $this->status === PurchaseRequestStatus::QuoteSent,
             'created_at' => $this->created_at?->toIso8601String(),
             'destination' => trim($this->city.', '.$this->countryName(), ', '),
 
@@ -53,6 +60,16 @@ class CustomerRequestResource extends JsonResource
                 'currency' => $this->quote_currency,
                 'notes' => $this->quote_notes,
                 'sent_at' => $this->quote_sent_at?->toIso8601String(),
+            ] : null,
+
+            // Où envoyer l'argent, une fois le devis accepté et tant qu'il reste
+            // quelque chose à régler. Avant l'acceptation il n'y a rien à payer,
+            // et un numéro affiché trop tôt se lit comme une facture.
+            'payment_instructions' => $this->awaitsPayment() ? [
+                'wallets' => PaymentWallets::payable(),
+                'account_name' => PaymentWallets::accountName(),
+                'amount' => $this->balance(),
+                'currency' => $this->quote_currency,
             ] : null,
 
             'payments' => $this->isQuoted() ? [

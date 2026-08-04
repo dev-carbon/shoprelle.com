@@ -176,6 +176,48 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Payment
+    |--------------------------------------------------------------------------
+    |
+    | Les portefeuilles par lesquels un client règle son devis. Le nom est
+    | annoncé sur la vitrine — savoir qu'on pourra payer par MTN ou Orange se
+    | décide avant de commander, pas après — mais le numéro n'est donné qu'au
+    | client qui a accepté son devis, sur sa propre page.
+    |
+    | Un portefeuille sans numéro n'est pas annoncé du tout : même règle que la
+    | carte Telegram de l'accueil, qui ne s'affiche que si quelqu'un écoute
+    | derrière. Promettre un moyen de paiement qu'on ne sait pas encaisser est
+    | la première chose qui fait douter d'un service qui manipule de l'argent.
+    |
+    */
+
+    'payment' => [
+        'wallets' => [
+            [
+                'name' => 'MTN Mobile Money',
+                'number' => env('SHOPRELLE_PAYMENT_MTN'),
+                // Le jaune et l'orange des deux opérateurs. Ils ne servent
+                // qu'à une pastille : le logo lui-même est une marque
+                // déposée, et rien ici ne prétend le reproduire.
+                'colour' => '#FFCC00',
+            ],
+            [
+                'name' => 'Orange Money',
+                'number' => env('SHOPRELLE_PAYMENT_ORANGE'),
+                'colour' => '#FF7900',
+            ],
+        ],
+
+        /*
+         * Le nom qui s'affiche sur le téléphone du client au moment de valider
+         * le transfert. L'annoncer d'avance est ce qui distingue un paiement
+         * attendu d'un numéro reçu par message.
+         */
+        'account_name' => env('SHOPRELLE_PAYMENT_ACCOUNT_NAME'),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Contact
     |--------------------------------------------------------------------------
     |

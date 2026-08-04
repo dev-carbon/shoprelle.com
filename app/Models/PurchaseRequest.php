@@ -196,6 +196,18 @@ class PurchaseRequest extends Model implements RoutesMail, RoutesTelegram
     }
 
     /**
+     * Whether the customer has said yes and still owes something.
+     *
+     * The one condition under which payment instructions are worth showing:
+     * before the quote is accepted there is nothing to pay, and once it is
+     * settled a number on screen only invites a second transfer.
+     */
+    public function awaitsPayment(): bool
+    {
+        return $this->status === PurchaseRequestStatus::QuoteAccepted && ! $this->isSettled();
+    }
+
+    /**
      * Everything received so far, instalments and refunds together.
      *
      * Sums the loaded relation rather than querying, so a screen that already
