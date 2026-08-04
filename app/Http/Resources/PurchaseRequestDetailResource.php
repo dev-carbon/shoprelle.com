@@ -7,6 +7,7 @@ use App\Models\Attachment;
 use App\Models\Payment;
 use App\Models\PurchaseItem;
 use App\Models\PurchaseRequest;
+use App\Notifications\QuoteSent;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -68,6 +69,20 @@ class PurchaseRequestDetailResource extends JsonResource
                 'margin_amount' => $this->marginAmount(),
                 'notes' => $this->quote_notes,
                 'sent_at' => $this->quote_sent_at?->toIso8601String(),
+            ] : null,
+
+            // De quoi remettre le devis à la main, dans les mots exacts que les
+            // canaux automatiques emploient. Un message retapé de tête à chaque
+            // fois finit par promettre ce que le devis ne dit pas.
+            'handover' => $this->isQuoted() ? [
+                'message' => $message = (new QuoteSent($this->resource))->asPlainText(),
+                // wa.me n'accepte le numéro qu'en chiffres, indicatif compris
+                // et sans le plus.
+                'whatsapp_url' => sprintf(
+                    'https://wa.me/%s?text=%s',
+                    preg_replace('/\D/', '', $this->customer->phone),
+                    rawurlencode($message),
+                ),
             ] : null,
 
             // Null before a quote exists: there is nothing to settle, and the

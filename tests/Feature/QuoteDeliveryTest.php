@@ -208,6 +208,39 @@ it('words the email with every line and what they add up to', function () {
         ->and($mail->actionUrl)->toBe(route('orders.index'));
 });
 
+it('hands the back office the very message the channels send', function () {
+    $request = requestFrom(Channel::Web);
+
+    quoteRequest($request, 'Délai estimé : 3 semaines.');
+
+    $response = $this->actingAs($this->admin)
+        ->get(route('admin.requests.show', $request->refresh()));
+
+    $handover = $response->viewData('page')['props']['request']['handover'];
+
+    // Mot pour mot ce que Telegram aurait posté : c'est toute la raison d'être
+    // du bloc, et une divergence ici serait invisible autrement.
+    expect($handover['message'])
+        ->toBe((new QuoteSent($request))->asPlainText())
+        ->toContain('Nike Air Max (×2) : 45 000 XAF')
+        ->toContain('Total : 65 000 XAF')
+        ->toContain('Délai estimé : 3 semaines.');
+
+    // wa.me n'accepte le numéro qu'en chiffres, sans le plus ni les espaces.
+    expect($handover['whatsapp_url'])
+        ->toStartWith('https://wa.me/'.preg_replace('/\D/', '', $request->customer->phone).'?text=')
+        ->toContain(rawurlencode('Total : 65 000 XAF'));
+});
+
+it('offers nothing to hand over before a quote exists', function () {
+    $request = requestFrom(Channel::Web);
+
+    $response = $this->actingAs($this->admin)
+        ->get(route('admin.requests.show', $request));
+
+    expect($response->viewData('page')['props']['request']['handover'])->toBeNull();
+});
+
 it('records the quote even when Telegram refuses the message', function () {
     Http::fake([
         '*/bot*/sendMessage' => Http::response(['ok' => false, 'description' => 'chat not found'], 400),

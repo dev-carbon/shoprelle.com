@@ -1,7 +1,10 @@
 import { Form, Head, setLayoutProps } from '@inertiajs/react';
 import {
+    Check,
+    Copy,
     ExternalLink,
     ImageIcon,
+    MessageCircle,
     MessageSquarePlus,
     Paperclip,
     ReceiptText,
@@ -32,6 +35,7 @@ import {
 } from '@/components/ui/select';
 import { Spinner } from '@/components/ui/spinner';
 import { Textarea } from '@/components/ui/textarea';
+import { useClipboard } from '@/hooks/use-clipboard';
 import { store as storeNote } from '@/routes/admin/notes';
 import { index, show } from '@/routes/admin/requests';
 import { store as storePayment } from '@/routes/admin/requests/payments';
@@ -396,6 +400,8 @@ function QuoteCard({
                     </dl>
                 )}
 
+                {request.handover && <Handover request={request} />}
+
                 <Form
                     {...storeQuote.form(request.reference)}
                     options={{ preserveScroll: true }}
@@ -637,6 +643,60 @@ function QuoteCard({
                 </Form>
             </CardContent>
         </Card>
+    );
+}
+
+/**
+ * Remettre le devis à la main, quand un canal ne s'en charge pas.
+ *
+ * Les deux boutons portent le même texte que les messages automatiques : ce
+ * n'est pas une commodité mais la raison d'être du bloc. Un devis réécrit de
+ * tête à chaque appel finit par annoncer un montant, un délai ou une condition
+ * que le devis enregistré ne dit pas — et c'est la version parlée que le client
+ * retiendra.
+ */
+function Handover({ request }: { request: PurchaseRequestDetail }) {
+    const [copied, copy] = useClipboard();
+
+    if (!request.handover) {
+        return null;
+    }
+
+    const message = request.handover.message;
+
+    return (
+        <div className="space-y-2 rounded-lg border border-dashed p-3">
+            <p className="text-xs text-muted-foreground">
+                Le même message, à transmettre vous-même :
+            </p>
+
+            <div className="flex flex-wrap gap-2">
+                <Button asChild variant="outline" size="sm">
+                    <a
+                        href={request.handover.whatsapp_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                    >
+                        <MessageCircle className="size-4" />
+                        WhatsApp
+                    </a>
+                </Button>
+
+                <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => copy(message)}
+                >
+                    {copied === message ? (
+                        <Check className="size-4 text-success" />
+                    ) : (
+                        <Copy className="size-4" />
+                    )}
+                    {copied === message ? 'Copié' : 'Copier le message'}
+                </Button>
+            </div>
+        </div>
     );
 }
 

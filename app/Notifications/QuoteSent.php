@@ -49,10 +49,20 @@ class QuoteSent extends Notification implements SendsTelegram, ShouldQueue
         return $channels;
     }
 
+    public function toTelegram(object $notifiable): string
+    {
+        return $this->asPlainText();
+    }
+
     /**
      * The quote as the customer reads it: every line, then what it adds up to.
+     *
+     * Public because it is also what an administrator hands over by hand, from
+     * the back office, when no channel can carry it. One wording, whoever
+     * delivers it — a message retyped from memory each time is a message that
+     * ends up promising something the quote does not say.
      */
-    public function toTelegram(object $notifiable): string
+    public function asPlainText(): string
     {
         $request = $this->request();
 

@@ -196,6 +196,11 @@ export type PurchaseRequestDetail = {
         notes: string | null;
         sent_at: string | null;
     } | null;
+    /** How to hand the quote over by hand. Null until a quote exists. */
+    handover: {
+        message: string;
+        whatsapp_url: string;
+    } | null;
     /** Null until a quote exists: there is nothing to settle before one. */
     payments: {
         currency: string;
