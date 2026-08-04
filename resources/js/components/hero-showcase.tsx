@@ -70,21 +70,16 @@ export function HeroShowcase({
     );
 
     return (
-        // `isolate` n'est pas cosmétique : le halo est en `-z-10`, et sans
-        // contexte d'empilement déclaré ici il passerait derrière le fond de la
-        // section — donc derrière la carte du monde en pointillés — pendant
-        // l'animation d'entrée puis devant elle une fois l'animation terminée,
-        // la transformation créant ce contexte le temps qu'elle dure. Posé, il
-        // reste au même endroit du début à la fin.
+        // Le halo doré qui débordait du cadre est parti : la photo a désormais
+        // deux vignettes posées dessus et une paire de puces, et un rond de
+        // lumière derrière tout ça faisait un fond de plus à démêler. L'ombre
+        // portée suffit à décoller l'image de la page.
+        //
+        // `isolate` reste : les vignettes sont positionnées par rapport à ce
+        // conteneur, et un contexte d'empilement déclaré ici les garde au-dessus
+        // du fond de la section — la carte du monde en pointillés — pendant
+        // l'animation d'entrée comme après.
         <div {...props} className={cn('relative isolate', className)}>
-            {/* Le halo. Il déborde du cadre de la photo et dérive très
-                lentement : sans lui, une image posée sur une page blanche
-                flotte sans poids. Purement décoratif, et sous la photo. */}
-            <div
-                aria-hidden
-                className="pointer-events-none absolute -inset-6 -z-10 animate-drift rounded-[3rem] bg-[radial-gradient(60%_60%_at_65%_35%,var(--color-accent-brand)_0%,transparent_70%)] opacity-40 blur-2xl"
-            />
-
             <figure className="relative" {...holdHandlers}>
                 {/* Verticale sur grand écran, panoramique en dessous : dans une
                     colonne de hero une image large s'écrase, et sur un
