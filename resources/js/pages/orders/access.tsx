@@ -2,6 +2,7 @@ import { Form, Head } from '@inertiajs/react';
 import { KeyRound } from 'lucide-react';
 
 import InputError from '@/components/input-error';
+import { Accent, Eyebrow } from '@/components/section-heading';
 import { Button } from '@/components/ui/button';
 import {
     Card,
@@ -22,11 +23,15 @@ export default function OrdersAccess() {
         <CustomerLayout>
             <Head title="Mes demandes" />
 
+            <div className="mx-auto mb-10 max-w-md">
+                <Eyebrow tone="gold">Votre espace</Eyebrow>
+            </div>
+
             <Card className="mx-auto max-w-md animate-rise">
                 <CardHeader>
                     <CardTitle className="flex items-center gap-2">
-                        <KeyRound className="size-4" />
-                        Mes demandes
+                        <KeyRound className="size-4 text-accent-brand-ink" />
+                        Mes <Accent tone="gold">demandes</Accent>
                     </CardTitle>
                     <CardDescription>
                         Retrouvez vos demandes et vos devis avec le numéro
@@ -35,7 +40,7 @@ export default function OrdersAccess() {
                 </CardHeader>
 
                 <CardContent>
-                    <Form {...store.form()} className="space-y-4">
+                    <Form {...store.form()} className="space-y-6">
                         {({ processing, errors }) => (
                             <>
                                 <div className="space-y-1.5">
@@ -84,7 +89,7 @@ export default function OrdersAccess() {
 
             {/* The code cannot be resent — it is stored hashed and nobody can
                 read it back — so the only honest advice is to ask us. */}
-            <p className="mx-auto mt-6 max-w-md text-center text-sm text-muted-foreground">
+            <p className="mx-auto mt-10 max-w-md text-center text-sm text-muted-foreground">
                 Votre code vous a été donné à la fin de votre première demande.
                 Vous l'avez perdu ? Écrivez-nous depuis{' '}
                 <a

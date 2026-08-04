@@ -45,6 +45,12 @@ enum Step: string
     case ReviewRating = 'review_rating';
     case ReviewComment = 'review_comment';
 
+    // Écrire à l'équipe. Le message d'abord, le moyen de rappel ensuite : on
+    // demande d'abord ce que la personne est venue dire, et seulement ensuite
+    // comment la joindre — l'inverse fait un formulaire.
+    case ContactMessage = 'contact_message';
+    case ContactReply = 'contact_reply';
+
     /**
      * How a channel should render the answer control.
      */
@@ -57,7 +63,7 @@ enum Step: string
             self::Quantity => InputType::Number,
             self::DeclaredPrice => InputType::Decimal,
             self::Screenshot => InputType::File,
-            self::ItemComment, self::ReviewComment => InputType::LongText,
+            self::ItemComment, self::ReviewComment, self::ContactMessage => InputType::LongText,
             self::Email => InputType::Email,
             self::Completed => InputType::None,
             default => InputType::Text,
@@ -71,7 +77,11 @@ enum Step: string
     {
         return match ($this) {
             self::Color, self::Size, self::DeclaredPrice, self::Screenshot, self::ItemComment,
-            self::Email, self::ReviewComment => true,
+            self::Email, self::ReviewComment,
+            // Facultatif, et c'est un choix : quelqu'un qui pose sa question
+            // sans laisser de numéro l'a quand même posée. Le message le dit à
+            // ce moment-là plutôt que de la refuser.
+            self::ContactReply => true,
             default => false,
         };
     }
@@ -100,7 +110,10 @@ enum Step: string
             // "Mes demandes" asks for, and the code that follows is what
             // actually triggers the lookup. The review is the other kind of
             // step the engine cannot finish — it writes rather than reads.
-            self::TrackPhone, self::MyOrdersCode, self::ReviewComment => true,
+            self::TrackPhone, self::MyOrdersCode, self::ReviewComment,
+            // Comme l'avis : cette étape écrit, et l'écriture appartient au
+            // gestionnaire, pas au moteur.
+            self::ContactReply => true,
             default => false,
         };
     }

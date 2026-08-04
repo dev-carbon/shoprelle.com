@@ -1,6 +1,7 @@
 import { Form, Head, Link } from '@inertiajs/react';
 import { ChevronRight, PackageOpen } from 'lucide-react';
 
+import { Accent, Eyebrow } from '@/components/section-heading';
 import { StatusBadge } from '@/components/status-badge';
 import { Button } from '@/components/ui/button';
 import { CustomerLayout } from '@/layouts/customer-layout';
@@ -38,12 +39,18 @@ export default function OrdersIndex({ customer, requests }: Props) {
         >
             <Head title="Mes demandes" />
 
-            <div className="animate-rise space-y-6">
+            <div className="animate-rise space-y-10">
                 <header>
-                    <h1 className="font-display text-2xl font-extrabold tracking-tight">
-                        Bonjour {customer.first_name}
+                    <Eyebrow>Mes demandes</Eyebrow>
+
+                    {/* Le prénom en bleu et non en or : c'est un nom propre,
+                        donc de l'information, et l'or ne porte pas de
+                        l'information sur un fond clair. */}
+                    <h1 className="mt-6 font-display text-2xl font-extrabold tracking-tight">
+                        Bonjour{' '}
+                        <Accent tone="blue">{customer.first_name}</Accent>
                     </h1>
-                    <p className="mt-1 text-sm text-muted-foreground">
+                    <p className="mt-3 text-sm text-muted-foreground">
                         {requests.length === 0
                             ? 'Aucune demande pour le moment.'
                             : `${requests.length} demande${requests.length > 1 ? 's' : ''} au ${customer.phone}.`}
@@ -51,7 +58,7 @@ export default function OrdersIndex({ customer, requests }: Props) {
                 </header>
 
                 {requests.length === 0 ? (
-                    <div className="rounded-2xl border border-dashed p-8 text-center">
+                    <div className="rounded-3xl border border-dashed p-12 text-center">
                         <PackageOpen className="mx-auto size-6 text-muted-foreground" />
                         <p className="mt-3 text-sm text-muted-foreground">
                             Vos demandes apparaîtront ici dès que vous en aurez
@@ -62,12 +69,12 @@ export default function OrdersIndex({ customer, requests }: Props) {
                         </Button>
                     </div>
                 ) : (
-                    <ul className="space-y-3">
+                    <ul className="space-y-4">
                         {requests.map((request) => (
                             <li key={request.reference}>
                                 <Link
                                     href={show(request.reference)}
-                                    className="flex items-center gap-4 rounded-2xl border bg-card p-4 transition hover:border-primary/40 hover:shadow-sm"
+                                    className="flex items-center gap-5 rounded-2xl border bg-card p-5 transition hover:border-primary/40 hover:shadow-sm"
                                 >
                                     <div className="min-w-0 flex-1">
                                         <p className="font-mono font-semibold">

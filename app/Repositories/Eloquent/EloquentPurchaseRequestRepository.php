@@ -48,7 +48,16 @@ class EloquentPurchaseRequestRepository implements PurchaseRequestRepository
     public function findForCustomer(Customer $customer, string $reference): ?PurchaseRequest
     {
         return $customer->purchaseRequests()
-            ->with(['items', 'payments'])
+            /*
+             * L'historique vient avec : c'est ce que le client suit, et sur le
+             * web c'est même tout ce qu'il a — un client sans adresse email ne
+             * reçoit aucune notification, il revient regarder sa page.
+             */
+            ->with([
+                'items.attachments',
+                'payments',
+                'statusHistories' => fn ($query) => $query->oldest()->orderBy('id'),
+            ])
             ->where('reference', $reference)
             ->first();
     }

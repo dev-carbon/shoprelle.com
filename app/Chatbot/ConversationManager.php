@@ -5,6 +5,7 @@ namespace App\Chatbot;
 use App\Chatbot\Contracts\ConversationStore;
 use App\DataTransferObjects\ReviewData;
 use App\Exceptions\ConversationException;
+use App\Models\ContactMessage;
 use App\Models\Customer;
 use App\Repositories\Contracts\PurchaseRequestRepository;
 use App\Services\AttachmentService;
@@ -32,6 +33,16 @@ class ConversationManager
     private const REVIEW_ATTEMPTS = 3;
 
     private const REVIEW_DECAY_SECONDS = 3600;
+
+    /**
+     * Combien de messages une même conversation peut nous adresser, et sur
+     * quelle durée. Plus large que pour les avis — écrire deux fois parce qu'on
+     * a oublié quelque chose est normal — mais borné : cette table est ouverte
+     * au public, sans compte ni captcha.
+     */
+    private const CONTACT_ATTEMPTS = 5;
+
+    private const CONTACT_DECAY_SECONDS = 3600;
 
     public function __construct(
         private ConversationStore $store,
@@ -112,7 +123,25 @@ class ConversationManager
             return $this->persist($key, $this->resolveReview($key, $state, ''));
         }
 
+        // Même chose pour un message laissé sans moyen de rappel : le message
+        // est écrit, il ne manque que l'adresse à laquelle répondre. Passer
+        // sans écrire perdrait ce que la personne est venue dire.
+        if ($state->step === Step::ContactReply) {
+            return $this->persist($key, $this->resolveContactMessage($key, $state, ''));
+        }
+
         return $this->persist($key, $this->engine->skip($state));
+    }
+
+    /**
+     * Ouvrir la conversation sur « nous écrire », depuis une page qui sait déjà
+     * de quelle demande il s'agit.
+     */
+    public function startContact(string $key, ?string $reference = null): ConversationState
+    {
+        $state = $this->current($key);
+
+        return $this->persist($key, $this->engine->startContact($state, $reference));
     }
 
     /**
@@ -245,6 +274,7 @@ class ConversationManager
             ),
             Step::MyOrdersCode => $this->resolveMyOrders($state, $input),
             Step::ReviewComment => $this->resolveReview($key, $state, $input),
+            Step::ContactReply => $this->resolveContactMessage($key, $state, $input),
             default => $state,
         };
     }
@@ -281,6 +311,60 @@ class ConversationManager
         ));
 
         return $this->engine->presentReview($state, $input);
+    }
+
+    /**
+     * Écrire le message que la conversation vient de recueillir.
+     *
+     * Le texte a été retenu à l'étape d'avant ; ce qui arrive ici est le moyen
+     * de rappel, facultatif. L'écriture précède le remerciement — celui-ci
+     * revient au menu et vide `tracking` au passage.
+     *
+     * Le client est rattaché quand la conversation a prouvé un numéro : c'est
+     * ce qui permet au back-office de relier un message à un historique. Sans
+     * numéro prouvé, le message existe quand même, sans propriétaire.
+     */
+    private function resolveContactMessage(string $key, ConversationState $state, string $input): ConversationState
+    {
+        $limiter = 'contact:'.sha1($key);
+
+        if (RateLimiter::tooManyAttempts($limiter, self::CONTACT_ATTEMPTS)) {
+            return $this->engine->reject($state, $input, sprintf(
+                'Vous nous avez déjà écrit plusieurs fois. Réessayez dans %d minutes, ou écrivez-nous à %s.',
+                (int) ceil(RateLimiter::availableIn($limiter) / 60),
+                config('shoprelle.contact.email'),
+            ));
+        }
+
+        RateLimiter::hit($limiter, self::CONTACT_DECAY_SECONDS);
+
+        $message = trim((string) ($state->tracking['message'] ?? ''));
+        $replyTo = trim($input);
+
+        /*
+         * La référence, quand la question vient de la page d'une demande. Elle
+         * est écrite dans le message plutôt que dans une colonne à elle : c'est
+         * ce que fait quelqu'un qui écrit un email, et le back-office la lit au
+         * même endroit que le reste.
+         */
+        $reference = trim((string) ($state->tracking['reference'] ?? ''));
+
+        if ($message !== '' && $reference !== '') {
+            $message = sprintf('[Demande %s] %s', $reference, $message);
+        }
+
+        if ($message !== '') {
+            ContactMessage::create([
+                'customer_id' => $state->knownPhone === null
+                    ? null
+                    : Customer::query()->where('phone', $state->knownPhone)->value('id'),
+                'message' => $message,
+                'reply_to' => $replyTo === '' ? null : $replyTo,
+                'channel' => $state->channel,
+            ]);
+        }
+
+        return $this->engine->presentContactMessage($state, $input);
     }
 
     /**

@@ -76,6 +76,20 @@ class ChatbotController extends Controller
     }
 
     /**
+     * Ouvrir l'assistant sur « nous écrire », au sujet d'une demande.
+     *
+     * La référence n'ouvre aucun accès : elle n'est qu'un sujet de message. Ce
+     * qui donne accès à une demande reste le numéro et le code, sur « Mes
+     * demandes ».
+     */
+    public function contact(Request $request, ?string $reference = null): RedirectResponse
+    {
+        $this->conversations->startContact($this->conversationKey($request), $reference);
+
+        return to_route('chat.show');
+    }
+
+    /**
      * Return to the welcome menu.
      */
     public function menu(Request $request): RedirectResponse

@@ -153,6 +153,7 @@ it('greets a new chat with the welcome menu and its buttons', function () {
             Intent::TrackOrder->value,
             Intent::MyOrders->value,
             Intent::LeaveReview->value,
+            Intent::ContactUs->value,
             Intent::Help->value,
         ]);
 });

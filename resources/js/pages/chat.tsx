@@ -50,11 +50,21 @@ export default function Chat({ conversation }: Props) {
         // the transcript owns the scrolling, which is what lets it be scrolled
         // to the newest message. On `min-h-svh` the page grew instead, the
         // transcript never overflowed, and scrollTo had nothing to move.
-        <div className="flex h-svh flex-col bg-background">
+        <div className="relative flex h-svh flex-col bg-background">
             <Head title="Votre concierge d'achat" />
 
-            <header className="shrink-0 border-b bg-background">
-                <div className="mx-auto flex w-full max-w-3xl items-center justify-between gap-4 px-5 py-4 sm:px-6">
+            {/* Le réseau de losanges, qui n'appartient qu'à cet écran : les
+                autres trames du site disent « fond de page », celle-ci dit
+                l'endroit où la demande se fabrique. Masquée en dégradé, comme
+                partout ailleurs — une trame qui s'arrête net sur un bord se lit
+                comme un défaut d'affichage. */}
+            <div
+                aria-hidden
+                className="pointer-events-none absolute inset-0 bg-geo [mask-image:radial-gradient(95%_75%_at_50%_38%,black,transparent)] opacity-70"
+            />
+
+            <header className="relative shrink-0 border-b bg-background">
+                <div className="mx-auto flex w-full max-w-3xl items-center justify-between gap-4 px-6 py-5 sm:px-8">
                     <Link
                         href={home()}
                         className="flex items-center gap-2.5 font-display font-extrabold tracking-tight"
@@ -89,7 +99,7 @@ export default function Chat({ conversation }: Props) {
                 </div>
 
                 {progress && (
-                    <div className="mx-auto w-full max-w-3xl px-5 pb-4 sm:px-6">
+                    <div className="mx-auto w-full max-w-3xl px-6 pb-5 sm:px-8">
                         <ChatProgress progress={progress} />
                     </div>
                 )}
@@ -97,10 +107,10 @@ export default function Chat({ conversation }: Props) {
 
             {/* `min-h-0` lets this flex child shrink below its content, which
                 is what allows the transcript inside it to scroll. */}
-            <main className="mx-auto flex min-h-0 w-full max-w-3xl flex-1 flex-col px-5 sm:px-6">
+            <main className="relative mx-auto flex min-h-0 w-full max-w-3xl flex-1 flex-col px-6 sm:px-8">
                 <div
                     ref={transcript}
-                    className="flex-1 space-y-5 overflow-y-auto py-8"
+                    className="flex-1 space-y-7 overflow-y-auto py-10"
                     role="log"
                     aria-live="polite"
                     aria-label="Conversation avec Shopbot"
@@ -138,8 +148,8 @@ export default function Chat({ conversation }: Props) {
                 </div>
             </main>
 
-            <div className="shrink-0 border-t bg-background">
-                <div className="mx-auto w-full max-w-3xl space-y-4 px-5 py-5 sm:px-6">
+            <div className="relative shrink-0 border-t bg-background">
+                <div className="mx-auto w-full max-w-3xl space-y-5 px-6 py-6 sm:px-8">
                     {errorMessage && (
                         <Alert variant="destructive" className="animate-enter">
                             <AlertDescription>{errorMessage}</AlertDescription>

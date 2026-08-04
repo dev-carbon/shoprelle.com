@@ -1,10 +1,13 @@
 import { Link } from '@inertiajs/react';
 import {
     ChartNoAxesColumn,
+    Globe,
+    Inbox,
     LayoutGrid,
     MessagesSquare,
     PackageSearch,
     Settings,
+    ShoppingBag,
     Star,
     Users,
 } from 'lucide-react';
@@ -21,9 +24,11 @@ import {
     SidebarMenuButton,
     SidebarMenuItem,
 } from '@/components/ui/sidebar';
-import { dashboard } from '@/routes';
+import { dashboard, home } from '@/routes';
 import { statistics } from '@/routes/admin';
 import { index as customersIndex } from '@/routes/admin/customers';
+import { index as messagesIndex } from '@/routes/admin/messages';
+import { index as productsIndex } from '@/routes/admin/products';
 import { index as requestsIndex } from '@/routes/admin/requests';
 import { index as reviewsIndex } from '@/routes/admin/reviews';
 import { show as chatShow } from '@/routes/chat';
@@ -47,6 +52,16 @@ const mainNavItems: NavItem[] = [
         icon: Users,
     },
     {
+        title: 'Produits',
+        href: productsIndex(),
+        icon: ShoppingBag,
+    },
+    {
+        title: 'Messages',
+        href: messagesIndex(),
+        icon: Inbox,
+    },
+    {
         title: 'Avis',
         href: reviewsIndex(),
         icon: Star,
@@ -64,6 +79,11 @@ const mainNavItems: NavItem[] = [
 ];
 
 const footerNavItems: NavItem[] = [
+    {
+        title: 'Voir la vitrine',
+        href: home(),
+        icon: Globe,
+    },
     {
         title: "Ouvrir l'assistant",
         href: chatShow(),

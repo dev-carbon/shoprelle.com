@@ -288,6 +288,53 @@ class ChatbotEngine
     }
 
     /**
+     * Ouvrir la conversation directement sur « nous écrire ».
+     *
+     * C'est le pendant de {@see startFromLink} pour les questions : on arrive
+     * d'une page qui sait déjà de quoi on veut parler — sa demande — et
+     * redemander la référence à quelqu'un qui vient de la regarder serait lui
+     * faire retaper ce qu'il a sous les yeux.
+     *
+     * Ce qui était en cours est abandonné, comme pour un lien collé : c'est ce
+     * que demande quelqu'un qui clique « poser une question ».
+     */
+    public function startContact(ConversationState $state, ?string $reference = null): ConversationState
+    {
+        $state->intent = Intent::ContactUs;
+        $state->step = Step::ContactMessage;
+        $state->draft = [];
+        $state->tracking = $reference === null ? [] : ['reference' => $reference];
+
+        $state->pushBotMessage($reference === null
+            ? '✍️ Je vous écoute — dites-nous tout, je transmets à l\'équipe.'
+            : sprintf('✍️ Au sujet de la demande %s : que voulez-vous nous dire ? Je transmets à l\'équipe avec la référence.', $reference)
+        );
+
+        return $state;
+    }
+
+    /**
+     * Confirmer un message transmis, puis revenir au menu.
+     *
+     * Le texte dit ce qui va se passer, et il change selon qu'un moyen de
+     * rappel a été laissé ou non : promettre une réponse à quelqu'un qu'on ne
+     * peut pas joindre serait la seule chose malhonnête que cet écran puisse
+     * faire.
+     */
+    public function presentContactMessage(ConversationState $state, string $input): ConversationState
+    {
+        $replyTo = trim($input);
+
+        $state->pushCustomerMessage($replyTo === '' ? 'Passer' : $replyTo);
+        $state->pushBotMessage($replyTo === ''
+            ? 'C\'est transmis à notre équipe 🙏 Sans moyen de vous joindre nous ne pourrons pas répondre, mais votre message est bien arrivé — revenez quand vous voulez.'
+            : sprintf('C\'est transmis à notre équipe 🙏 Nous vous répondons sur %s, %s.', $replyTo, config('shoprelle.contact.response_time'))
+        );
+
+        return $this->returnToMenu($state);
+    }
+
+    /**
      * The recap as plain text, for channels that cannot render a card.
      *
      * The web shows a structured summary component; Telegram and any future
@@ -543,6 +590,13 @@ class ChatbotEngine
                 Intent::TrackOrder => Step::TrackReference,
                 Intent::MyOrders => Step::MyOrdersPhone,
                 Intent::LeaveReview => Step::ReviewRating,
+                /*
+                 * Déjà écrit au menu ? On ne redemande pas le message : il ne
+                 * reste qu'à savoir comment répondre.
+                 */
+                Intent::ContactUs => isset($state->tracking['message'])
+                    ? Step::ContactReply
+                    : Step::ContactMessage,
                 Intent::Help => Step::HelpTopic,
                 null => Step::Menu,
             },
@@ -566,9 +620,11 @@ class ChatbotEngine
             Step::TrackReference => Step::TrackPhone,
             Step::MyOrdersPhone => Step::MyOrdersCode,
             Step::ReviewRating => Step::ReviewComment,
+            Step::ContactMessage => Step::ContactReply,
             // Resolved by the manager, which calls presentTracking, presentOrders
             // or presentReview.
-            Step::TrackPhone, Step::MyOrdersCode, Step::ReviewComment => Step::Menu,
+            Step::TrackPhone, Step::MyOrdersCode, Step::ReviewComment,
+            Step::ContactReply => Step::Menu,
             Step::Summary, Step::Completed => Step::Completed,
         };
     }
@@ -614,6 +670,8 @@ class ChatbotEngine
             Step::MyOrdersCode => "🔐 Indiquez votre code d'accès, celui reçu lors de votre première demande.",
             Step::ReviewRating => 'Merci de prendre le temps 🙏 Comment évaluez-vous votre expérience avec Shoprelle ?',
             Step::ReviewComment => "Souhaitez-vous ajouter un mot ? Dites-nous ce qui s'est bien passé, ou ce qui n'a pas été. (facultatif)",
+            Step::ContactMessage => '✍️ Écrivez-nous : une question, une demande particulière, un souci. Je transmets à l\'équipe.',
+            Step::ContactReply => 'Comment pouvons-nous vous répondre ? Un numéro ou une adresse email. (facultatif)',
         };
     }
 
@@ -631,6 +689,7 @@ class ChatbotEngine
             Step::City => 80,
             Step::FullName => 120,
             Step::ItemComment, Step::ReviewComment => 500,
+            Step::ContactMessage => 1500,
             Step::ProductUrl => 2048,
             Step::Phone, Step::TrackPhone, Step::MyOrdersPhone => 20,
             Step::TrackReference => 26,
@@ -660,6 +719,8 @@ class ChatbotEngine
             Step::TrackReference => 'SHP-2607-4KJ9X2',
             Step::MyOrdersCode => 'K4M-9PZ',
             Step::ReviewComment => 'Ex : livraison rapide, équipe à l\'écoute…',
+            Step::ContactMessage => 'Ex : livrez-vous à Kribi ? Je cherche un produit introuvable en ligne…',
+            Step::ContactReply => 'Ex : +237 6 XX XX XX XX ou vous@exemple.com',
             default => null,
         };
     }
@@ -726,13 +787,45 @@ class ChatbotEngine
     }
 
     /**
+     * Ce que le menu fait de ce qu'on lui donne.
+     *
+     * Un bouton donne une intention. Une phrase donne un message : on retient
+     * l'intention « nous écrire » *et* le texte, pour que l'étape suivante soit
+     * « comment vous répondre ? » plutôt que « écrivez-nous » à quelqu'un qui
+     * vient de le faire.
+     */
+    private function applyMenu(ConversationState $state, string $input): void
+    {
+        $intent = Intent::tryFrom($input);
+
+        if ($intent !== null) {
+            $state->intent = $intent;
+
+            return;
+        }
+
+        $state->intent = Intent::ContactUs;
+        $state->tracking['message'] = trim($input);
+    }
+
+    /**
      * Validate an answer, returning the bot's reply when it is not acceptable.
      */
     private function validate(Step $step, string $input, ConversationState $state): ?string
     {
         return match ($step) {
-            Step::Menu => Intent::tryFrom($input) === null
-                ? 'Je n\'ai pas bien saisi. Choisissez une option ci-dessous 🙂'
+            /*
+             * Écrire au menu n'est plus une erreur.
+             *
+             * C'était « je n'ai pas bien saisi, choisissez une option » — une
+             * réponse qui renvoie à des boutons quelqu'un qui vient justement
+             * de formuler sa demande en toutes lettres. Un texte assez long
+             * pour être une phrase est traité comme un message à l'équipe ; ce
+             * qui est trop court pour en être une reste une erreur de frappe,
+             * et rien ne serait transmis d'utile.
+             */
+            Step::Menu => Intent::tryFrom($input) === null && mb_strlen(trim($input)) < 5
+                ? 'Je n\'ai pas bien saisi. Choisissez une option ci-dessous, ou écrivez-moi votre demande 🙂'
                 : null,
             Step::HelpTopic => HelpTopic::tryFrom($input) === null && $input !== self::MENU
                 ? 'Choisissez un sujet dans la liste.'
@@ -767,6 +860,14 @@ class ChatbotEngine
             Step::TrackReference => $this->validateReference($input),
             Step::MyOrdersCode => $this->validateAccessCode($input),
             Step::ReviewRating => $this->validateRating($input),
+            Step::ContactMessage => match (true) {
+                mb_strlen(trim($input)) < 5 => 'Dites-m\'en un peu plus, que je puisse transmettre quelque chose d\'utile.',
+                mb_strlen($input) > 1500 => 'Votre message est un peu long — pouvez-vous le résumer en 1500 caractères ?',
+                default => null,
+            },
+            Step::ContactReply => mb_strlen($input) > 120
+                ? 'Ce moyen de contact est un peu long — un numéro ou une adresse suffit.'
+                : null,
             Step::ReviewComment => mb_strlen($input) > 500
                 ? 'Votre avis est un peu long — pouvez-vous le résumer en 500 caractères ?'
                 : null,
@@ -929,7 +1030,7 @@ class ChatbotEngine
     private function apply(ConversationState $state, Step $step, string $input): void
     {
         match ($step) {
-            Step::Menu => $state->intent = Intent::from($input),
+            Step::Menu => $this->applyMenu($state, $input),
             Step::HelpTopic => $this->applyHelpTopic($state, $input),
             Step::Marketplace => $state->draft = ['marketplace' => $input, 'attachments' => []],
             Step::ProductUrl => $state->draft['product_url'] = $input,
@@ -949,8 +1050,9 @@ class ChatbotEngine
             // the list. On its own it unlocks nothing.
             Step::MyOrdersPhone => $state->tracking['phone'] = $this->normalizePhone($input),
             Step::ReviewRating => $state->tracking['rating'] = (int) $input,
+            Step::ContactMessage => $state->tracking['message'] = trim($input),
             Step::Screenshot, Step::Summary, Step::Completed,
-            Step::TrackPhone, Step::MyOrdersCode, Step::ReviewComment => null,
+            Step::TrackPhone, Step::MyOrdersCode, Step::ReviewComment, Step::ContactReply => null,
         };
     }
 

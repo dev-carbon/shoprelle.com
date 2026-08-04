@@ -41,25 +41,27 @@
      * Les quatre pas d'affichage sont fluides : ils sont assez grands pour
      * qu'une valeur fixe déborde d'un téléphone ou paraisse timide sur un
      * grand écran, et un `clamp` règle les deux sans un seul point de rupture
-     * dans le balisage. Ils ont tous été montés d'un cran par rapport à la
-     * version précédente : une direction artistique aérée se joue autant dans
-     * l'écart entre le titre et le texte que dans les marges.
+     * dans le balisage. Ils ont été redescendus d'environ un dixième : une
+     * direction artistique aérée se joue dans l'écart entre les éléments, pas
+     * dans la taille des lettres, et des titres plus sobres laissent
+     * précisément la place à cet écart. Les marges, elles, ont augmenté du
+     * même mouvement.
      *
      * L'interlignage suit la taille en sens inverse — serré en haut de
      * l'échelle où les lettres sont déjà énormes, largement ouvert en bas où
      * l'œil doit revenir à la ligne. Le crénage aussi : un titre à 5 rem
      * dessiné à l'espacement du texte courant paraît troué.
      */
-    --text-display: clamp(3rem, 7.5vw, 5.25rem);
+    --text-display: clamp(2.625rem, 6.6vw, 4.5rem);
     --text-display--line-height: 0.98;
     --text-display--letter-spacing: -0.04em;
-    --text-hero: clamp(2.75rem, 6.4vw, 4.25rem);
+    --text-hero: clamp(2.375rem, 5.6vw, 3.625rem);
     --text-hero--line-height: 1.02;
     --text-hero--letter-spacing: -0.035em;
-    --text-title: clamp(2.125rem, 4.2vw, 3rem);
+    --text-title: clamp(1.875rem, 3.7vw, 2.625rem);
     --text-title--line-height: 1.08;
     --text-title--letter-spacing: -0.03em;
-    --text-subtitle: clamp(1.375rem, 1.9vw, 1.625rem);
+    --text-subtitle: clamp(1.25rem, 1.7vw, 1.5rem);
     --text-subtitle--line-height: 1.25;
     --text-subtitle--letter-spacing: -0.02em;
 
@@ -71,10 +73,10 @@
      * l'interligne qui décide de ça, pas la taille. Le crénage est très
      * légèrement négatif — Inter est dessinée un peu large pour les corps
      * d'interface, et à 17 px un paragraphe s'y resserre avec profit. */
-    --text-lead: clamp(1.0625rem, 1.35vw, 1.25rem);
+    --text-lead: clamp(1rem, 1.2vw, 1.125rem);
     --text-lead--line-height: 1.65;
     --text-lead--letter-spacing: -0.011em;
-    --text-body: 1.0625rem;
+    --text-body: 1rem;
     --text-body--line-height: 1.7;
     --text-body--letter-spacing: -0.006em;
 
@@ -93,6 +95,7 @@
     --color-surface-tile: var(--surface-tile);
     --color-surface-dark: var(--surface-dark);
     --color-surface-alt: var(--surface-alt);
+    --color-surface-cool: var(--surface-cool);
     --color-success: var(--success);
     --color-warning: var(--warning);
 
@@ -216,6 +219,12 @@
        palette's cream used as a surface rather than as a chip. Its dark
        counterpart is a deep blue, not a brown — see the note there. */
     --surface-alt: oklch(0.951 0.041 77);
+    /* La bande froide : le bleu de la marque éclairci jusqu'à devenir une
+       surface, #E4EFFF. C'est la teinte exacte du logo — même angle de teinte
+       que le bleu, 263 — et non un bleu-gris pris ailleurs : une bande qui
+       s'écarte de la charte se remarque plus qu'elle ne sert. Elle porte
+       l'encre de la page à plus de 15:1, donc rien n'y change de couleur. */
+    --surface-cool: oklch(0.95 0.03 263);
     /* A section that stays dark in both themes. It exists so a heading can be
        set in the gold itself: #FFC300 is 1.5:1 on the light page and 11.5:1
        here, and no weight or size closes that gap. */
@@ -259,19 +268,24 @@
  */
 .dark {
     --background: oklch(0.187 0.043 240);
-    --foreground: oklch(0.951 0.041 77);
+    /* Blanc, et non la crème de la palette. Sur le marine, la crème tire au
+       jaune pâle : un titre en 900 y prend une teinte d'or délavé qu'on ne
+       reconnaît ni comme l'or de la marque ni comme de l'encre. Le blanc laisse
+       l'or exact — celui des sur-titres et des mots mis en avant — être la
+       seule chose dorée de la page sombre. */
+    --foreground: oklch(1 0 0);
     --card: oklch(0.245 0.042 238);
-    --card-foreground: oklch(0.951 0.041 77);
+    --card-foreground: oklch(1 0 0);
     --popover: oklch(0.245 0.042 238);
-    --popover-foreground: oklch(0.951 0.041 77);
+    --popover-foreground: oklch(1 0 0);
     --primary: oklch(0.7 0.15 263);
     --primary-foreground: oklch(0.187 0.043 240);
     --secondary: oklch(0.3 0.04 235);
-    --secondary-foreground: oklch(0.951 0.041 77);
+    --secondary-foreground: oklch(1 0 0);
     --muted: oklch(0.3 0.04 235);
     --muted-foreground: oklch(0.735 0.033 226);
     --accent: oklch(0.3 0.04 235);
-    --accent-foreground: oklch(0.951 0.041 77);
+    --accent-foreground: oklch(1 0 0);
     /* Same gold in both themes: it is a fill, so it needs no lift. */
     --accent-brand: oklch(0.848 0.174 86);
     --accent-brand-foreground: oklch(0.187 0.043 240);
@@ -287,6 +301,9 @@
        swaps to a deep blue instead — the primary's own hue, with enough chroma
        to read as a surface rather than as dimmed navy. */
     --surface-alt: oklch(0.3 0.06 258);
+    /* Le pendant sombre de la bande froide : le même bleu, à la profondeur de
+       la page. Un pastel y serait un projecteur. */
+    --surface-cool: oklch(0.3 0.055 262);
     /* A section that stays dark in both themes. It exists so a heading can be
        set in the gold itself: #FFC300 is 1.5:1 on the light page and 11.5:1
        here, and no weight or size closes that gap. */
@@ -742,6 +759,87 @@
         linear-gradient(to right, var(--color-border) 1px, transparent 1px),
         linear-gradient(to bottom, var(--color-border) 1px, transparent 1px);
     background-size: 64px 64px;
+}
+
+/*
+ * ── Les trois autres trames ─────────────────────────────────────────────────
+ *
+ * Le quadrillage ci-dessus était seul, et une page qui reprend la même trame
+ * partout ne gagne rien à l'avoir : ce qui distingue une section d'une autre
+ * cesse de se voir. Chacune de celles-ci a donc un motif différent, et il n'est
+ * pas choisi au hasard — il dit quelque chose de la section qu'il porte :
+ *
+ *   — le semis de points pour ce qui est photographié : une trame d'imprimeur.
+ *   — les hachures pour la conversation : la texture d'une bulle de message.
+ *   — les cercles pour la raison d'être du service : quelque chose qui part
+ *     d'un point et se propage.
+ *
+ * Les trois règles qu'elles partagent avec `bg-grid`, et qui sont la raison
+ * pour laquelle elles tiennent en trois lignes chacune :
+ *
+ *   1. la couleur est `--color-border`, jamais une valeur écrite ici. Les
+ *      bandes colorées redéclarent ce jeton, donc la trame suit la bande sans
+ *      que rien ne sache sur quel fond elle est posée — bleu clair sur le bleu,
+ *      sable sur la crème, et l'inverse en thème sombre.
+ *   2. elles sont toujours masquées par un dégradé à l'endroit où on les
+ *      emploie. Un motif qui s'arrête net sur un bord se lit comme un défaut
+ *      d'affichage.
+ *   3. elles vivent dans un calque `aria-hidden` posé en `absolute inset-0`,
+ *      sous un contenu passé en `relative`. Rien n'est jamais peint par-dessus
+ *      du texte.
+ */
+
+/* Un semis de points, au pas de 22 px. */
+@utility bg-dots {
+    background-image: radial-gradient(
+        var(--color-border) 1.5px,
+        transparent 1.5px
+    );
+    background-size: 22px 22px;
+}
+
+/* Des hachures à 45°, une ligne toutes les 14 px. */
+@utility bg-diagonals {
+    background-image: repeating-linear-gradient(
+        45deg,
+        var(--color-border) 0 1px,
+        transparent 1px 14px
+    );
+}
+
+/*
+ * Un réseau de losanges : deux familles de diagonales qui se croisent.
+ *
+ * C'est la trame de l'assistant. Les points et le quadrillage disent « fond de
+ * page » ; un réseau qui se referme sur lui-même dit « atelier », et c'est ce
+ * qu'est cet écran — l'endroit où la demande se fabrique.
+ *
+ * Le pas est large — 52 px, soit un losange de la hauteur d'une bulle courte.
+ * Serré, il faisait un tissu : une texture qu'on regarde. Espacé, il fait une
+ * construction : des lignes qu'on ne remarque qu'en levant les yeux de la
+ * conversation, ce qui est tout ce qu'on demande à un fond.
+ */
+@utility bg-geo {
+    background-image:
+        repeating-linear-gradient(
+            45deg,
+            var(--color-border) 0 1px,
+            transparent 1px 52px
+        ),
+        repeating-linear-gradient(
+            -45deg,
+            var(--color-border) 0 1px,
+            transparent 1px 52px
+        );
+}
+
+/* Des cercles concentriques, un anneau tous les 56 px. */
+@utility bg-rings {
+    background-image: repeating-radial-gradient(
+        circle at center,
+        var(--color-border) 0 1px,
+        transparent 1px 56px
+    );
 }
 
 /*

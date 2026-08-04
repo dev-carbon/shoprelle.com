@@ -1,15 +1,19 @@
 <?php
 
 use App\Enums\PurchaseRequestStatus;
+use App\Models\Attachment;
+use App\Models\ContactMessage;
 use App\Models\Customer;
 use App\Models\Payment;
 use App\Models\PurchaseItem;
 use App\Models\PurchaseRequest;
+use App\Models\StatusHistory;
 use App\Models\User;
 use App\Notifications\PurchaseRequestStatusChanged;
 use Database\Factories\CustomerFactory;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Support\Facades\Storage;
 
 beforeEach(function () {
     $this->customer = Customer::factory()->withAccessCode()->create([
@@ -353,4 +357,108 @@ it('sends an unidentified visitor back to the form rather than accepting', funct
         ->assertRedirect(route('orders.index'));
 
     expect($request->refresh()->status)->toBe(PurchaseRequestStatus::QuoteSent);
+});
+
+it('shows the customer the whole path their request has taken', function () {
+    $request = PurchaseRequest::factory()->for($this->customer)->create([
+        'status' => PurchaseRequestStatus::QuoteSent,
+    ]);
+
+    StatusHistory::factory()->for($request)->create([
+        'from_status' => null,
+        'to_status' => PurchaseRequestStatus::Pending,
+    ]);
+    StatusHistory::factory()->for($request)->create([
+        'from_status' => PurchaseRequestStatus::Pending,
+        'to_status' => PurchaseRequestStatus::QuoteSent,
+        'comment' => 'Note interne, à ne jamais montrer.',
+    ]);
+
+    identify();
+
+    $this->get(route('orders.show', $request->reference))
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->has('request.timeline', 2)
+            // L'ordre est celui du temps : la première entrée est la plus
+            // ancienne, et c'est la dernière qui dit où l'on en est.
+            ->where('request.timeline.0.label', PurchaseRequestStatus::Pending->label())
+            ->where('request.timeline.1.label', PurchaseRequestStatus::QuoteSent->label())
+            // Ni les notes de service ni le nom de qui a changé le statut.
+            ->missing('request.timeline.1.comment')
+            ->missing('request.timeline.1.author')
+        );
+});
+
+it('gives a customer their own screenshots back', function () {
+    Storage::fake('local');
+
+    $request = PurchaseRequest::factory()->for($this->customer)->create();
+    $item = PurchaseItem::factory()->for($request)->create();
+
+    Storage::disk('local')->put('purchase-requests/capture.jpg', 'binaire');
+
+    $attachment = Attachment::factory()->create([
+        'purchase_request_id' => $request->id,
+        'purchase_item_id' => $item->id,
+        'path' => 'purchase-requests/capture.jpg',
+    ]);
+
+    identify();
+
+    $this->get(route('orders.show', $request->reference))
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page->has('request.items.0.attachments', 1));
+
+    $this->get(route('orders.attachments.show', [
+        'reference' => $request->reference,
+        'attachment' => $attachment->id,
+    ]))->assertOk()->assertHeader('X-Content-Type-Options', 'nosniff');
+});
+
+it('refuses a screenshot to someone who has not identified themselves', function () {
+    $request = PurchaseRequest::factory()->for($this->customer)->create();
+    $attachment = Attachment::factory()->create([
+        'purchase_request_id' => $request->id,
+    ]);
+
+    $this->get(route('orders.attachments.show', [
+        'reference' => $request->reference,
+        'attachment' => $attachment->id,
+    ]))->assertForbidden();
+});
+
+it('refuses a screenshot belonging to somebody else', function () {
+    $mine = PurchaseRequest::factory()->for($this->customer)->create();
+    $theirs = PurchaseRequest::factory()->create();
+    $attachment = Attachment::factory()->create([
+        'purchase_request_id' => $theirs->id,
+    ]);
+
+    identify();
+
+    // La référence est la mienne, la pièce jointe est à quelqu'un d'autre :
+    // c'est le couple qui autorise, pas l'identifiant seul.
+    $this->get(route('orders.attachments.show', [
+        'reference' => $mine->reference,
+        'attachment' => $attachment->id,
+    ]))->assertNotFound();
+});
+
+it('opens the assistant on a question about a request', function () {
+    $this->get(route('chat.contact', ['reference' => 'SHP-2608-4KJ9X2']))
+        ->assertRedirect(route('chat.show'));
+
+    $this->get(route('chat.show'))
+        ->assertInertia(fn ($page) => $page
+            ->where('conversation.current.step', 'contact_message')
+        );
+
+    // Le message part avec la référence, sans qu'on ait eu à la retaper.
+    $this->post(route('chat.message'), ['message' => 'Le devis me convient-il ?']);
+    $this->post(route('chat.skip'));
+
+    expect(ContactMessage::sole()->message)
+        ->toContain('SHP-2608-4KJ9X2')
+        ->toContain('Le devis me convient-il ?');
 });

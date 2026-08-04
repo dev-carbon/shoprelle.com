@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Product;
 use App\Models\Review;
 use App\Services\AcceptedPayments;
 use Inertia\Inertia;
@@ -34,7 +35,48 @@ class HomeController extends Controller
             // qu'on pourra payer par MoMo se demande avant de commander. Les
             // coordonnées, elles, n'ont rien à faire sur une page publique.
             'paymentMethods' => AcceptedPayments::announced(),
+            'products' => $this->products(),
         ]);
+    }
+
+    /**
+     * La sélection de produits mise en avant, dans son ordre.
+     *
+     * Rien n'est calculé ni deviné : ce sont les produits que quelqu'un a
+     * ajoutés depuis le back-office et cochés pour la page d'accueil. Un
+     * produit sans photo est écarté ici plutôt qu'affiché en cadre vide — la
+     * section est une vitrine, et une vitrine à trous ne vend rien.
+     *
+     * Le prix est indicatif et le dit sur la page ; le seul prix qui engage le
+     * service est celui du devis.
+     *
+     * @return list<array{name: string, imageUrl: string, url: string, marketplace: string, marketplaceLabel: string, category: string, categoryLabel: string, price: ?string, currency: ?string}>
+     */
+    private function products(): array
+    {
+        $products = [];
+
+        foreach (Product::query()->featured()->get() as $product) {
+            $imageUrl = $product->imageUrl();
+
+            if ($imageUrl === null) {
+                continue;
+            }
+
+            $products[] = [
+                'name' => $product->name,
+                'imageUrl' => $imageUrl,
+                'url' => $product->product_url,
+                'marketplace' => $product->marketplace->value,
+                'marketplaceLabel' => $product->marketplace->label(),
+                'category' => $product->category->value,
+                'categoryLabel' => $product->category->label(),
+                'price' => $product->price,
+                'currency' => $product->currency,
+            ];
+        }
+
+        return $products;
     }
 
     /**

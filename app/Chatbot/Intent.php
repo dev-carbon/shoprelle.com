@@ -11,6 +11,7 @@ enum Intent: string
     case TrackOrder = 'track_order';
     case MyOrders = 'my_orders';
     case LeaveReview = 'leave_review';
+    case ContactUs = 'contact_us';
     case Help = 'help';
 
     public function label(): string
@@ -20,6 +21,7 @@ enum Intent: string
             self::TrackOrder => '📦 Suivre ma demande',
             self::MyOrders => '📋 Mes demandes',
             self::LeaveReview => '⭐ Laisser un avis',
+            self::ContactUs => '✍️ Nous écrire',
             self::Help => '❓ Aide',
         };
     }

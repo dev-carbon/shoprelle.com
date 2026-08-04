@@ -4,6 +4,8 @@ import {
     Check,
     CheckCircle2,
     ExternalLink,
+    History,
+    MessageSquare,
     ReceiptText,
     Wallet,
     X,
@@ -24,7 +26,8 @@ import { Label } from '@/components/ui/label';
 import { Spinner } from '@/components/ui/spinner';
 import { Textarea } from '@/components/ui/textarea';
 import { CustomerLayout } from '@/layouts/customer-layout';
-import { formatAmount, formatDate } from '@/lib/utils';
+import { cn, formatAmount, formatDate } from '@/lib/utils';
+import { contact } from '@/routes/chat';
 import { index } from '@/routes/orders';
 import { accept, decline } from '@/routes/orders/quote';
 
@@ -38,6 +41,8 @@ type Item = {
     size: string | null;
     /** Null while the request is still being priced. */
     quoted_amount: string | null;
+    /** Les captures que le client a jointes à ce produit. */
+    attachments: { id: number; url: string }[];
 };
 
 type Props = {
@@ -50,6 +55,13 @@ type Props = {
         awaits_decision: boolean;
         created_at: string | null;
         destination: string;
+        /** Chaque changement de statut, du plus ancien au plus récent. */
+        timeline: {
+            id: number;
+            label: string;
+            color: string;
+            at: string | null;
+        }[];
         items: Item[];
         /** Non nul seulement entre l'acceptation et le règlement complet. */
         payment_instructions: {
@@ -82,7 +94,7 @@ export default function OrderShow({ request }: Props) {
         <CustomerLayout>
             <Head title={`Demande ${request.reference}`} />
 
-            <div className="animate-rise space-y-6">
+            <div className="animate-rise space-y-10">
                 <div>
                     <Link
                         href={index()}
@@ -92,7 +104,7 @@ export default function OrderShow({ request }: Props) {
                         Mes demandes
                     </Link>
 
-                    <div className="mt-3 flex flex-wrap items-center gap-3">
+                    <div className="mt-6 flex flex-wrap items-center gap-3">
                         <h1 className="font-mono text-xl font-semibold">
                             {request.reference}
                         </h1>
@@ -101,11 +113,103 @@ export default function OrderShow({ request }: Props) {
                             color={request.status_color}
                         />
                     </div>
-                    <p className="mt-1 text-sm text-muted-foreground">
+                    <p className="mt-3 text-sm text-muted-foreground">
                         Passée le {formatDate(request.created_at)} · Livraison à{' '}
                         {request.destination}
                     </p>
+
+                    {/* ── Poser une question, là où la question se pose ───────
+                        Quelqu'un qui hésite devant son devis n'avait rien à
+                        cliquer : il fallait quitter la page, retrouver
+                        l'assistant, et retaper sa référence. Le lien l'ouvre
+                        déjà sur « nous écrire », la référence en tête du
+                        message. */}
+                    <Link
+                        href={contact(request.reference)}
+                        className="mt-5 inline-flex items-center gap-1.5 text-sm font-semibold text-primary underline-offset-4 hover:underline"
+                    >
+                        <MessageSquare className="size-4" />
+                        Poser une question sur cette demande
+                    </Link>
                 </div>
+
+                {/* ── Où en est la demande, depuis le début ───────────────────
+                    Le statut du moment ne dit pas le chemin parcouru, et c'est
+                    le chemin qu'on vient regarder — surtout quand on n'a laissé
+                    aucune adresse et que cette page est le seul endroit où la
+                    demande parle.
+
+                    L'ordre est celui du temps, le plus récent en bas : une file
+                    d'événements se lit comme elle s'est écrite. La dernière
+                    pastille est pleine, les précédentes creuses — c'est ce qui
+                    distingue « on y est » de « on y est passé ». */}
+                {request.timeline.length > 0 && (
+                    <Card>
+                        <CardHeader>
+                            <CardTitle className="flex items-center gap-2">
+                                <History className="size-4" />
+                                Suivi
+                            </CardTitle>
+                            <CardDescription>
+                                Chaque étape depuis l'envoi de votre demande.
+                            </CardDescription>
+                        </CardHeader>
+
+                        <CardContent>
+                            <ol className="space-y-0">
+                                {request.timeline.map((entry, index) => {
+                                    const isLast =
+                                        index === request.timeline.length - 1;
+
+                                    return (
+                                        <li
+                                            key={entry.id}
+                                            className="grid grid-cols-[auto_1fr] gap-x-4"
+                                        >
+                                            <div className="flex flex-col items-center">
+                                                <span
+                                                    className={cn(
+                                                        'mt-1 size-3 shrink-0 rounded-full border-2',
+                                                        isLast
+                                                            ? 'border-primary bg-primary'
+                                                            : 'border-border bg-background',
+                                                    )}
+                                                />
+                                                {!isLast && (
+                                                    <span
+                                                        aria-hidden
+                                                        className="w-px flex-1 bg-border"
+                                                    />
+                                                )}
+                                            </div>
+
+                                            <div
+                                                className={cn(
+                                                    'pb-6',
+                                                    isLast && 'pb-0',
+                                                )}
+                                            >
+                                                <p
+                                                    className={cn(
+                                                        'text-sm',
+                                                        isLast
+                                                            ? 'font-semibold'
+                                                            : 'font-medium text-muted-foreground',
+                                                    )}
+                                                >
+                                                    {entry.label}
+                                                </p>
+                                                <p className="mt-0.5 text-xs text-muted-foreground">
+                                                    {formatDateTime(entry.at)}
+                                                </p>
+                                            </div>
+                                        </li>
+                                    );
+                                })}
+                            </ol>
+                        </CardContent>
+                    </Card>
+                )}
 
                 <Card>
                     <CardHeader>
@@ -120,7 +224,7 @@ export default function OrderShow({ request }: Props) {
                         </CardDescription>
                     </CardHeader>
 
-                    <CardContent className="space-y-4">
+                    <CardContent className="space-y-6">
                         <ul className="divide-y">
                             {request.items.map((item) => (
                                 <li
@@ -154,6 +258,43 @@ export default function OrderShow({ request }: Props) {
                                                 <span>Taille {item.size}</span>
                                             )}
                                         </p>
+
+                                        {/* Ses propres captures, rendues à leur
+                                            auteur : c'est ainsi qu'on vérifie
+                                            avoir joint la bonne photo au bon
+                                            produit. Ouvertes dans un onglet
+                                            plutôt que dans une visionneuse —
+                                            le navigateur sait déjà agrandir une
+                                            image, et une lightbox n'aurait rien
+                                            ajouté qu'une pièce de plus. */}
+                                        {item.attachments.length > 0 && (
+                                            <ul className="mt-3 flex flex-wrap gap-2">
+                                                {item.attachments.map(
+                                                    (attachment, index) => (
+                                                        <li key={attachment.id}>
+                                                            <a
+                                                                href={
+                                                                    attachment.url
+                                                                }
+                                                                target="_blank"
+                                                                rel="noopener noreferrer"
+                                                                className="block overflow-hidden rounded-lg border transition-colors hover:border-primary/50"
+                                                            >
+                                                                <img
+                                                                    src={
+                                                                        attachment.url
+                                                                    }
+                                                                    alt={`Capture ${index + 1} jointe à ${item.name}`}
+                                                                    loading="lazy"
+                                                                    decoding="async"
+                                                                    className="size-16 object-cover"
+                                                                />
+                                                            </a>
+                                                        </li>
+                                                    ),
+                                                )}
+                                            </ul>
+                                        )}
                                     </div>
 
                                     <span className="shrink-0 text-sm font-medium">
@@ -255,7 +396,7 @@ function Decision({ reference }: { reference: string }) {
             <Form
                 {...decline.form(reference)}
                 options={{ preserveScroll: true }}
-                className="space-y-3 rounded-xl border p-4"
+                className="space-y-3 rounded-xl border p-5"
             >
                 {({ processing }) => (
                     <>
@@ -293,7 +434,7 @@ function Decision({ reference }: { reference: string }) {
     }
 
     return (
-        <div className="space-y-3 rounded-xl border p-4">
+        <div className="space-y-3 rounded-xl border p-5">
             <p className="text-sm">
                 Ce devis vous convient ? Nous n'achetons rien avant votre
                 accord.
@@ -357,8 +498,8 @@ function PaymentInstructions({
                 </CardDescription>
             </CardHeader>
 
-            <CardContent className="space-y-4">
-                <ul className="space-y-2">
+            <CardContent className="space-y-6">
+                <ul className="space-y-3">
                     {instructions.methods.map((method) => (
                         <li
                             key={method.name}
@@ -412,4 +553,19 @@ function Row({ label, value }: { label: string; value: string }) {
             <dd className="font-medium">{value}</dd>
         </div>
     );
+}
+
+/** La date et l'heure : deux étapes d'un même jour ne doivent pas se confondre. */
+function formatDateTime(value: string | null): string {
+    if (!value) {
+        return '—';
+    }
+
+    return new Date(value).toLocaleDateString('fr-FR', {
+        day: '2-digit',
+        month: 'long',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+    });
 }
