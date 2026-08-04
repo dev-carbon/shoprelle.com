@@ -338,18 +338,44 @@ export function LinkToParcel({ className, ...props }: ComponentProps<'div'>) {
                 la seule chose que ce site ne peut pas se permettre. */}
             <p className="text-xs text-muted-foreground">Exemple de parcours</p>
 
+            {/*
+             * Les quatre libellés côte à côte à partir de `sm` ; sur un
+             * téléphone, celui de l'étape en cours et lui seul.
+             *
+             * En 2×2, les quatre tenaient à l'écran en même temps que la scène
+             * qu'ils annoncent : on lisait « Livraison » pendant que la scène
+             * montrait le lien, et la barre cessait de dire où l'on en était
+             * pour devenir un sommaire. Un seul libellé à la fois redit ce que
+             * la scène est en train de montrer.
+             *
+             * Rien n'est perdu au passage : la jauge juste en dessous garde ses
+             * quatre segments, donc « troisième étape sur quatre » reste lisible
+             * d'un coup d'œil, sans les libellés.
+             *
+             * Les quatre restent dans le document, empilés dans la même case, et
+             * les inactifs sortent par `visibility` — ce qui les retire aussi du
+             * clavier et des lecteurs d'écran, plutôt que de laisser trois
+             * boutons invisibles sous le doigt. C'est le procédé qu'emploient
+             * déjà les scènes plus bas.
+             */}
             <ol
                 role="tablist"
                 aria-label="Les étapes d'une commande"
                 onKeyDown={onKeyDown}
-                className="mt-7 grid grid-cols-2 gap-x-4 gap-y-4 sm:grid-cols-4 sm:gap-x-6"
+                className="mt-7 grid grid-cols-1 gap-x-4 sm:grid-cols-4 sm:gap-x-6"
             >
                 {STAGES.map((item, index) => {
                     const done = index < active;
                     const current = index === active;
 
                     return (
-                        <li key={item.label}>
+                        <li
+                            key={item.label}
+                            className={cn(
+                                'col-start-1 row-start-1 transition-opacity duration-500 ease-out motion-reduce:transition-none sm:visible sm:col-auto sm:row-auto sm:opacity-100',
+                                current ? 'opacity-100' : 'invisible opacity-0',
+                            )}
+                        >
                             <button
                                 type="button"
                                 role="tab"
