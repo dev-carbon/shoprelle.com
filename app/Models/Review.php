@@ -3,6 +3,8 @@
 namespace App\Models;
 
 use App\Chatbot\Channel;
+use Carbon\CarbonImmutable;
+use Database\Factories\ReviewFactory;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -11,18 +13,23 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 /**
  * What a customer thought, said to the assistant.
  *
+ * Les dates sont immuables : `AppServiceProvider` appelle
+ * `Date::use(CarbonImmutable::class)`, donc c'est bien une CarbonImmutable que
+ * la conversion rend et que `now()` produit — annoncer une `Carbon` mutable
+ * faisait échouer l'analyse à la seule ligne qui écrit dans la colonne.
+ *
  * @property int $id
  * @property int|null $customer_id
  * @property int|null $purchase_request_id
  * @property int $rating
  * @property string|null $comment
  * @property Channel $channel
- * @property \Illuminate\Support\Carbon|null $approved_at
- * @property \Illuminate\Support\Carbon|null $created_at
+ * @property CarbonImmutable|null $approved_at
+ * @property CarbonImmutable|null $created_at
  */
 class Review extends Model
 {
-    /** @use HasFactory<\Database\Factories\ReviewFactory> */
+    /** @use HasFactory<ReviewFactory> */
     use HasFactory;
 
     /** The lowest and highest a rating may be, in one place. */

@@ -78,20 +78,28 @@ class HomeController extends Controller
      */
     private function reviews(): array
     {
-        return Review::query()
+        $published = Review::query()
             ->approved()
             ->whereNotNull('comment')
             ->with('customer')
             ->latest('approved_at')
             ->limit(12)
-            ->get()
-            ->map(fn (Review $review): array => [
+            ->get();
+
+        $reviews = [];
+
+        // Empilés plutôt que projetés : une collection garde les clés des
+        // modèles, et ce que la vue attend est une liste.
+        foreach ($published as $review) {
+            $reviews[] = [
                 'rating' => $review->rating,
                 'comment' => (string) $review->comment,
                 'author' => $review->customer?->first_name ?: 'Client Shoprelle',
                 'place' => $review->customer?->city,
-            ])
-            ->all();
+            ];
+        }
+
+        return $reviews;
     }
 
     /**
