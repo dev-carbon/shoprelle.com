@@ -161,7 +161,7 @@ export function ProcessPhotos({ className }: { className?: string }) {
     return (
         <div
             className={cn(
-                'grid gap-x-8 gap-y-14 sm:grid-cols-2 lg:grid-cols-3',
+                'grid gap-x-8 gap-y-16 sm:grid-cols-2 sm:gap-x-12 lg:grid-cols-3 lg:gap-x-20 lg:gap-y-24',
                 className,
             )}
         >

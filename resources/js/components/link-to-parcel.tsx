@@ -69,7 +69,18 @@ function Stage({ children, className }: ComponentProps<'div'>) {
     return (
         <div
             className={cn(
-                'rounded-3xl border bg-muted/60 p-6 sm:p-7',
+                // `min-w-0` parce que le panneau est une case de grille, et
+                // qu'une case de grille prend par défaut la largeur minimale de
+                // ce qu'elle contient. L'étape « Lien » contient une URL en
+                // `truncate`, donc en `white-space: nowrap` : sa largeur
+                // minimale est la chaîne entière, 235 px. La case gonflait donc
+                // à 347 px dans une carte qui en fait 308 sur un téléphone, et
+                // comme les quatre scènes partagent la même case, les trois
+                // autres — le devis en tête — débordaient avec elle.
+                //
+                // Remis à zéro, la case suit la carte et l'URL retrouve son
+                // rôle : c'est elle qui se coupe, ce qu'elle demandait déjà.
+                'min-w-0 rounded-3xl border bg-muted/60 p-6 sm:p-7',
                 className,
             )}
         >
@@ -529,7 +540,12 @@ export function LinkToParcel({ className, ...props }: ComponentProps<'div'>) {
                         id={`stage-panel-${index}`}
                         aria-labelledby={`stage-tab-${index}`}
                         className={cn(
-                            'col-start-1 row-start-1 grid gap-8 transition-[opacity,visibility] duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] motion-reduce:transition-none lg:grid-cols-2 lg:items-center lg:gap-14',
+                            // `min-w-0` pour la même raison qu'au niveau du
+                            // dessous, sur `Stage` : les quatre scènes sont
+                            // empilées dans une seule case de grille, et sans
+                            // ça cette case se dimensionne sur la plus large
+                            // des quatre plutôt que sur la carte.
+                            'col-start-1 row-start-1 grid min-w-0 gap-8 transition-[opacity,visibility] duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] motion-reduce:transition-none lg:grid-cols-2 lg:items-center lg:gap-14',
                             index === active
                                 ? 'visible opacity-100'
                                 : 'invisible opacity-0',

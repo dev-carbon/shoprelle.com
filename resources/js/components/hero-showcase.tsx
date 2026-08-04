@@ -4,6 +4,7 @@ import type { ComponentProps } from 'react';
 import { useSlideshow } from '@/hooks/use-slideshow';
 import delivered from '@/images/colis-livre.webp';
 import ordering from '@/images/commande-telephone.webp';
+import family from '@/images/famille-colis.webp';
 import jacket from '@/images/products/veste-matelassee.webp';
 import { flagFor } from '@/lib/destinations';
 import { cn } from '@/lib/utils';
@@ -12,16 +13,23 @@ import { cn } from '@/lib/utils';
 const PHOTO_DURATION_MS = 5000;
 
 /**
- * Les deux bouts du service, dans l'ordre où on veut les croire.
+ * Le service, dans l'ordre où on veut le croire.
  *
  * Le colis reçu d'abord, parce que c'est la preuve et que c'est elle qui doit
- * être peinte en premier ; la commande passée ensuite, qui montre le geste
- * qu'on demande au visiteur. L'inverse aurait ouvert la page sur une promesse.
+ * être peinte en premier. La famille qui l'ouvre ensuite : c'est ce que la
+ * livraison vaut une fois faite, et c'est la seule image de la page où le
+ * service a déjà servi à quelque chose. La commande passée en dernier, qui
+ * montre le geste qu'on demande au visiteur — commencer par elle aurait ouvert
+ * la page sur une promesse.
  */
 const PHOTOS = [
     {
         src: delivered,
         alt: 'Une cliente reçoit son colis Shoprelle devant chez elle, à Douala.',
+    },
+    {
+        src: family,
+        alt: 'Une famille ouvre son carton Shoprelle dans son salon, entourée des colis Shein, Amazon et AliExpress qu’il regroupait.',
     },
     {
         src: ordering,

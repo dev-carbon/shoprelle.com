@@ -1,7 +1,9 @@
 <?php
 
 use App\Models\Customer;
+use App\Models\Product;
 use App\Models\Review;
+use Inertia\Testing\AssertableInertia as Assert;
 
 it('renders the landing page with its contact details', function () {
     config([
@@ -281,4 +283,30 @@ it('names every accepted payment method, configured or not', function () {
             ->missing('paymentMethods.0.account')
         )
         ->assertDontSee('237670000000');
+});
+
+it('shows the product selection when there is one', function () {
+    Product::factory()->create([
+        'name' => 'Veste matelassée',
+        'image_path' => 'products/veste.webp',
+    ]);
+
+    Product::factory()->withoutImage()->create(['name' => 'Sans photo']);
+    Product::factory()->hidden()->create(['name' => 'Retiré de la vitrine']);
+
+    $this->get(route('home'))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            // Un seul des trois : celui qui a une photo et qui est mis en
+            // avant. La vitrine ne montre pas de cadre vide, et un produit
+            // décoché n'y est plus.
+            ->has('products', 1)
+            ->where('products.0.name', 'Veste matelassée')
+        );
+});
+
+it('leaves the product section out when nothing is featured', function () {
+    $this->get(route('home'))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page->has('products', 0));
 });

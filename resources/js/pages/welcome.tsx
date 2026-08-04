@@ -14,6 +14,7 @@ import {
     ShieldCheck,
     ShoppingBag,
     ShoppingCart,
+    UserRound,
     X,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
@@ -31,11 +32,15 @@ import {
 import { MarketplaceMarquee } from '@/components/marketplace-marquee';
 import { OrderFab } from '@/components/order-fab';
 import { OrderMenu } from '@/components/order-menu';
+import { PAYMENT_LOGOS } from '@/components/payment-logos';
 import { ConversationShot, ProcessPhotos } from '@/components/process-photos';
+import { ProductShowcase } from '@/components/product-showcase';
+import type { ShowcaseProduct } from '@/components/product-showcase';
 import { Reveal } from '@/components/reveal';
 import { ReviewCarousel } from '@/components/review-carousel';
 import type { Review } from '@/components/review-carousel';
 import { ScrollProgress } from '@/components/scroll-progress';
+import { Accent, Eyebrow } from '@/components/section-heading';
 import {
     SOCIAL_ICONS,
     WHATSAPP_GREEN,
@@ -59,9 +64,9 @@ import { index as orders } from '@/routes/orders';
  * it sits two thirds of the way down. Split out, it streams in beside the rest
  * instead of holding up the hero.
  */
-const DeliveryMap = lazy(() =>
-    import('@/components/delivery-map').then((module) => ({
-        default: module.DeliveryMap,
+const AfricaMap = lazy(() =>
+    import('@/components/africa-map').then((module) => ({
+        default: module.AfricaMap,
     })),
 );
 
@@ -74,7 +79,7 @@ const DeliveryMap = lazy(() =>
  * page aérée se joue d'abord au bord de l'écran, où l'œil mesure sans y penser
  * la place que le contenu s'accorde.
  */
-const SHELL = 'mx-auto w-full max-w-7xl px-5 sm:px-8 lg:px-10';
+const SHELL = 'mx-auto w-full max-w-[90rem] px-6 sm:px-10 lg:px-14 2xl:px-20';
 
 /**
  * Le rythme vertical des sections, lui aussi unique.
@@ -84,7 +89,7 @@ const SHELL = 'mx-auto w-full max-w-7xl px-5 sm:px-8 lg:px-10';
  * le défilement ait une cadence — une section serrée suivie d'une section large
  * se lit comme une erreur de gabarit.
  */
-const BAND = 'py-28 lg:py-40';
+const BAND = 'py-36 lg:py-56';
 
 const MARKETPLACES = [
     'Shein',
@@ -274,6 +279,8 @@ type Props = {
     social: Partial<Record<SocialNetwork, string>>;
     /** Les moyens de paiement acceptés, sans leurs coordonnées. */
     paymentMethods: { name: string; colour: string }[];
+    /** La sélection tenue depuis le back-office. Vide tant qu'elle l'est. */
+    products: ShowcaseProduct[];
 };
 
 /**
@@ -286,24 +293,6 @@ type Props = {
  */
 const formatFigure = (value: number) =>
     String(value).replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
-
-/**
- * Le sur-titre d'une section : un filet, puis deux mots en capitales.
- *
- * Il ne dit rien que le titre ne dise déjà — il annonce. C'est ce qui donne à
- * un titre de section un point de départ visuel, et ce qui fait qu'une page
- * très aérée reste lisible comme une suite de chapitres plutôt que comme une
- * série de blocs flottants. Il prend la couleur primaire, qui est redéclarée
- * par chaque bande colorée : blanc sur le bleu, marine sur l'or.
- */
-function Eyebrow({ children }: { children: ReactNode }) {
-    return (
-        <p className="flex items-center gap-3 font-display text-eyebrow font-extrabold text-primary uppercase">
-            <span aria-hidden className="h-px w-7 bg-primary/40" />
-            {children}
-        </p>
-    );
-}
 
 /**
  * One figure in the network row, counting up to itself as it is reached.
@@ -329,7 +318,7 @@ function Stat({
     const ref = useCountUp<HTMLSpanElement>(value, formatFigure);
 
     return (
-        <div className="text-center">
+        <div>
             <p className="font-display text-title font-black tabular-nums">
                 <span ref={ref}>{formatFigure(value)}</span>
                 {suffix && (
@@ -505,6 +494,7 @@ export default function Welcome({
     reviews,
     social,
     paymentMethods,
+    products,
 }: Props) {
     const { auth } = usePage().props;
     const scrolled = useScrolled();
@@ -617,22 +607,40 @@ export default function Welcome({
                         belongs to the visitor, and a door marked for somebody
                         else is one more thing for them to read past. */}
                     <div className="flex items-center gap-2">
-                        {/* La porte des clients qui reviennent.
+                        <ThemeSwitcher />
 
+                        {/* ── La porte des clients qui reviennent ────────────
                             Elle est dans la barre et pas seulement au pied de
                             page : quelqu'un qui vient relire son devis n'a
                             aucune raison de faire défiler toute une page de
-                            vente pour retrouver l'entrée. Discrète, parce que
-                            la page appartient d'abord à qui ne connaît pas
-                            encore le service. */}
+                            vente pour retrouver l'entrée.
+
+                            Une icône plutôt que « Mes demandes » écrit en
+                            toutes lettres. Trois raisons, dans l'ordre où elles
+                            comptent :
+
+                              — c'est un espace personnel, et la silhouette est
+                                ce que tout le monde cherche pour en trouver un.
+                                Le mot, lui, se lisait comme un lien de plus au
+                                milieu des cinq du menu.
+                              — elle tient sur un téléphone, où le libellé était
+                                purement et simplement caché. L'espace client y
+                                était donc introuvable depuis la barre.
+                              — elle se range avec le sélecteur de thème, à côté
+                                du bouton d'action : les deux commandes de la
+                                personne d'un côté, ce qu'on lui propose de
+                                faire de l'autre.
+
+                            Le nom reste dit — `aria-label` et `title` — parce
+                            qu'une icône seule n'a jamais annoncé où elle mène. */}
                         <Link
                             href={orders()}
-                            className="hidden rounded-full px-3.5 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground sm:inline-flex"
+                            title="Mes demandes"
+                            aria-label="Mes demandes"
+                            className="inline-flex size-9 items-center justify-center rounded-md text-muted-foreground transition-colors outline-none hover:bg-accent hover:text-accent-foreground focus-visible:ring-[3px] focus-visible:ring-ring/50"
                         >
-                            Mes demandes
+                            <UserRound className="size-4" />
                         </Link>
-
-                        <ThemeSwitcher />
 
                         {/* Le même menu que le bouton flottant : le header
                             n'impose plus le chat web.
@@ -649,8 +657,8 @@ export default function Welcome({
                             whatsappUrl={whatsappUrl}
                             trigger={
                                 <Button className="hidden h-10 rounded-full px-5 shadow-md shadow-primary/25 transition-shadow hover:shadow-lg hover:shadow-primary/30 sm:inline-flex">
-                                    Commander
                                     <ShoppingCart className="size-4" />
+                                    Commander
                                 </Button>
                             }
                         />
@@ -671,7 +679,7 @@ export default function Welcome({
                     place de ça. */}
                 <section
                     id="top"
-                    className="relative overflow-hidden border-b pt-16 pb-24 lg:pt-24 lg:pb-32"
+                    className="relative overflow-hidden border-b pt-20 pb-28 lg:pt-28 lg:pb-40"
                 >
                     <div
                         aria-hidden
@@ -685,31 +693,26 @@ export default function Welcome({
                     <div
                         className={cn(
                             SHELL,
-                            'relative grid items-center gap-14 lg:grid-cols-[minmax(0,6fr)_minmax(0,5fr)] lg:gap-20',
+                            'relative grid items-center gap-20 lg:grid-cols-[minmax(0,6fr)_minmax(0,5fr)] lg:gap-24',
                         )}
                     >
                         <div className="text-center lg:text-left">
-                            <div
-                                className="flex animate-rise justify-center lg:justify-start"
-                                style={{ animationDelay: '20ms' }}
-                            >
-                                <Eyebrow>
-                                    Concierge d'achat international
-                                </Eyebrow>
-                            </div>
+                            {/* Pas de sur-titre au-dessus du titre du hero :
+                                c'est la première chose de la page, et rien n'a
+                                à l'annoncer.
 
-                            {/* Se met au point plutôt que d'arriver : à cette
+                                Se met au point plutôt que d'arriver : à cette
                                 taille, un titre qui glisse fait un mouvement de
                                 quinze centimètres à l'écran. */}
                             <h1
-                                className="mt-7 animate-rise-blur font-display text-hero font-black"
+                                className="animate-rise-blur font-display text-hero font-black"
                                 style={{ animationDelay: '60ms' }}
                             >
                                 Vos envies, enfin livrées chez vous.
                             </h1>
 
                             <p
-                                className="mx-auto mt-7 max-w-lg animate-rise text-lead text-muted-foreground lg:mx-0"
+                                className="mx-auto mt-9 max-w-lg animate-rise text-lead text-muted-foreground lg:mx-0"
                                 style={{ animationDelay: '160ms' }}
                             >
                                 Un lien suffit pour commander sur vos
@@ -726,7 +729,7 @@ export default function Welcome({
                                 first step of it. */}
                             <Form
                                 {...link.form()}
-                                className="mt-10 flex w-full animate-rise flex-col gap-3 sm:flex-row"
+                                className="mt-12 flex w-full animate-rise flex-col gap-4 sm:flex-row"
                                 style={{ animationDelay: '220ms' }}
                             >
                                 {({ processing, errors }) => (
@@ -782,7 +785,7 @@ export default function Welcome({
                                 un engagement que la page tient plus bas, aucune
                                 n'en ajoute. */}
                             <ul
-                                className="mt-8 flex animate-rise flex-wrap items-center justify-center gap-x-7 gap-y-3 text-sm font-medium lg:justify-start"
+                                className="mt-10 flex animate-rise flex-wrap items-center justify-center gap-x-8 gap-y-4 text-sm font-medium lg:justify-start"
                                 style={{ animationDelay: '280ms' }}
                             >
                                 {[
@@ -823,7 +826,7 @@ export default function Welcome({
                         vaut mieux avoir répondu avant de raconter un parcours
                         que personne ne lira s'il ne le concerne pas. */}
                     <div
-                        className={cn(SHELL, 'relative mt-20 animate-rise')}
+                        className={cn(SHELL, 'relative mt-28 animate-rise')}
                         style={{ animationDelay: '340ms' }}
                     >
                         <MarketplaceMarquee
@@ -845,12 +848,13 @@ export default function Welcome({
                             from="blur"
                             className="mx-auto flex max-w-2xl flex-col items-center text-center"
                         >
-                            <Eyebrow>Du lien au colis</Eyebrow>
+                            <Eyebrow tone="gold">Du lien au colis</Eyebrow>
 
-                            <h2 className="mt-7 font-display text-title font-black">
-                                Ce qui se passe une fois le lien envoyé
+                            <h2 className="mt-8 font-display text-title font-black">
+                                Ce qui se passe une fois le{' '}
+                                <Accent tone="gold">lien envoyé</Accent>
                             </h2>
-                            <p className="mt-6 text-lead text-muted-foreground">
+                            <p className="mt-8 text-lead text-muted-foreground">
                                 Quatre étapes, et vous n'en pilotez qu'une : la
                                 première. Le reste, c'est nous.
                             </p>
@@ -901,8 +905,8 @@ export default function Welcome({
                                         size="lg"
                                         className="mt-7 h-14 rounded-2xl px-9 text-base shadow-lg shadow-primary/25 transition-shadow hover:shadow-xl hover:shadow-primary/30"
                                     >
-                                        Commander maintenant
                                         <ShoppingCart className="size-4" />
+                                        Commander maintenant
                                     </Button>
                                 }
                             />
@@ -955,141 +959,188 @@ export default function Welcome({
                     >
                         <Eyebrow>Le réseau</Eyebrow>
 
-                        <h2 className="mt-7 font-display text-title font-black">
-                            Vos envies voyagent jusqu'à vous.
+                        <h2 className="mt-8 font-display text-title font-black">
+                            <Accent tone="blue">Vos envies</Accent> voyagent
+                            jusqu'à vous.
                         </h2>
 
-                        <p className="mt-6 text-lead text-muted-foreground">
+                        <p className="mt-8 text-lead text-muted-foreground">
                             Shoprelle vous ouvre l'accès aux plus grandes
                             plateformes d'achat et organise l'acheminement de
                             vos commandes jusqu'à votre destination.
                         </p>
                     </Reveal>
 
-                    {/* Full bleed, and the only thing on the page that is: the
-                        map is the answer this section exists to give, and a
-                        gutter around it turns the world into an illustration of
-                        somewhere else. Capped all the same — past about eighteen
-                        hundred pixels it stops being a band and starts being a
-                        wall. */}
-                    <Reveal
-                        from="fade"
-                        delay={100}
-                        className="relative mx-auto mt-16 w-full max-w-[1800px] lg:mt-20"
+                    {/* ── La carte et sa lecture, côte à côte ─────────────
+                        La carte est un objet haut : posée seule au milieu de la
+                        page, elle poussait la légende, les compteurs et la liste
+                        des pays à la suite les uns des autres, et la section
+                        prenait trois écrans pour dire une chose simple.
+
+                        Elle tient donc la colonne de gauche, et tout ce qui la
+                        lit en mots — la légende, les chiffres, les noms — tient
+                        celle de droite, à la même hauteur. Rien n'a été retiré ;
+                        ce qui était empilé est maintenant en regard.
+
+                        Sous `lg`, les deux colonnes redeviennent une pile : à
+                        cette largeur, une carte de la moitié de l'écran n'est
+                        plus une carte. */}
+                    <div
+                        className={cn(
+                            SHELL,
+                            'relative mt-16 grid items-center gap-14 lg:mt-20 lg:grid-cols-[minmax(0,5fr)_minmax(0,6fr)] lg:gap-20',
+                        )}
                     >
-                        <Suspense
-                            fallback={
-                                <div className="aspect-[957/348] w-full animate-pulse bg-muted-foreground/10" />
-                            }
-                        >
-                            <DeliveryMap
-                                countries={countries}
-                                upcomingCountries={upcomingCountries}
-                            />
-                        </Suspense>
-                    </Reveal>
+                        {/* ── Le panneau de la carte ──────────────────────────
+                            Le continent était posé à même la page, et une carte
+                            en gris pâle sur un fond blanc ne se pose sur rien :
+                            elle flotte. Un panneau lui donne un bord, donc une
+                            place, et sépare la colonne du dessin de celle des
+                            mots sans qu'un trait ait à le faire.
 
-                    <div className={cn(SHELL, 'relative')}>
-                        <ul className="mt-10 flex flex-wrap items-center justify-center gap-x-8 gap-y-2 text-xs font-semibold">
-                            <Legend swatch="bg-accent-brand">
-                                Hub · France
-                            </Legend>
-                            <Legend swatch="bg-primary">
-                                Livraison disponible
-                            </Legend>
-                            <Legend swatch="bg-primary/50">
-                                Bientôt desservi
-                            </Legend>
-                        </ul>
+                            Deux couches et rien de plus : le fond du panneau
+                            et la trame de points du site. Ni bordure, ni ombre
+                            portée, ni halo — le panneau n'est pas une carte
+                            posée sur la page, c'est un aplat de couleur dans
+                            lequel le continent est dessiné. Un trait autour en
+                            aurait refait un objet. La carte passe en `relative`
+                            par-dessus. */}
+                        <Reveal from="left" delay={100}>
+                            <div className="relative isolate overflow-hidden rounded-[2rem] bg-muted/40 p-6 sm:p-8">
+                                <div
+                                    aria-hidden
+                                    className="pointer-events-none absolute inset-0 bg-dots opacity-60"
+                                />
 
-                        {/* The counters, on a rule of their own: they are the
-                            claim the map makes, stated as numbers, and sitting
-                            them under the drawing would make them read as its
-                            caption. */}
-                        <div className="mx-auto mt-20 grid max-w-4xl gap-12 border-t pt-16 sm:grid-cols-3 sm:gap-8">
-                            {figures.map((figure, index) => (
-                                <Reveal
-                                    key={figure.label}
-                                    delay={index * 80}
-                                    className="sm:not-first:border-l sm:not-first:border-border"
+                                <Suspense
+                                    fallback={
+                                        <div className="mx-auto aspect-[234/319] w-full max-w-md animate-pulse rounded-3xl bg-muted-foreground/10" />
+                                    }
                                 >
-                                    <Stat {...figure} />
-                                </Reveal>
-                            ))}
-                        </div>
+                                    <AfricaMap
+                                        countries={countries}
+                                        upcomingCountries={upcomingCountries}
+                                        className="relative mx-auto w-full max-w-md"
+                                    />
+                                </Suspense>
+                            </div>
+                        </Reveal>
 
-                        {/* The destinations come from the same config the
-                            assistant offers, so the page cannot promise a
-                            country the conversation would then refuse. They are
-                            named as well as drawn: the markers carry their name,
-                            but a list is what a visitor scans and what a search
-                            engine reads. */}
-                        <div className="mx-auto mt-20 flex w-full max-w-3xl flex-col items-center gap-8 text-center">
-                            <div>
-                                <p className="flex items-center justify-center gap-2 text-sm font-semibold">
-                                    <span className="size-2 rounded-full bg-primary" />
-                                    Nous livrons aujourd'hui
-                                </p>
-                                <ul className="mt-4 flex flex-wrap justify-center gap-2.5">
-                                    {countries.map((country, index) => (
-                                        <Reveal
-                                            as="li"
-                                            from="fade"
-                                            key={country.code}
-                                            delay={index * 55}
-                                            className="flex items-center gap-2 rounded-full border bg-card px-4 py-2 text-sm font-semibold shadow-sm"
-                                        >
-                                            {/* Le drapeau porte plus que sa
-                                                taille de texte : c'est lui
-                                                qu'on reconnaît avant de lire le
-                                                nom du pays. */}
-                                            <span
-                                                aria-hidden
-                                                className="text-xl leading-none"
-                                            >
-                                                {flagFor(country.code)}
-                                            </span>
-                                            {country.name}
-                                        </Reveal>
-                                    ))}
-                                </ul>
+                        <Reveal
+                            from="right"
+                            delay={140}
+                            className="flex flex-col gap-10"
+                        >
+                            {/* Le hub a quitté la légende avec la France : ce
+                                que cette carte dit est où l'on livre, et d'où
+                                part le colis est écrit en toutes lettres
+                                ailleurs. */}
+                            <ul className="flex flex-wrap items-center gap-x-8 gap-y-2 text-xs font-semibold">
+                                <Legend swatch="bg-primary">
+                                    Livraison disponible
+                                </Legend>
+                                <Legend swatch="bg-primary/35">
+                                    Bientôt desservi
+                                </Legend>
+                                <Legend swatch="bg-muted-foreground/20">
+                                    Pas encore desservi
+                                </Legend>
+                            </ul>
+
+                            {/* Les compteurs : la même chose que la carte, dite
+                                en nombres. */}
+                            {/* Autant de colonnes que de chiffres, jusqu'à
+                                trois : deux d'entre eux n'existent que le jour
+                                où il y a des colis expédiés et des demandes
+                                livrées à compter, et une grille de trois
+                                colonnes pour un seul chiffre laisse deux vides
+                                que l'œil lit comme une donnée manquante. */}
+                            <div
+                                className={cn(
+                                    'grid gap-10 border-t pt-10 sm:gap-8',
+                                    figures.length > 1 && 'sm:grid-cols-3',
+                                )}
+                            >
+                                {figures.map((figure) => (
+                                    <div key={figure.label}>
+                                        <Stat {...figure} />
+                                    </div>
+                                ))}
                             </div>
 
-                            {upcomingCountries.length > 0 && (
-                                <div className="border-t pt-8">
-                                    <p className="text-sm text-muted-foreground">
-                                        Bientôt
+                            {/* Les destinations viennent de la configuration
+                                que l'assistant applique, donc la page ne peut
+                                pas promettre un pays que la conversation
+                                refuserait ensuite. Elles sont nommées autant que
+                                dessinées : les étiquettes portent leur nom sur
+                                la carte, mais une liste est ce qu'un visiteur
+                                parcourt et ce qu'un moteur de recherche lit. */}
+                            <div className="flex flex-col gap-8 border-t pt-10">
+                                <div>
+                                    <p className="flex items-center gap-2 text-sm font-semibold">
+                                        <span className="size-2 rounded-full bg-primary" />
+                                        Nous livrons aujourd'hui
                                     </p>
-                                    {/* Outlined rather than filled, matching
-                                        the paler countries on the map: these
-                                        are announced, not open, and the
-                                        assistant turns them down until the
-                                        config says otherwise. */}
-                                    <ul className="mt-4 flex flex-wrap justify-center gap-2.5">
-                                        {upcomingCountries.map(
-                                            (country, index) => (
-                                                <Reveal
-                                                    as="li"
-                                                    from="fade"
-                                                    key={country.code}
-                                                    delay={index * 55}
-                                                    className="flex items-center gap-2 rounded-full border border-dashed px-4 py-2 text-sm font-medium text-muted-foreground"
+                                    <ul className="mt-4 flex flex-wrap gap-2.5">
+                                        {countries.map((country) => (
+                                            <li
+                                                key={country.code}
+                                                className="flex items-center gap-2 rounded-full border bg-card px-4 py-2 text-sm font-semibold shadow-sm"
+                                            >
+                                                {/* Le drapeau porte plus que sa
+                                                    taille de texte : c'est lui
+                                                    qu'on reconnaît avant de lire
+                                                    le nom du pays. */}
+                                                <span
+                                                    aria-hidden
+                                                    className="text-xl leading-none"
                                                 >
-                                                    <span
-                                                        aria-hidden
-                                                        className="text-xl leading-none"
-                                                    >
-                                                        {flagFor(country.code)}
-                                                    </span>
-                                                    {country.name}
-                                                </Reveal>
-                                            ),
-                                        )}
+                                                    {flagFor(country.code)}
+                                                </span>
+                                                {country.name}
+                                            </li>
+                                        ))}
                                     </ul>
                                 </div>
-                            )}
-                        </div>
 
+                                {upcomingCountries.length > 0 && (
+                                    <div>
+                                        <p className="text-sm text-muted-foreground">
+                                            Bientôt
+                                        </p>
+                                        {/* En pointillés plutôt qu'en plein,
+                                            comme les pays pâles de la carte :
+                                            ils sont annoncés, pas ouverts, et
+                                            l'assistant les refuse tant que la
+                                            configuration ne dit pas autre
+                                            chose. */}
+                                        <ul className="mt-4 flex flex-wrap gap-2.5">
+                                            {upcomingCountries.map(
+                                                (country) => (
+                                                    <li
+                                                        key={country.code}
+                                                        className="flex items-center gap-2 rounded-full border border-dashed px-4 py-2 text-sm font-medium text-muted-foreground"
+                                                    >
+                                                        <span
+                                                            aria-hidden
+                                                            className="text-xl leading-none"
+                                                        >
+                                                            {flagFor(
+                                                                country.code,
+                                                            )}
+                                                        </span>
+                                                        {country.name}
+                                                    </li>
+                                                ),
+                                            )}
+                                        </ul>
+                                    </div>
+                                )}
+                            </div>
+                        </Reveal>
+                    </div>
+
+                    <div className={cn(SHELL, 'relative')}>
                         {/* Two columns, and the same split the rest of the page
                             uses: the heading holds the narrow side and the
                             content takes the width. Stacked one per line rather
@@ -1102,9 +1153,10 @@ export default function Welcome({
                                 from="left"
                                 className="lg:sticky lg:top-32 lg:self-start"
                             >
-                                <Eyebrow>Toujours pareil</Eyebrow>
-
-                                <h3 className="mt-6 font-display text-subtitle font-extrabold">
+                                {/* Pas de sur-titre ici : ce bloc est la suite
+                                    de la section qui le porte, pas un chapitre
+                                    de plus. */}
+                                <h3 className="font-display text-subtitle font-extrabold">
                                     Le même parcours, quelle que soit la
                                     destination.
                                 </h3>
@@ -1142,18 +1194,86 @@ export default function Welcome({
                     </div>
                 </section>
 
+                {/* ── Ce qu'on commande ──────────────────────────────────
+                    Après « oui, on livre chez vous » et avant « voilà comment
+                    ça se passe » : le visiteur vient d'apprendre que le service
+                    l'atteint, et la question suivante est ce qu'il peut en
+                    faire. Le service accepte n'importe quel lien de n'importe
+                    quelle plateforme — une promesse aussi large ne donne aucune
+                    idée, et quelques produits en donnent une.
+
+                    La section disparaît tant qu'aucun produit n'est mis en
+                    avant depuis le back-office. Une vitrine vide dit exactement
+                    le contraire de ce qu'elle vient dire. */}
+                {products.length > 0 && (
+                    <section
+                        className={cn(
+                            'relative overflow-hidden border-b',
+                            BAND,
+                        )}
+                    >
+                        {/* Les hachures : la même trame que la section de
+                            l'assistant, l'autre endroit où l'on choisit. */}
+                        <div
+                            aria-hidden
+                            className="pointer-events-none absolute inset-0 bg-diagonals [mask-image:linear-gradient(to_bottom,black,transparent_70%)] opacity-40"
+                        />
+
+                        <div className={cn(SHELL, 'relative')}>
+                            <Reveal from="blur" className="max-w-2xl">
+                                <Eyebrow tone="gold">La sélection</Eyebrow>
+
+                                <h2 className="mt-8 font-display text-title font-black">
+                                    Ce qu'on nous commande{' '}
+                                    <Accent tone="gold">le plus souvent</Accent>
+                                </h2>
+
+                                <p className="mt-8 text-lead text-muted-foreground">
+                                    Quelques exemples, avec leur prix relevé sur
+                                    la plateforme. Vous n'êtes pas limité à
+                                    cette liste : n'importe quel lien fait
+                                    l'affaire.
+                                </p>
+                            </Reveal>
+
+                            <ProductShowcase
+                                products={products}
+                                className="mt-14"
+                            />
+
+                            {/* Dit une fois, en bas de la grille : les prix
+                                sont relevés à la main et le transport n'y est
+                                pas. Le seul montant qui engage est celui du
+                                devis, et cette page n'a pas le droit de laisser
+                                croire autre chose. */}
+                            <p className="mt-12 text-sm text-muted-foreground">
+                                Prix indicatifs relevés sur les plateformes,
+                                hors transport. Votre devis les recalcule au
+                                cours du jour.
+                            </p>
+                        </div>
+                    </section>
+                )}
+
                 <section
                     id="comment-ca-marche"
                     className={cn('border-b section-brand', BAND)}
                 >
-                    {/* Same two-column split as the marketplace section: the
-                        heading holds the narrow side and the content takes the
-                        width, which is what keeps a wide page from stretching
-                        its paragraphs past reading length. */}
+                    {/* Le même partage en deux que les autres sections — le
+                        titre sur la colonne étroite, le contenu sur la large —
+                        mais retourné : ici le titre est à droite.
+
+                        La frise passe donc à gauche, c'est-à-dire du côté d'où
+                        l'on commence à lire, ce qui est sa place : elle est la
+                        chose numérotée de la section. Le titre reste premier
+                        dans le document — c'est lui qu'un lecteur d'écran doit
+                        rencontrer d'abord — et ne change que de colonne, par
+                        `order`. Sous `lg`, la pile revient à l'ordre du
+                        document et le titre repasse devant. */}
                     <div
                         className={cn(
                             SHELL,
-                            'grid gap-14 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] lg:gap-20',
+                            'grid gap-14 lg:grid-cols-[minmax(0,7fr)_minmax(0,5fr)] lg:gap-20',
                         )}
                     >
                         {/* Cette colonne n'est plus collante. Elle l'était
@@ -1162,13 +1282,13 @@ export default function Welcome({
                             dépasse la hauteur d'écran, et un bloc collant plus
                             haut que la fenêtre a un bas que l'on n'atteint
                             jamais. */}
-                        <div>
+                        <div className="lg:order-2">
                             <Eyebrow>Comment ça marche</Eyebrow>
 
-                            <h2 className="mt-7 font-display text-title font-black">
+                            <h2 className="mt-8 font-display text-title font-black">
                                 Trois étapes, et c'est tout
                             </h2>
-                            <p className="mt-6 max-w-sm text-lead text-muted-foreground">
+                            <p className="mt-8 max-w-sm text-lead text-muted-foreground">
                                 Pas de formulaire interminable, pas de compte :
                                 une conversation.
                             </p>
@@ -1188,7 +1308,7 @@ export default function Welcome({
                         {/* A rail rather than three cards: the steps happen in
                             an order, and a timeline says so where a grid does
                             not. */}
-                        <ol>
+                        <ol className="lg:order-1">
                             {STEPS.map((step, index) => (
                                 <Reveal
                                     as="li"
@@ -1237,20 +1357,37 @@ export default function Welcome({
                     Toute la bande disparaît tant qu'aucune photo n'est
                     déposée — voir `lib/photos.ts`. */}
                 {SHOW_PROCESS_PHOTOS && (
-                    <section className={cn('border-b', BAND)}>
+                    <section
+                        className={cn(
+                            'relative overflow-hidden border-b',
+                            BAND,
+                        )}
+                    >
+                        {/* Le semis de points : la trame d'imprimeur, derrière
+                            la seule bande de la page qui est faite de
+                            photographies. */}
                         <div
-                            className={cn(SHELL, 'flex flex-col items-center')}
+                            aria-hidden
+                            className="pointer-events-none absolute inset-0 bg-dots [mask-image:radial-gradient(75%_55%_at_50%_0%,black,transparent)] opacity-50"
+                        />
+
+                        <div
+                            className={cn(
+                                SHELL,
+                                'relative flex flex-col items-center',
+                            )}
                         >
                             <Reveal
                                 from="blur"
                                 className="flex max-w-2xl flex-col items-center text-center"
                             >
-                                <Eyebrow>En vrai</Eyebrow>
+                                <Eyebrow tone="gold">En vrai</Eyebrow>
 
-                                <h2 className="mt-7 font-display text-title font-black">
-                                    Ce que ça donne, concrètement
+                                <h2 className="mt-8 font-display text-title font-black">
+                                    Ce que ça donne,{' '}
+                                    <Accent tone="gold">concrètement</Accent>
                                 </h2>
-                                <p className="mt-6 text-lead text-muted-foreground">
+                                <p className="mt-8 text-lead text-muted-foreground">
                                     Les trois mêmes étapes, photographiées. Rien
                                     de mis en scène : c'est le travail tel qu'il
                                     se fait, de la commande passée en France au
@@ -1272,18 +1409,34 @@ export default function Welcome({
                     gauche et de trois cartes tassées dans les sept douzièmes
                     restants. Les canaux sont des égaux : les mettre en colonne
                     à côté d'un titre en désignait un premier. */}
-                <section id="assistant" className={cn('border-b', BAND)}>
-                    <div className={cn(SHELL, 'flex flex-col items-center')}>
+                <section
+                    id="assistant"
+                    className={cn('relative overflow-hidden border-b', BAND)}
+                >
+                    {/* Les hachures : la texture d'une bulle de message,
+                        derrière la section qui raconte une conversation. */}
+                    <div
+                        aria-hidden
+                        className="pointer-events-none absolute inset-0 bg-diagonals [mask-image:linear-gradient(to_bottom,black,transparent_65%)] opacity-40"
+                    />
+
+                    <div
+                        className={cn(
+                            SHELL,
+                            'relative flex flex-col items-center',
+                        )}
+                    >
                         <Reveal
                             from="blur"
                             className="flex max-w-2xl flex-col items-center text-center"
                         >
                             <Eyebrow>L'assistant</Eyebrow>
 
-                            <h2 className="mt-7 font-display text-title font-black">
-                                Commandez simplement en discutant
+                            <h2 className="mt-8 font-display text-title font-black">
+                                Commandez simplement{' '}
+                                <Accent tone="blue">en discutant</Accent>
                             </h2>
-                            <p className="mt-6 text-lead text-muted-foreground">
+                            <p className="mt-8 text-lead text-muted-foreground">
                                 Plus besoin de remplir des formulaires
                                 compliqués. Envoyez un lien à notre assistant et
                                 laissez-vous guider étape par étape.
@@ -1347,22 +1500,35 @@ export default function Welcome({
                     who wants to know why it had to exist. */}
                 <section
                     id="a-propos"
-                    className={cn('border-b bg-surface-alt', BAND)}
+                    className={cn(
+                        'relative overflow-hidden border-b bg-surface-alt',
+                        BAND,
+                    )}
                 >
+                    {/* Les cercles concentriques, partant du bord où commence
+                        le récit : quelque chose qui part d'un point et se
+                        propage, derrière la section qui dit pourquoi le service
+                        existe. */}
+                    <div
+                        aria-hidden
+                        className="pointer-events-none absolute inset-0 bg-rings [mask-image:radial-gradient(60%_70%_at_0%_50%,black,transparent)] opacity-60"
+                    />
+
                     <div
                         className={cn(
                             SHELL,
-                            'grid gap-14 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] lg:gap-20',
+                            'relative grid gap-14 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] lg:gap-20',
                         )}
                     >
                         <Reveal
                             from="left"
                             className="lg:sticky lg:top-32 lg:self-start"
                         >
-                            <Eyebrow>À propos</Eyebrow>
+                            <Eyebrow tone="gold">À propos</Eyebrow>
 
-                            <h2 className="mt-7 font-display text-title font-black">
-                                Pourquoi Shoprelle existe ?
+                            <h2 className="mt-8 font-display text-title font-black">
+                                Pourquoi <Accent tone="gold">Shoprelle</Accent>{' '}
+                                existe ?
                             </h2>
                             <p className="mt-7 text-lead text-muted-foreground">
                                 De nombreux produits sont difficiles à obtenir
@@ -1439,12 +1605,13 @@ export default function Welcome({
                         <Reveal from="blur" className="max-w-2xl">
                             <Eyebrow>Nos engagements</Eyebrow>
 
-                            <h2 className="mt-7 font-display text-title font-black">
-                                Une solution simple, transparente et fiable
+                            <h2 className="mt-8 font-display text-title font-black">
+                                Une solution simple, transparente et{' '}
+                                <Accent tone="blue">fiable</Accent>
                             </h2>
                         </Reveal>
 
-                        <div className="mt-16 grid gap-6 sm:grid-cols-2 lg:grid-cols-6">
+                        <div className="mt-20 grid gap-8 sm:grid-cols-2 lg:grid-cols-6">
                             {PROMISES.map((promise, index) => (
                                 <Reveal
                                     key={promise.title}
@@ -1456,9 +1623,14 @@ export default function Welcome({
                                             : 'lg:col-span-2',
                                     )}
                                 >
+                                    {/* Le bleu, et non l'or : depuis que les
+                                        titres portent l'or, cinq pastilles
+                                        dorées de plus au même endroit faisaient
+                                        de cette grille la seule chose qu'on
+                                        voyait de la page. */}
                                     <span
                                         className={cn(
-                                            'flex items-center justify-center rounded-2xl bg-accent-brand text-accent-brand-foreground',
+                                            'flex items-center justify-center rounded-2xl bg-primary text-primary-foreground',
                                             index === 0 ? 'size-14' : 'size-12',
                                         )}
                                     >
@@ -1481,7 +1653,7 @@ export default function Welcome({
                                     >
                                         {promise.title}
                                     </h3>
-                                    <p className="mt-4 max-w-md text-body text-muted-foreground">
+                                    <p className="mt-6 max-w-md text-body text-muted-foreground">
                                         {promise.description}
                                     </p>
                                 </Reveal>
@@ -1504,7 +1676,15 @@ export default function Welcome({
 
                             Tous les moyens sont nommés, y compris ceux dont
                             aucun compte n'est encore renseigné : cette liste
-                            informe, elle ne promet pas un numéro. */}
+                            informe, elle ne promet pas un numéro.
+
+                            Les trois marques y sont maintenant elles-mêmes,
+                            sur leur tuile blanche, plutôt qu'une pastille de
+                            couleur suivie de leur nom : « MoMo » se reconnaît
+                            d'un coup d'œil par ceux qui s'en servent tous les
+                            jours, et c'est précisément à eux que cette ligne
+                            s'adresse. Un moyen sans marque déposée ici garde
+                            l'ancien affichage — voir `payment-logos.tsx`. */}
                         {paymentMethods.length > 0 && (
                             <Reveal
                                 delay={160}
@@ -1514,21 +1694,52 @@ export default function Welcome({
                                     Vous réglez par
                                 </span>
 
-                                {paymentMethods.map((method) => (
-                                    <span
-                                        key={method.name}
-                                        className="flex items-center gap-2 font-display text-sm font-extrabold"
-                                    >
+                                {paymentMethods.map((method) => {
+                                    const logo = PAYMENT_LOGOS[method.name];
+
+                                    if (!logo) {
+                                        return (
+                                            <span
+                                                key={method.name}
+                                                className="flex items-center gap-2 font-display text-sm font-extrabold"
+                                            >
+                                                <span
+                                                    aria-hidden
+                                                    style={{
+                                                        backgroundColor:
+                                                            method.colour,
+                                                    }}
+                                                    className="size-4 rounded-md"
+                                                />
+                                                {method.name}
+                                            </span>
+                                        );
+                                    }
+
+                                    return (
                                         <span
-                                            aria-hidden
-                                            style={{
-                                                backgroundColor: method.colour,
-                                            }}
-                                            className="size-4 rounded-md"
-                                        />
-                                        {method.name}
-                                    </span>
-                                ))}
+                                            key={method.name}
+                                            className="flex h-14 items-center rounded-xl border border-black/[0.07] bg-surface-tile px-4 shadow-sm"
+                                        >
+                                            {/* La hauteur est donnée, la
+                                                largeur suit les proportions de
+                                                l'artwork : trois marques de
+                                                gabarits différents alignées sur
+                                                leur hauteur se lisent comme une
+                                                série. */}
+                                            <img
+                                                src={logo.src}
+                                                alt={method.name}
+                                                loading="lazy"
+                                                decoding="async"
+                                                style={{
+                                                    aspectRatio: logo.ratio,
+                                                }}
+                                                className="h-8 w-auto"
+                                            />
+                                        </span>
+                                    );
+                                })}
                             </Reveal>
                         )}
                     </div>
@@ -1546,12 +1757,14 @@ export default function Welcome({
                             )}
                         >
                             <Reveal from="left">
-                                <Eyebrow>Ils l'ont fait</Eyebrow>
+                                <Eyebrow tone="gold">Ils l'ont fait</Eyebrow>
 
-                                <h2 className="mt-7 font-display text-title font-black">
-                                    Ils ont commandé avec nous
+                                <h2 className="mt-8 font-display text-title font-black">
+                                    Ils ont{' '}
+                                    <Accent tone="gold">commandé</Accent> avec
+                                    nous
                                 </h2>
-                                <p className="mt-6 max-w-sm text-lead text-muted-foreground">
+                                <p className="mt-8 max-w-sm text-lead text-muted-foreground">
                                     Des avis laissés à la fin d'une
                                     conversation, par des clients qui ont reçu
                                     leur colis.
@@ -1573,10 +1786,11 @@ export default function Welcome({
                         )}
                     >
                         <div className="lg:sticky lg:top-32 lg:self-start">
-                            <Eyebrow>Questions fréquentes</Eyebrow>
+                            <Eyebrow tone="gold">Questions fréquentes</Eyebrow>
 
-                            <h2 className="mt-7 font-display text-title font-black">
-                                Ce qu'on nous demande le plus
+                            <h2 className="mt-8 font-display text-title font-black">
+                                Ce qu'on nous demande{' '}
+                                <Accent tone="gold">le plus</Accent>
                             </h2>
                         </div>
 
@@ -1615,10 +1829,11 @@ export default function Welcome({
                     second inbox to watch, and anything about an existing
                     request is better answered by the assistant, which can look
                     it up from its reference. */}
-                <section
-                    id="contact"
-                    className={cn('border-b bg-surface-alt', BAND)}
-                >
+                {/* Sur le fond de la page, sans bande : la section d'avant est
+                    crème et celle d'après est l'or plein de l'appel final. Une
+                    troisième couleur entre les deux ferait trois bandes à la
+                    suite, et plus aucune ne se distinguerait. */}
+                <section id="contact" className={cn('border-b', BAND)}>
                     <div
                         className={cn(
                             SHELL,
@@ -1628,10 +1843,10 @@ export default function Welcome({
                         <Reveal from="left">
                             <Eyebrow>Contact</Eyebrow>
 
-                            <h2 className="mt-7 font-display text-title font-black">
-                                Nous contacter
+                            <h2 className="mt-8 font-display text-title font-black">
+                                Nous <Accent tone="blue">contacter</Accent>
                             </h2>
-                            <p className="mt-6 max-w-md text-body text-muted-foreground">
+                            <p className="mt-8 max-w-md text-body text-muted-foreground">
                                 Une question avant de commander, un partenariat,
                                 ou simplement une hésitation : écrivez-nous, on
                                 répond {contact.responseTime}.

@@ -200,9 +200,10 @@ return [
             [
                 'name' => 'MTN Mobile Money',
                 'account' => env('SHOPRELLE_PAYMENT_MTN'),
-                // Les couleurs des trois marques. Elles ne servent qu'à une
-                // pastille : le logo lui-même est déposé, et rien ici ne
-                // prétend le reproduire.
+                // Les couleurs des trois marques. La vitrine affiche
+                // maintenant les logos eux-mêmes, sur leur tuile blanche ; la
+                // couleur reste ce sur quoi retombe un moyen de paiement dont
+                // aucune marque n'est fournie — une pastille et son nom.
                 'colour' => '#FFCC00',
             ],
             [
