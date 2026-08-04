@@ -1,4 +1,11 @@
-import { Check, Link as LinkIcon, MapPin, Truck } from 'lucide-react';
+import {
+    Check,
+    ChevronLeft,
+    ChevronRight,
+    Link as LinkIcon,
+    MapPin,
+    Truck,
+} from 'lucide-react';
 import { useRef, useState } from 'react';
 import type { ComponentProps, ReactNode } from 'react';
 
@@ -369,69 +376,101 @@ export function LinkToParcel({ className, ...props }: ComponentProps<'div'>) {
              * boutons invisibles sous le doigt. C'est le procédé qu'emploient
              * déjà les scènes plus bas.
              */}
-            <ol
-                role="tablist"
-                aria-label="Les étapes d'une commande"
-                onKeyDown={onKeyDown}
-                className="mt-7 grid grid-cols-1 gap-x-4 sm:grid-cols-4 sm:gap-x-6"
-            >
-                {STAGES.map((item, index) => {
-                    const done = index < active;
-                    const current = index === active;
+            <div className="mt-7 flex items-center gap-4">
+                <ol
+                    role="tablist"
+                    aria-label="Les étapes d'une commande"
+                    onKeyDown={onKeyDown}
+                    className="grid min-w-0 flex-1 grid-cols-1 gap-x-4 sm:grid-cols-4 sm:gap-x-6"
+                >
+                    {STAGES.map((item, index) => {
+                        const done = index < active;
+                        const current = index === active;
 
-                    return (
-                        <li
-                            key={item.label}
-                            className={cn(
-                                'col-start-1 row-start-1 transition-opacity duration-500 ease-out motion-reduce:transition-none sm:visible sm:col-auto sm:row-auto sm:opacity-100',
-                                current ? 'opacity-100' : 'invisible opacity-0',
-                            )}
-                        >
-                            <button
-                                type="button"
-                                role="tab"
-                                id={`stage-tab-${index}`}
-                                aria-selected={current}
-                                aria-controls={`stage-panel-${index}`}
-                                tabIndex={current ? 0 : -1}
-                                ref={(node) => {
-                                    tabs.current[index] = node;
-                                }}
-                                onClick={() => select(index)}
-                                className="w-full cursor-pointer text-left focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ring"
+                        return (
+                            <li
+                                key={item.label}
+                                className={cn(
+                                    'col-start-1 row-start-1 transition-opacity duration-500 ease-out motion-reduce:transition-none sm:visible sm:col-auto sm:row-auto sm:opacity-100',
+                                    current
+                                        ? 'opacity-100'
+                                        : 'invisible opacity-0',
+                                )}
                             >
-                                <span className="flex items-center gap-2.5">
-                                    <span
-                                        className={cn(
-                                            'flex size-6 shrink-0 items-center justify-center rounded-full text-[11px] font-black tabular-nums transition-colors',
-                                            done || current
-                                                ? 'bg-primary text-primary-foreground'
-                                                : 'bg-muted text-muted-foreground',
-                                        )}
-                                    >
-                                        {done ? (
-                                            <Check className="size-3.5" />
-                                        ) : (
-                                            index + 1
-                                        )}
-                                    </span>
+                                <button
+                                    type="button"
+                                    role="tab"
+                                    id={`stage-tab-${index}`}
+                                    aria-selected={current}
+                                    aria-controls={`stage-panel-${index}`}
+                                    tabIndex={current ? 0 : -1}
+                                    ref={(node) => {
+                                        tabs.current[index] = node;
+                                    }}
+                                    onClick={() => select(index)}
+                                    className="w-full cursor-pointer text-left focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ring"
+                                >
+                                    <span className="flex items-center gap-2.5">
+                                        <span
+                                            className={cn(
+                                                'flex size-6 shrink-0 items-center justify-center rounded-full text-[11px] font-black tabular-nums transition-colors',
+                                                done || current
+                                                    ? 'bg-primary text-primary-foreground'
+                                                    : 'bg-muted text-muted-foreground',
+                                            )}
+                                        >
+                                            {done ? (
+                                                <Check className="size-3.5" />
+                                            ) : (
+                                                index + 1
+                                            )}
+                                        </span>
 
-                                    <span
-                                        className={cn(
-                                            'truncate font-display text-eyebrow font-extrabold uppercase transition-colors',
-                                            current
-                                                ? 'text-foreground'
-                                                : 'text-muted-foreground',
-                                        )}
-                                    >
-                                        {item.label}
+                                        <span
+                                            className={cn(
+                                                'truncate font-display text-eyebrow font-extrabold uppercase transition-colors',
+                                                current
+                                                    ? 'text-foreground'
+                                                    : 'text-muted-foreground',
+                                            )}
+                                        >
+                                            {item.label}
+                                        </span>
                                     </span>
-                                </span>
-                            </button>
-                        </li>
-                    );
-                })}
-            </ol>
+                                </button>
+                            </li>
+                        );
+                    })}
+                </ol>
+
+                {/* ── Les flèches, sur téléphone seulement ────────────────────
+                    À partir de `sm`, les quatre onglets sont là et cliquer
+                    l'étape voulue est plus direct que d'y aller pas à pas. En
+                    dessous, un seul libellé est visible à la fois : sans ces
+                    deux boutons, le seul moyen de bouger était d'attendre la
+                    jauge — un carrousel qu'on ne peut pas feuilleter n'est pas
+                    un carrousel, c'est une publicité. */}
+                <div className="flex shrink-0 gap-2 sm:hidden">
+                    <button
+                        type="button"
+                        aria-label="Étape précédente"
+                        onClick={() =>
+                            select((active - 1 + STAGES.length) % STAGES.length)
+                        }
+                        className="flex size-8 items-center justify-center rounded-full border text-muted-foreground transition-colors hover:bg-accent hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+                    >
+                        <ChevronLeft className="size-4" />
+                    </button>
+                    <button
+                        type="button"
+                        aria-label="Étape suivante"
+                        onClick={() => select((active + 1) % STAGES.length)}
+                        className="flex size-8 items-center justify-center rounded-full border text-muted-foreground transition-colors hover:bg-accent hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+                    >
+                        <ChevronRight className="size-4" />
+                    </button>
+                </div>
+            </div>
 
             {/*
              * ── La jauge, d'un bout à l'autre du parcours ────────────────────
@@ -527,10 +566,15 @@ export function LinkToParcel({ className, ...props }: ComponentProps<'div'>) {
              * reprendrait, et la grille se remettrait à mesurer la seule scène
              * visible — c'est-à-dire exactement le problème de départ.
              *
-             * L'entrée devient un fondu au lieu d'une arrivée par le bas. Ce
-             * n'est pas seulement plus doux : des éléments qui restent montés se
-             * transitionnent, là où une arrivée demandait de les remonter par
-             * leur clé à chaque étape.
+             * L'entrée est un glissement, pas seulement un fondu : la scène qui
+             * vient se tient quelques pixels du côté d'où elle arrive — à
+             * droite quand on avance, à gauche quand on revient — et se pose en
+             * place pendant que la sortante s'efface vers l'autre bord. C'est le
+             * mouvement que la barre d'étapes promet : un parcours qui va de
+             * gauche à droite. Le déplacement reste petit, la règle de la
+             * maison n'a pas changé — un concierge ne fait pas de spectacle.
+             * Sous `prefers-reduced-motion`, la transition entière est annulée,
+             * translation comprise.
              */}
             <div className="mt-9 grid">
                 {STAGES.map((item, index) => (
@@ -545,10 +589,12 @@ export function LinkToParcel({ className, ...props }: ComponentProps<'div'>) {
                             // empilées dans une seule case de grille, et sans
                             // ça cette case se dimensionne sur la plus large
                             // des quatre plutôt que sur la carte.
-                            'col-start-1 row-start-1 grid min-w-0 gap-8 transition-[opacity,visibility] duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] motion-reduce:transition-none lg:grid-cols-2 lg:items-center lg:gap-14',
+                            'col-start-1 row-start-1 grid min-w-0 gap-8 transition-[opacity,visibility,transform] duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] motion-reduce:transform-none motion-reduce:transition-none lg:grid-cols-2 lg:items-center lg:gap-14',
                             index === active
-                                ? 'visible opacity-100'
-                                : 'invisible opacity-0',
+                                ? 'visible translate-x-0 opacity-100'
+                                : index < active
+                                  ? 'invisible -translate-x-6 opacity-0'
+                                  : 'invisible translate-x-6 opacity-0',
                         )}
                     >
                         <div>

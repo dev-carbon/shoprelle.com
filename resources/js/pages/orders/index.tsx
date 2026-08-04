@@ -77,7 +77,7 @@ export default function OrdersIndex({ customer, requests }: Props) {
                             <li key={request.reference}>
                                 <Link
                                     href={show(request.reference)}
-                                    className="flex items-center gap-5 rounded-2xl border bg-card p-5 transition hover:border-primary/40 hover:shadow-sm"
+                                    className="group flex items-center gap-5 rounded-2xl border bg-card p-5 transition hover:border-primary/40 hover:shadow-sm"
                                 >
                                     <div className="min-w-0 flex-1">
                                         <p className="font-mono font-semibold">
@@ -105,7 +105,7 @@ export default function OrdersIndex({ customer, requests }: Props) {
                                         )}
                                     </div>
 
-                                    <ChevronRight className="size-4 shrink-0 text-muted-foreground" />
+                                    <ChevronRight className="size-4 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-0.5" />
                                 </Link>
                             </li>
                         ))}

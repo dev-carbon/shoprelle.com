@@ -1,11 +1,13 @@
+import AppLogoIcon from '@/components/app-logo-icon';
 import { cn } from '@/lib/utils';
 import type { ChatMessage } from '@/types';
 
 /**
  * One line of the transcript.
  *
- * The bot gets a named avatar rather than a generic robot glyph: the promise is
- * that someone competent is handling this, not that a machine is.
+ * The bot speaks under the brand's own mark — the gold tile every other screen
+ * opens with — rather than a generic robot glyph: the promise is that the
+ * service is handling this, not that a machine is.
  *
  * Bot text may contain newlines — the engine uses them for tracking results and
  * the help subjects — so whitespace is preserved.
@@ -27,9 +29,9 @@ export function ChatBubble({ message }: { message: ChatMessage }) {
             {isBot && (
                 <div
                     aria-hidden
-                    className="mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-full bg-primary font-display text-sm font-extrabold text-primary-foreground"
+                    className="mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-full bg-accent-brand"
                 >
-                    S
+                    <AppLogoIcon className="size-4 text-accent-brand-foreground" />
                 </div>
             )}
 

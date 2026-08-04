@@ -1754,61 +1754,76 @@ export default function Welcome({
                             jours, et c'est précisément à eux que cette ligne
                             s'adresse. Un moyen sans marque déposée ici garde
                             l'ancien affichage — voir `payment-logos.tsx`. */}
+                        {/* Une bande à deux côtés, plus une bulle centrée : le
+                            libellé flottait au milieu des logos comme une
+                            étiquette égarée. À gauche ce qu'on affirme — et
+                            rien qui ne soit déjà promis ailleurs sur la page —
+                            à droite les marques qui le prouvent, chacune sur sa
+                            tuile. C'est la grammaire du bandeau des
+                            marketplaces, appliquée au paiement. */}
                         {paymentMethods.length > 0 && (
                             <Reveal
                                 delay={160}
-                                className="mt-10 flex flex-wrap items-center justify-center gap-x-6 gap-y-3 rounded-3xl border bg-card px-8 py-6 text-center shadow-sm"
+                                className="mt-10 flex flex-col items-start gap-6 rounded-3xl border bg-card p-7 shadow-sm sm:p-8 lg:flex-row lg:items-center lg:justify-between lg:gap-10"
                             >
-                                <span className="text-sm font-medium text-muted-foreground">
-                                    Vous réglez par
-                                </span>
+                                <div>
+                                    <p className="font-display text-lg font-extrabold">
+                                        Vous réglez par
+                                    </p>
+                                    <p className="mt-1.5 text-sm text-muted-foreground">
+                                        En monnaie locale, une seule fois — et
+                                        jamais avant d'avoir validé le devis.
+                                    </p>
+                                </div>
 
-                                {paymentMethods.map((method) => {
-                                    const logo = PAYMENT_LOGOS[method.name];
+                                <div className="flex flex-wrap items-center gap-x-4 gap-y-3">
+                                    {paymentMethods.map((method) => {
+                                        const logo = PAYMENT_LOGOS[method.name];
 
-                                    if (!logo) {
+                                        if (!logo) {
+                                            return (
+                                                <span
+                                                    key={method.name}
+                                                    className="flex items-center gap-2 font-display text-sm font-extrabold"
+                                                >
+                                                    <span
+                                                        aria-hidden
+                                                        style={{
+                                                            backgroundColor:
+                                                                method.colour,
+                                                        }}
+                                                        className="size-4 rounded-md"
+                                                    />
+                                                    {method.name}
+                                                </span>
+                                            );
+                                        }
+
                                         return (
                                             <span
                                                 key={method.name}
-                                                className="flex items-center gap-2 font-display text-sm font-extrabold"
+                                                className="flex h-14 items-center rounded-xl border border-black/[0.07] bg-surface-tile px-4 shadow-sm"
                                             >
-                                                <span
-                                                    aria-hidden
-                                                    style={{
-                                                        backgroundColor:
-                                                            method.colour,
-                                                    }}
-                                                    className="size-4 rounded-md"
-                                                />
-                                                {method.name}
-                                            </span>
-                                        );
-                                    }
-
-                                    return (
-                                        <span
-                                            key={method.name}
-                                            className="flex h-14 items-center rounded-xl border border-black/[0.07] bg-surface-tile px-4 shadow-sm"
-                                        >
-                                            {/* La hauteur est donnée, la
+                                                {/* La hauteur est donnée, la
                                                 largeur suit les proportions de
                                                 l'artwork : trois marques de
                                                 gabarits différents alignées sur
                                                 leur hauteur se lisent comme une
                                                 série. */}
-                                            <img
-                                                src={logo.src}
-                                                alt={method.name}
-                                                loading="lazy"
-                                                decoding="async"
-                                                style={{
-                                                    aspectRatio: logo.ratio,
-                                                }}
-                                                className="h-8 w-auto"
-                                            />
-                                        </span>
-                                    );
-                                })}
+                                                <img
+                                                    src={logo.src}
+                                                    alt={method.name}
+                                                    loading="lazy"
+                                                    decoding="async"
+                                                    style={{
+                                                        aspectRatio: logo.ratio,
+                                                    }}
+                                                    className="h-8 w-auto"
+                                                />
+                                            </span>
+                                        );
+                                    })}
+                                </div>
                             </Reveal>
                         )}
                     </div>

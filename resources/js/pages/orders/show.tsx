@@ -91,7 +91,7 @@ export default function OrderShow({ request }: Props) {
     const { quote, payments } = request;
 
     return (
-        <CustomerLayout>
+        <CustomerLayout wide>
             <Head title={`Demande ${request.reference}`} />
 
             <div className="animate-rise space-y-10">
@@ -145,123 +145,147 @@ export default function OrderShow({ request }: Props) {
                     d'événements se lit comme elle s'est écrite. La dernière
                     pastille est pleine, les précédentes creuses — c'est ce qui
                     distingue « on y est » de « on y est passé ». */}
-                {request.timeline.length > 0 && (
-                    <Card>
-                        <CardHeader>
-                            <CardTitle className="flex items-center gap-2">
-                                <History className="size-4" />
-                                Suivi
-                            </CardTitle>
-                            <CardDescription>
-                                Chaque étape depuis l'envoi de votre demande.
-                            </CardDescription>
-                        </CardHeader>
+                {/* ── Deux colonnes à partir de `lg` ──────────────────────────
+                    Le devis et son règlement portent la colonne large — c'est
+                    là qu'on agit — et le suivi les borde, épinglé : on lève les
+                    yeux vers lui, on ne le fait pas défiler. Empilés, chaque
+                    carte prenait tout l'écran et le devis n'arrivait qu'au
+                    troisième défilement. Sous `lg`, la pile revient, suivi en
+                    tête : c'est lui qu'on vient vérifier depuis un téléphone. */}
+                <div className="grid items-start gap-8 lg:grid-cols-[7fr_5fr]">
+                    {request.timeline.length > 0 && (
+                        <div className="min-w-0 lg:sticky lg:top-8 lg:order-2">
+                            <Card>
+                                <CardHeader>
+                                    <CardTitle className="flex items-center gap-2">
+                                        <History className="size-4" />
+                                        Suivi
+                                    </CardTitle>
+                                    <CardDescription>
+                                        Chaque étape depuis l'envoi de votre
+                                        demande.
+                                    </CardDescription>
+                                </CardHeader>
 
-                        <CardContent>
-                            <ol className="space-y-0">
-                                {request.timeline.map((entry, index) => {
-                                    const isLast =
-                                        index === request.timeline.length - 1;
+                                <CardContent>
+                                    <ol className="space-y-0">
+                                        {request.timeline.map(
+                                            (entry, index) => {
+                                                const isLast =
+                                                    index ===
+                                                    request.timeline.length - 1;
 
-                                    return (
+                                                return (
+                                                    <li
+                                                        key={entry.id}
+                                                        className="grid grid-cols-[auto_1fr] gap-x-4"
+                                                    >
+                                                        <div className="flex flex-col items-center">
+                                                            <span
+                                                                className={cn(
+                                                                    'mt-1 size-3 shrink-0 rounded-full border-2',
+                                                                    isLast
+                                                                        ? 'border-primary bg-primary'
+                                                                        : 'border-border bg-background',
+                                                                )}
+                                                            />
+                                                            {!isLast && (
+                                                                <span
+                                                                    aria-hidden
+                                                                    className="w-px flex-1 bg-border"
+                                                                />
+                                                            )}
+                                                        </div>
+
+                                                        <div
+                                                            className={cn(
+                                                                'pb-6',
+                                                                isLast &&
+                                                                    'pb-0',
+                                                            )}
+                                                        >
+                                                            <p
+                                                                className={cn(
+                                                                    'text-sm',
+                                                                    isLast
+                                                                        ? 'font-semibold'
+                                                                        : 'font-medium text-muted-foreground',
+                                                                )}
+                                                            >
+                                                                {entry.label}
+                                                            </p>
+                                                            <p className="mt-0.5 text-xs text-muted-foreground">
+                                                                {formatDateTime(
+                                                                    entry.at,
+                                                                )}
+                                                            </p>
+                                                        </div>
+                                                    </li>
+                                                );
+                                            },
+                                        )}
+                                    </ol>
+                                </CardContent>
+                            </Card>
+                        </div>
+                    )}
+
+                    <div className="min-w-0 space-y-8 lg:order-1">
+                        <Card>
+                            <CardHeader>
+                                <CardTitle className="flex items-center gap-2">
+                                    <ReceiptText className="size-4" />
+                                    {quote ? 'Votre devis' : 'Vos produits'}
+                                </CardTitle>
+                                <CardDescription>
+                                    {quote
+                                        ? `Devis établi le ${formatDate(quote.sent_at)}.`
+                                        : 'Nous chiffrons votre demande, produit par produit.'}
+                                </CardDescription>
+                            </CardHeader>
+
+                            <CardContent className="space-y-6">
+                                <ul className="divide-y">
+                                    {request.items.map((item) => (
                                         <li
-                                            key={entry.id}
-                                            className="grid grid-cols-[auto_1fr] gap-x-4"
+                                            key={item.id}
+                                            className="flex items-start gap-3 py-3 first:pt-0"
                                         >
-                                            <div className="flex flex-col items-center">
-                                                <span
-                                                    className={cn(
-                                                        'mt-1 size-3 shrink-0 rounded-full border-2',
-                                                        isLast
-                                                            ? 'border-primary bg-primary'
-                                                            : 'border-border bg-background',
-                                                    )}
-                                                />
-                                                {!isLast && (
-                                                    <span
-                                                        aria-hidden
-                                                        className="w-px flex-1 bg-border"
-                                                    />
-                                                )}
-                                            </div>
-
-                                            <div
-                                                className={cn(
-                                                    'pb-6',
-                                                    isLast && 'pb-0',
-                                                )}
-                                            >
-                                                <p
-                                                    className={cn(
-                                                        'text-sm',
-                                                        isLast
-                                                            ? 'font-semibold'
-                                                            : 'font-medium text-muted-foreground',
-                                                    )}
+                                            <div className="min-w-0 flex-1">
+                                                <a
+                                                    href={item.product_url}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer nofollow"
+                                                    className="inline-flex items-start gap-1.5 font-medium hover:underline"
                                                 >
-                                                    {entry.label}
+                                                    <span className="break-words">
+                                                        {item.name}
+                                                    </span>
+                                                    <ExternalLink className="mt-1 size-3.5 shrink-0" />
+                                                </a>
+                                                <p className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground">
+                                                    <Badge
+                                                        variant="secondary"
+                                                        className="font-normal"
+                                                    >
+                                                        {item.marketplace_label}
+                                                    </Badge>
+                                                    <span>
+                                                        ×{item.quantity}
+                                                    </span>
+                                                    {item.color && (
+                                                        <span>
+                                                            {item.color}
+                                                        </span>
+                                                    )}
+                                                    {item.size && (
+                                                        <span>
+                                                            Taille {item.size}
+                                                        </span>
+                                                    )}
                                                 </p>
-                                                <p className="mt-0.5 text-xs text-muted-foreground">
-                                                    {formatDateTime(entry.at)}
-                                                </p>
-                                            </div>
-                                        </li>
-                                    );
-                                })}
-                            </ol>
-                        </CardContent>
-                    </Card>
-                )}
 
-                <Card>
-                    <CardHeader>
-                        <CardTitle className="flex items-center gap-2">
-                            <ReceiptText className="size-4" />
-                            {quote ? 'Votre devis' : 'Vos produits'}
-                        </CardTitle>
-                        <CardDescription>
-                            {quote
-                                ? `Devis établi le ${formatDate(quote.sent_at)}.`
-                                : 'Nous chiffrons votre demande, produit par produit.'}
-                        </CardDescription>
-                    </CardHeader>
-
-                    <CardContent className="space-y-6">
-                        <ul className="divide-y">
-                            {request.items.map((item) => (
-                                <li
-                                    key={item.id}
-                                    className="flex items-start gap-3 py-3 first:pt-0"
-                                >
-                                    <div className="min-w-0 flex-1">
-                                        <a
-                                            href={item.product_url}
-                                            target="_blank"
-                                            rel="noopener noreferrer nofollow"
-                                            className="inline-flex items-start gap-1.5 font-medium hover:underline"
-                                        >
-                                            <span className="break-words">
-                                                {item.name}
-                                            </span>
-                                            <ExternalLink className="mt-1 size-3.5 shrink-0" />
-                                        </a>
-                                        <p className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground">
-                                            <Badge
-                                                variant="secondary"
-                                                className="font-normal"
-                                            >
-                                                {item.marketplace_label}
-                                            </Badge>
-                                            <span>×{item.quantity}</span>
-                                            {item.color && (
-                                                <span>{item.color}</span>
-                                            )}
-                                            {item.size && (
-                                                <span>Taille {item.size}</span>
-                                            )}
-                                        </p>
-
-                                        {/* Ses propres captures, rendues à leur
+                                                {/* Ses propres captures, rendues à leur
                                             auteur : c'est ainsi qu'on vérifie
                                             avoir joint la bonne photo au bon
                                             produit. Ouvertes dans un onglet
@@ -269,111 +293,126 @@ export default function OrderShow({ request }: Props) {
                                             le navigateur sait déjà agrandir une
                                             image, et une lightbox n'aurait rien
                                             ajouté qu'une pièce de plus. */}
-                                        {item.attachments.length > 0 && (
-                                            <ul className="mt-3 flex flex-wrap gap-2">
-                                                {item.attachments.map(
-                                                    (attachment, index) => (
-                                                        <li key={attachment.id}>
-                                                            <a
-                                                                href={
-                                                                    attachment.url
-                                                                }
-                                                                target="_blank"
-                                                                rel="noopener noreferrer"
-                                                                className="block overflow-hidden rounded-lg border transition-colors hover:border-primary/50"
-                                                            >
-                                                                <img
-                                                                    src={
-                                                                        attachment.url
+                                                {item.attachments.length >
+                                                    0 && (
+                                                    <ul className="mt-3 flex flex-wrap gap-2">
+                                                        {item.attachments.map(
+                                                            (
+                                                                attachment,
+                                                                index,
+                                                            ) => (
+                                                                <li
+                                                                    key={
+                                                                        attachment.id
                                                                     }
-                                                                    alt={`Capture ${index + 1} jointe à ${item.name}`}
-                                                                    loading="lazy"
-                                                                    decoding="async"
-                                                                    className="size-16 object-cover"
-                                                                />
-                                                            </a>
-                                                        </li>
-                                                    ),
+                                                                >
+                                                                    <a
+                                                                        href={
+                                                                            attachment.url
+                                                                        }
+                                                                        target="_blank"
+                                                                        rel="noopener noreferrer"
+                                                                        className="block overflow-hidden rounded-lg border transition-colors hover:border-primary/50"
+                                                                    >
+                                                                        <img
+                                                                            src={
+                                                                                attachment.url
+                                                                            }
+                                                                            alt={`Capture ${index + 1} jointe à ${item.name}`}
+                                                                            loading="lazy"
+                                                                            decoding="async"
+                                                                            className="size-16 object-cover"
+                                                                        />
+                                                                    </a>
+                                                                </li>
+                                                            ),
+                                                        )}
+                                                    </ul>
                                                 )}
-                                            </ul>
-                                        )}
-                                    </div>
+                                            </div>
 
-                                    <span className="shrink-0 text-sm font-medium">
-                                        {item.quoted_amount && quote
-                                            ? `${formatAmount(item.quoted_amount)} ${quote.currency}`
-                                            : '—'}
-                                    </span>
-                                </li>
-                            ))}
-                        </ul>
+                                            <span className="shrink-0 text-sm font-medium">
+                                                {item.quoted_amount && quote
+                                                    ? `${formatAmount(item.quoted_amount)} ${quote.currency}`
+                                                    : '—'}
+                                            </span>
+                                        </li>
+                                    ))}
+                                </ul>
 
-                        {quote && (
-                            <dl className="space-y-1.5 rounded-xl bg-muted/50 p-4 text-sm">
-                                <Row
-                                    label="Produits"
-                                    value={`${formatAmount(quote.items_amount)} ${quote.currency}`}
-                                />
-                                <Row
-                                    label="Livraison"
-                                    value={`${formatAmount(quote.shipping_amount)} ${quote.currency}`}
-                                />
-                                <div className="flex items-baseline justify-between border-t pt-2 text-base">
-                                    <dt className="font-medium">Total</dt>
-                                    <dd className="font-bold">
-                                        {formatAmount(quote.total_amount)}{' '}
-                                        {quote.currency}
-                                    </dd>
-                                </div>
-                            </dl>
+                                {quote && (
+                                    <dl className="space-y-1.5 rounded-xl bg-muted/50 p-4 text-sm">
+                                        <Row
+                                            label="Produits"
+                                            value={`${formatAmount(quote.items_amount)} ${quote.currency}`}
+                                        />
+                                        <Row
+                                            label="Livraison"
+                                            value={`${formatAmount(quote.shipping_amount)} ${quote.currency}`}
+                                        />
+                                        <div className="flex items-baseline justify-between border-t pt-2 text-base">
+                                            <dt className="font-medium">
+                                                Total
+                                            </dt>
+                                            <dd className="font-bold">
+                                                {formatAmount(
+                                                    quote.total_amount,
+                                                )}{' '}
+                                                {quote.currency}
+                                            </dd>
+                                        </div>
+                                    </dl>
+                                )}
+
+                                {quote?.notes && (
+                                    <p className="rounded-xl border border-dashed p-3 text-sm">
+                                        {quote.notes}
+                                    </p>
+                                )}
+
+                                {request.awaits_decision && (
+                                    <Decision reference={request.reference} />
+                                )}
+                            </CardContent>
+                        </Card>
+
+                        {request.payment_instructions && (
+                            <PaymentInstructions
+                                instructions={request.payment_instructions}
+                                reference={request.reference}
+                            />
                         )}
 
-                        {quote?.notes && (
-                            <p className="rounded-xl border border-dashed p-3 text-sm">
-                                {quote.notes}
-                            </p>
+                        {payments && (
+                            <Card>
+                                <CardHeader>
+                                    <CardTitle>Règlement</CardTitle>
+                                </CardHeader>
+
+                                <CardContent>
+                                    {payments.is_settled ? (
+                                        <p className="flex items-center gap-2 text-sm font-medium text-success">
+                                            <CheckCircle2 className="size-4" />
+                                            Votre demande est entièrement
+                                            réglée.
+                                        </p>
+                                    ) : (
+                                        <dl className="space-y-1.5 text-sm">
+                                            <Row
+                                                label="Déjà réglé"
+                                                value={`${formatAmount(payments.total_paid)} ${payments.currency}`}
+                                            />
+                                            <Row
+                                                label="Reste à régler"
+                                                value={`${formatAmount(payments.balance)} ${payments.currency}`}
+                                            />
+                                        </dl>
+                                    )}
+                                </CardContent>
+                            </Card>
                         )}
-
-                        {request.awaits_decision && (
-                            <Decision reference={request.reference} />
-                        )}
-                    </CardContent>
-                </Card>
-
-                {request.payment_instructions && (
-                    <PaymentInstructions
-                        instructions={request.payment_instructions}
-                        reference={request.reference}
-                    />
-                )}
-
-                {payments && (
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>Règlement</CardTitle>
-                        </CardHeader>
-
-                        <CardContent>
-                            {payments.is_settled ? (
-                                <p className="flex items-center gap-2 text-sm font-medium text-success">
-                                    <CheckCircle2 className="size-4" />
-                                    Votre demande est entièrement réglée.
-                                </p>
-                            ) : (
-                                <dl className="space-y-1.5 text-sm">
-                                    <Row
-                                        label="Déjà réglé"
-                                        value={`${formatAmount(payments.total_paid)} ${payments.currency}`}
-                                    />
-                                    <Row
-                                        label="Reste à régler"
-                                        value={`${formatAmount(payments.balance)} ${payments.currency}`}
-                                    />
-                                </dl>
-                            )}
-                        </CardContent>
-                    </Card>
-                )}
+                    </div>
+                </div>
             </div>
         </CustomerLayout>
     );

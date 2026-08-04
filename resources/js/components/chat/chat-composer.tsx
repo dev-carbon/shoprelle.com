@@ -3,7 +3,6 @@ import { ArrowRight, Paperclip, RotateCcw, Send } from 'lucide-react';
 import { useRef, useState } from 'react';
 
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Spinner } from '@/components/ui/spinner';
 import { Textarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';
@@ -182,9 +181,9 @@ export function ChatComposer({
 
     const isLongText = step.input_type === 'long_text';
 
-    return (
-        <form onSubmit={submit} className="flex items-end gap-2">
-            {isLongText ? (
+    if (isLongText) {
+        return (
+            <form onSubmit={submit} className="flex items-end gap-2">
                 <Textarea
                     value={value}
                     onChange={(event) => setValue(event.target.value)}
@@ -193,15 +192,52 @@ export function ChatComposer({
                     maxLength={step.max_length ?? undefined}
                     disabled={busy}
                     autoFocus
-                    className="min-h-11 resize-none"
+                    className="min-h-11 resize-none rounded-2xl"
                     onKeyDown={(event) => {
                         if (event.key === 'Enter' && !event.shiftKey) {
                             submit(event);
                         }
                     }}
                 />
-            ) : (
-                <Input
+
+                {step.optional && (
+                    <Button
+                        type="button"
+                        variant="ghost"
+                        className="h-11"
+                        disabled={busy}
+                        onClick={passStep}
+                    >
+                        Passer
+                    </Button>
+                )}
+
+                <Button
+                    type="submit"
+                    size="icon"
+                    className="size-11 shrink-0 rounded-full"
+                    disabled={busy || (value.trim() === '' && !step.optional)}
+                    aria-label="Envoyer"
+                >
+                    {busy ? <Spinner /> : <Send className="size-4" />}
+                </Button>
+            </form>
+        );
+    }
+
+    /* ── La pilule ───────────────────────────────────────────────────────────
+     *
+     * Le champ d'une ligne et son bouton d'envoi vivent dans la même capsule,
+     * comme dans toutes les messageries que le visiteur connaît déjà — et
+     * comme le champ du hero, qui est le même objet au début du parcours.
+     * L'input est nu : la capsule porte la bordure, l'ombre et l'anneau de
+     * focus, et deux cadres imbriqués se liraient comme un champ dans un
+     * champ.
+     */
+    return (
+        <form onSubmit={submit}>
+            <div className="flex items-center gap-1.5 rounded-full border bg-card py-1.5 pr-1.5 pl-5 shadow-sm transition-[border-color,box-shadow] focus-within:border-primary focus-within:ring-[3px] focus-within:ring-ring/40">
+                <input
                     value={value}
                     onChange={(event) => setValue(event.target.value)}
                     placeholder={step.placeholder ?? 'Votre réponse…'}
@@ -210,31 +246,31 @@ export function ChatComposer({
                     autoFocus
                     inputMode={inputModeFor(step)}
                     type={step.input_type === 'email' ? 'email' : 'text'}
-                    className="h-11"
+                    className="h-9 w-full min-w-0 bg-transparent text-[0.9375rem] outline-none placeholder:text-muted-foreground"
                 />
-            )}
 
-            {step.optional && (
+                {step.optional && (
+                    <Button
+                        type="button"
+                        variant="ghost"
+                        className="h-9 shrink-0 rounded-full px-3"
+                        disabled={busy}
+                        onClick={passStep}
+                    >
+                        Passer
+                    </Button>
+                )}
+
                 <Button
-                    type="button"
-                    variant="ghost"
-                    className="h-11"
-                    disabled={busy}
-                    onClick={passStep}
+                    type="submit"
+                    size="icon"
+                    className="size-9 shrink-0 rounded-full"
+                    disabled={busy || (value.trim() === '' && !step.optional)}
+                    aria-label="Envoyer"
                 >
-                    Passer
+                    {busy ? <Spinner /> : <Send className="size-4" />}
                 </Button>
-            )}
-
-            <Button
-                type="submit"
-                size="icon"
-                className="size-11 shrink-0"
-                disabled={busy || (value.trim() === '' && !step.optional)}
-                aria-label="Envoyer"
-            >
-                {busy ? <Spinner /> : <Send className="size-4" />}
-            </Button>
+            </div>
         </form>
     );
 }
