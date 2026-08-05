@@ -29,6 +29,8 @@ class SitemapController extends Controller
             ['route' => 'home', 'priority' => '1.0'],
             ['route' => 'chat.show', 'priority' => '0.8'],
             ['route' => 'orders.index', 'priority' => '0.5'],
+            ['route' => 'legal.mentions', 'priority' => '0.3'],
+            ['route' => 'legal.privacy', 'priority' => '0.3'],
         ];
 
         $urls = array_map(

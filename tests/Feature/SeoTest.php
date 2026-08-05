@@ -54,7 +54,9 @@ it('lists only the public pages in the sitemap', function () {
         ->assertSee(route('chat.show'), escape: false)
         // Le formulaire, que n'importe qui peut ouvrir et qu'un client qui
         // revient a le droit de trouver dans un moteur.
-        ->assertSee(route('orders.index'), escape: false);
+        ->assertSee(route('orders.index'), escape: false)
+        ->assertSee(route('legal.mentions'), escape: false)
+        ->assertSee(route('legal.privacy'), escape: false);
 
     // Rien derrière une session : un moteur qui suit ces adresses ne récolte
     // que des redirections vers un formulaire de connexion.
