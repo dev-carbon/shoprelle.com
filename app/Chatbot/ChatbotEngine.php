@@ -113,6 +113,28 @@ class ChatbotEngine
     }
 
     /**
+     * Open a new request straight from a marketplace.
+     *
+     * The landing page's brand band answers the first question of the flow by
+     * itself: clicking a tile is choosing the platform. The conversation starts
+     * with that answer already in the transcript, and the first thing actually
+     * asked is the product link.
+     */
+    public function startFromMarketplace(ConversationState $state, Marketplace $marketplace): ConversationState
+    {
+        $state->intent = Intent::NewOrder;
+        $state->step = Step::Marketplace;
+        $state->draft = [
+            'marketplace' => $marketplace->value,
+            'attachments' => [],
+        ];
+
+        $state->pushCustomerMessage($marketplace->label());
+
+        return $this->advance($state);
+    }
+
+    /**
      * Validate an answer without applying it, for the steps the manager has to
      * resolve itself.
      */

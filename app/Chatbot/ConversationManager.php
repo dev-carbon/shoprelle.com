@@ -4,6 +4,7 @@ namespace App\Chatbot;
 
 use App\Chatbot\Contracts\ConversationStore;
 use App\DataTransferObjects\ReviewData;
+use App\Enums\Marketplace;
 use App\Exceptions\ConversationException;
 use App\Models\ContactMessage;
 use App\Models\Customer;
@@ -107,6 +108,19 @@ class ConversationManager
         $state = $this->restart($key);
 
         return $this->persist($key, $this->engine->startFromLink($state, $url));
+    }
+
+    /**
+     * Start a fresh request from a marketplace chosen outside the conversation.
+     *
+     * Same rule as a pasted link: clicking a brand asks for a new request, so
+     * whatever was in progress is discarded rather than grafted onto.
+     */
+    public function startFromMarketplace(string $key, Marketplace $marketplace): ConversationState
+    {
+        $state = $this->restart($key);
+
+        return $this->persist($key, $this->engine->startFromMarketplace($state, $marketplace));
     }
 
     /**

@@ -324,10 +324,9 @@ const buildStages = (t: Translator, marketplace: string): StageDefinition[] => [
 ];
 
 /**
- * `marketplace` : la marque de la scène « Lien », Temu par défaut. La page la
- * change au clic sur une tuile du bandeau, en remontant le composant par sa
- * `key` — le parcours repart alors de la première étape, jauge comprise, sans
- * qu'aucun effet n'ait à le remettre à zéro.
+ * `marketplace` : la marque que la scène « Lien » met en scène, Temu par
+ * défaut. Le composant ne dépend de Temu nulle part ailleurs : changer la prop
+ * suffit à raconter le même parcours commencé chez une autre enseigne.
  */
 export function LinkToParcel({
     marketplace = 'Temu',

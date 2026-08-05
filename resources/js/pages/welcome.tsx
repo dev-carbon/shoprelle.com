@@ -1,4 +1,4 @@
-import { Form, Head, Link, usePage } from '@inertiajs/react';
+import { Form, Head, Link, router, usePage } from '@inertiajs/react';
 import {
     ArrowRight,
     BadgeCheck,
@@ -19,7 +19,7 @@ import {
     X,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
-import { lazy, Suspense, useRef, useState } from 'react';
+import { lazy, Suspense } from 'react';
 import type { ComponentType, ReactNode } from 'react';
 
 import AppLogoIcon from '@/components/app-logo-icon';
@@ -61,7 +61,7 @@ import { flagFor } from '@/lib/destinations';
 import { SHOW_PROCESS_PHOTOS } from '@/lib/photos';
 import { cn } from '@/lib/utils';
 import { dashboard, login } from '@/routes';
-import { link, show as chat } from '@/routes/chat';
+import { link, show as chat, start as chatStart } from '@/routes/chat';
 import {
     mentions as legalMentions,
     privacy as legalPrivacy,
@@ -538,37 +538,18 @@ export default function Welcome({
     const t = useTranslations();
 
     /**
-     * La marque que le parcours met en scène, et le moyen d'y aller.
+     * Ouvrir l'assistant sur une nouvelle demande, la plateforme déjà répondue.
      *
-     * Cliquer une tuile du bandeau ne quitte pas la page — envoyer le visiteur
-     * chez la marque au milieu du hero, c'est le perdre. Le clic répond à la
-     * question que la tuile vient de poser (« ça marche avec celle-là ? ») en
-     * amenant au parcours, recommencé à sa première étape avec cette marque
-     * dans le champ. Le remontage par la `key` s'occupe du recommencement.
+     * Cliquer une tuile du bandeau, c'est choisir où acheter — la première
+     * question que le chat pose. Le clic ne va donc plus à la démonstration :
+     * il ouvre le chat web avec cette réponse déjà dans la conversation, et
+     * l'assistant enchaîne sur la suivante, le lien du produit. Le nom affiché
+     * devient la valeur de l'enum par ses seules lettres — la règle qui fait
+     * déjà « H&M » → hm.com dans la démo du parcours.
      */
-    const [demoMarketplace, setDemoMarketplace] = useState('Temu');
-    const parcoursCard = useRef<HTMLDivElement>(null);
-
-    const showParcoursFor = (marketplace: string) => {
-        setDemoMarketplace(marketplace);
-
-        // Le défilement vise la carte du parcours, pas le titre de sa
-        // section : atterrir sur le titre laissait la démonstration sous la
-        // ligne de flottaison des écrans courts — un « léger défilement » et
-        // rien à voir. Et il part deux images après le clic, une fois le
-        // parcours remonté : lancé avant, l'ancrage de défilement du
-        // navigateur peut l'écourter quand le sous-arbre se remplace.
-        requestAnimationFrame(() =>
-            requestAnimationFrame(() => {
-                parcoursCard.current?.scrollIntoView({
-                    behavior: window.matchMedia(
-                        '(prefers-reduced-motion: reduce)',
-                    ).matches
-                        ? 'auto'
-                        : 'smooth',
-                    block: 'start',
-                });
-            }),
+    const orderFrom = (marketplace: string) => {
+        router.visit(
+            chatStart(marketplace.toLowerCase().replace(/[^a-z]/g, '')),
         );
     };
 
@@ -967,7 +948,7 @@ export default function Welcome({
                             marketplaces={MARKETPLACES}
                             logos={MARKETPLACE_LOGOS}
                             colors={MARKETPLACE_COLORS}
-                            onSelect={showParcoursFor}
+                            onSelect={orderFrom}
                         />
                     </div>
 
@@ -1003,18 +984,9 @@ export default function Welcome({
                             ce panneau est sous la ligne de flottaison sur la
                             plupart des écrans, et une entrée jouée avant d'être
                             vue n'a jamais été jouée. */}
-                        {/* Le porteur de la cible du défilement : `Reveal`
-                            garde son ref pour lui. `scroll-mt-24` pour que la
-                            carte se pose sous l'en-tête collant, pas
-                            dessous. */}
-                        <div ref={parcoursCard} className="scroll-mt-24">
-                            <Reveal delay={80} className="mt-14">
-                                <LinkToParcel
-                                    key={demoMarketplace}
-                                    marketplace={demoMarketplace}
-                                />
-                            </Reveal>
-                        </div>
+                        <Reveal delay={80} className="mt-14">
+                            <LinkToParcel />
+                        </Reveal>
 
                         {/* ── La sortie du parcours ───────────────────────────
                             On venait de regarder les quatre étapes, on était au

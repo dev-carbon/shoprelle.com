@@ -30,8 +30,9 @@ import { cn } from '@/lib/utils';
  * are aria-hidden and every tile exists twice, so a real button in there would
  * either enter the tab order duplicated and invisible to screen readers, or
  * carry a `tabindex` that silences it anyway. Nothing is lost by leaving it to
- * the pointer — the click only jumps to content that sits right below, where
- * keyboard and screen-reader users already land by continuing on.
+ * the pointer — the click is a head start on a journey that keeps its own
+ * full-fledged doors: the « Commander » buttons, which keyboard and
+ * screen-reader users already reach.
  */
 export function MarketplaceMarquee({
     marketplaces,

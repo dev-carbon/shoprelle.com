@@ -64,6 +64,14 @@ Route::prefix('demande')->name('chat.')->group(function () {
         ->middleware('throttle:chatbot')
         ->name('contact');
 
+    /*
+     * Ouvrir une demande depuis une marque de la vitrine. La liaison implicite
+     * de l'enum répond 404 à toute plateforme inconnue.
+     */
+    Route::get('plateforme/{marketplace}', [ChatbotController::class, 'start'])
+        ->middleware('throttle:chatbot')
+        ->name('start');
+
     Route::middleware('throttle:chatbot')->group(function () {
         Route::post('lien', [ChatbotController::class, 'link'])->name('link');
         Route::post('message', [ChatbotController::class, 'message'])->name('message');

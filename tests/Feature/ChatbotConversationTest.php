@@ -805,6 +805,63 @@ it('opens a request straight from a link pasted on the landing page', function (
     expect(transcript())->toContain('Shein détecté');
 });
 
+it('starts a request from a marketplace clicked on the landing page', function () {
+    $this->get(route('chat.start', 'nike'))
+        ->assertRedirect(route('chat.show'));
+
+    // The platform is already behind the visitor: the first thing the
+    // assistant asks for is the product link.
+    $this->get(route('chat.show'))->assertInertia(fn ($page) => $page
+        ->where('conversation.current.step', Step::ProductUrl->value)
+    );
+
+    expect(transcript())->toContain('Nike')
+        ->toContain('Envoyez le lien du produit');
+});
+
+it('carries the clicked marketplace through to the submitted request', function () {
+    Notification::fake();
+
+    $this->get(route('chat.start', 'darty'));
+
+    say('https://www.darty.com/produit-42.html');
+    pass(); // colour
+    pass(); // size
+    say('1');
+    pass(); // declared price
+    pass(); // screenshot
+    pass(); // item comment
+    say('no');
+    say('CM');
+    say('Douala');
+    say('+237 6 12 34 56 78');
+    say('Awa Ndiaye');
+    pass(); // email
+
+    $this->post(route('chat.confirm'));
+
+    expect(PurchaseItem::sole()->marketplace)->toBe(Marketplace::Darty);
+});
+
+it('discards a conversation in progress when a marketplace is clicked', function () {
+    $this->get(route('chat.show'));
+    $this->post(route('chat.link'), ['url' => 'https://www.temu.com/women-jacket-p-8842.html']);
+    say('Noir');
+
+    $this->get(route('chat.start', 'zara'));
+
+    $this->get(route('chat.show'))->assertInertia(fn ($page) => $page
+        ->where('conversation.current.step', Step::ProductUrl->value)
+    );
+
+    expect(transcript())->toContain('Zara')
+        ->not->toContain('temu.com');
+});
+
+it('rejects an unknown marketplace from the landing page', function () {
+    $this->get(route('chat.start', 'boutique-inconnue'))->assertNotFound();
+});
+
 it('accepts a link from a site it does not recognise', function () {
     $this->get(route('chat.show'));
 

@@ -76,6 +76,22 @@ class ChatbotController extends Controller
     }
 
     /**
+     * Ouvrir une demande depuis une marque cliquée sur la vitrine.
+     *
+     * La tuile répond à la première question du parcours — la plateforme — et
+     * l'assistant enchaîne sur la suivante : le lien du produit.
+     */
+    public function start(Request $request, Marketplace $marketplace): RedirectResponse
+    {
+        $this->conversations->startFromMarketplace(
+            $this->conversationKey($request),
+            $marketplace,
+        );
+
+        return to_route('chat.show');
+    }
+
+    /**
      * Ouvrir l'assistant sur « nous écrire », au sujet d'une demande.
      *
      * La référence n'ouvre aucun accès : elle n'est qu'un sujet de message. Ce

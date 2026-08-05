@@ -18,6 +18,15 @@ enum Marketplace: string
     case Asos = 'asos';
     case Zalando = 'zalando';
     case Bershka = 'bershka';
+    case Hm = 'hm';
+    case Nike = 'nike';
+    case Adidas = 'adidas';
+    case Sephora = 'sephora';
+    case Decathlon = 'decathlon';
+    case Boulanger = 'boulanger';
+    case Fnac = 'fnac';
+    case Darty = 'darty';
+    case FootLocker = 'footlocker';
     case Other = 'other';
 
     /**
@@ -34,6 +43,15 @@ enum Marketplace: string
             self::Asos => 'ASOS',
             self::Zalando => 'Zalando',
             self::Bershka => 'Bershka',
+            self::Hm => 'H&M',
+            self::Nike => 'Nike',
+            self::Adidas => 'Adidas',
+            self::Sephora => 'Sephora',
+            self::Decathlon => 'Decathlon',
+            self::Boulanger => 'Boulanger',
+            self::Fnac => 'Fnac',
+            self::Darty => 'Darty',
+            self::FootLocker => 'Foot Locker',
             self::Other => 'Autre site',
         };
     }
@@ -56,6 +74,15 @@ enum Marketplace: string
             self::Asos => ['asos.com', 'asos.fr'],
             self::Zalando => ['zalando.fr', 'zalando.com', 'zalando.de', 'zalando.be'],
             self::Bershka => ['bershka.com'],
+            self::Hm => ['hm.com'],
+            self::Nike => ['nike.com'],
+            self::Adidas => ['adidas.fr', 'adidas.com', 'adidas.de'],
+            self::Sephora => ['sephora.fr', 'sephora.com'],
+            self::Decathlon => ['decathlon.fr', 'decathlon.com'],
+            self::Boulanger => ['boulanger.com'],
+            self::Fnac => ['fnac.com', 'fnac.be'],
+            self::Darty => ['darty.com'],
+            self::FootLocker => ['footlocker.fr', 'footlocker.com', 'footlocker.eu'],
             self::Other => [],
         };
     }
