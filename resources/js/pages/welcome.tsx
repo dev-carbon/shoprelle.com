@@ -115,6 +115,7 @@ const MARKETPLACES = [
     'Adidas',
     'Sephora',
     'Decathlon',
+    'Boulanger',
 ];
 
 /**
