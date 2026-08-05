@@ -1,9 +1,16 @@
 import { Form, Head } from '@inertiajs/react';
-import { ExternalLink, ImageOff, Pencil, Plus, Trash2, X } from 'lucide-react';
+import { ExternalLink, ImageOff, Pencil, Plus, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 
 import InputError from '@/components/input-error';
 import { Button } from '@/components/ui/button';
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogHeader,
+    DialogTitle,
+} from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Spinner } from '@/components/ui/spinner';
@@ -42,9 +49,11 @@ type Props = {
 /**
  * ── La sélection montrée sur la vitrine ─────────────────────────────────────
  *
- * La liste et le formulaire sur un seul écran. Il n'y a jamais qu'une poignée
- * de produits mis en avant, et une page par produit ferait cliquer trois fois
- * pour corriger un prix.
+ * La liste sur l'écran, le formulaire dans une boîte modale. Il n'y a jamais
+ * qu'une poignée de produits mis en avant, et une page par produit ferait
+ * cliquer trois fois pour corriger un prix ; la modale garde en plus la liste
+ * en place — on modifie le produit qu'on vient de voir, on le retrouve où il
+ * était en fermant.
  *
  * Le formulaire sert à l'ajout comme à la modification : le produit en cours
  * d'édition est un état local, et c'est lui qui décide de l'action visée et des
@@ -92,24 +101,30 @@ export default function ProductsIndex({
                     </Button>
                 </div>
 
-                {open && (
-                    <div className="rounded-xl border bg-card p-5">
-                        <div className="mb-5 flex items-center justify-between gap-4">
-                            <h2 className="font-semibold">
+                {/* Contrôlée, et non montée par déclencheur : l'ouverture
+                    vient de deux endroits — le bouton d'ajout et le crayon de
+                    chaque ligne — et c'est `editing` qui décide de ce que la
+                    boîte contient. */}
+                <Dialog
+                    open={open}
+                    onOpenChange={(value) => {
+                        if (!value) {
+                            close();
+                        }
+                    }}
+                >
+                    <DialogContent className="max-h-[85svh] overflow-y-auto sm:max-w-2xl">
+                        <DialogHeader>
+                            <DialogTitle>
                                 {editing
                                     ? `Modifier « ${editing.name} »`
                                     : 'Nouveau produit'}
-                            </h2>
-
-                            <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={close}
-                                aria-label="Fermer le formulaire"
-                            >
-                                <X className="size-4" />
-                            </Button>
-                        </div>
+                            </DialogTitle>
+                            <DialogDescription>
+                                Visible sur la page d'accueil une fois
+                                enregistré, si la case d'affichage est cochée.
+                            </DialogDescription>
+                        </DialogHeader>
 
                         <Form
                             key={editing?.id ?? 'new'}
@@ -305,8 +320,8 @@ export default function ProductsIndex({
                                 </>
                             )}
                         </Form>
-                    </div>
-                )}
+                    </DialogContent>
+                </Dialog>
 
                 {products.length === 0 ? (
                     <div className="rounded-xl border border-dashed p-10 text-center">
