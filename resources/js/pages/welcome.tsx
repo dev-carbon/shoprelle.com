@@ -763,10 +763,12 @@ export default function Welcome({
                             telegramUrl={telegramUrl}
                             whatsappUrl={whatsappUrl}
                             trigger={
-                                // Le même rayon que les autres boutons
-                                // « Commander » de la page : une seule famille
-                                // de boutons, pas une pilule isolée.
-                                <Button className="hidden h-10 rounded-2xl px-5 shadow-md shadow-primary/25 transition-shadow hover:shadow-lg hover:shadow-primary/30 sm:inline-flex">
+                                // Le rayon par défaut des boutons, comme ses
+                                // voisins de barre : ici il appartient à la
+                                // navbar avant d'appartenir à la famille des
+                                // grands « Commander », et une pilule au milieu
+                                // de coins discrets se lisait comme un intrus.
+                                <Button className="hidden h-10 px-5 shadow-md shadow-primary/25 transition-shadow hover:shadow-lg hover:shadow-primary/30 sm:inline-flex">
                                     <ShoppingCart className="size-4" />
                                     {t('Commander')}
                                 </Button>
