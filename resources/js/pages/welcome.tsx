@@ -2336,8 +2336,10 @@ export default function Welcome({
                 </div>
 
                 {/* Le retour en haut, juste au-dessus du wordmark : on vient
-                    de finir la page, c'est ici que remonter se propose. */}
-                <ScrollToTop className="mt-4 -mb-3" />
+                    de finir la page, c'est ici que remonter se propose. Les
+                    marges se compensent — remonter le bouton ne fait pas
+                    bouger le wordmark sous lui. */}
+                <ScrollToTop className="-mt-2 mb-3" />
 
                 <BrandWordmark />
             </footer>
