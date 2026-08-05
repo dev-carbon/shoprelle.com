@@ -19,7 +19,7 @@ import {
     X,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
-import { lazy, Suspense } from 'react';
+import { lazy, Suspense, useRef, useState } from 'react';
 import type { ComponentType, ReactNode } from 'react';
 
 import AppLogoIcon from '@/components/app-logo-icon';
@@ -537,6 +537,29 @@ export default function Welcome({
     const scrolled = useScrolled();
     const t = useTranslations();
 
+    /**
+     * La marque que le parcours met en scène, et le moyen d'y aller.
+     *
+     * Cliquer une tuile du bandeau ne quitte pas la page — envoyer le visiteur
+     * chez la marque au milieu du hero, c'est le perdre. Le clic répond à la
+     * question que la tuile vient de poser (« ça marche avec celle-là ? ») en
+     * amenant au parcours, recommencé à sa première étape avec cette marque
+     * dans le champ. Le remontage par la `key` s'occupe du recommencement.
+     */
+    const [demoMarketplace, setDemoMarketplace] = useState('Temu');
+    const parcoursSection = useRef<HTMLDivElement>(null);
+
+    const showParcoursFor = (marketplace: string) => {
+        setDemoMarketplace(marketplace);
+        parcoursSection.current?.scrollIntoView({
+            behavior: window.matchMedia('(prefers-reduced-motion: reduce)')
+                .matches
+                ? 'auto'
+                : 'smooth',
+            block: 'start',
+        });
+    };
+
     const socials = SOCIAL_NETWORKS.flatMap((network) => {
         const href = social[network.key];
 
@@ -930,6 +953,7 @@ export default function Welcome({
                             marketplaces={MARKETPLACES}
                             logos={MARKETPLACE_LOGOS}
                             colors={MARKETPLACE_COLORS}
+                            onSelect={showParcoursFor}
                         />
                     </div>
 
@@ -940,7 +964,15 @@ export default function Welcome({
                         faut d'abord identifier est un bloc qu'on saute. Le titre
                         dit ce que le panneau va montrer, et le panneau le
                         montre. */}
-                    <div className={cn(SHELL, 'relative mt-24 lg:mt-28')}>
+                    {/* `scroll-mt-24` parce que le clic d'une tuile amène ici :
+                        sans elle, l'en-tête collant recouvrirait le titre. */}
+                    <div
+                        ref={parcoursSection}
+                        className={cn(
+                            SHELL,
+                            'relative mt-24 scroll-mt-24 lg:mt-28',
+                        )}
+                    >
                         <Reveal
                             from="blur"
                             className="mx-auto flex max-w-2xl flex-col items-center text-center"
@@ -966,7 +998,10 @@ export default function Welcome({
                             plupart des écrans, et une entrée jouée avant d'être
                             vue n'a jamais été jouée. */}
                         <Reveal delay={80} className="mt-14">
-                            <LinkToParcel />
+                            <LinkToParcel
+                                key={demoMarketplace}
+                                marketplace={demoMarketplace}
+                            />
                         </Reveal>
 
                         {/* ── La sortie du parcours ───────────────────────────

@@ -25,11 +25,19 @@ import { cn } from '@/lib/utils';
  *
  * The tiles are aria-hidden and duplicated visually only; a static, readable
  * list is exposed to screen readers instead.
+ *
+ * `onSelect` makes each tile clickable, as a pointer-only shortcut: the tracks
+ * are aria-hidden and every tile exists twice, so a real button in there would
+ * either enter the tab order duplicated and invisible to screen readers, or
+ * carry a `tabindex` that silences it anyway. Nothing is lost by leaving it to
+ * the pointer — the click only jumps to content that sits right below, where
+ * keyboard and screen-reader users already land by continuing on.
  */
 export function MarketplaceMarquee({
     marketplaces,
     logos = {},
     colors = {},
+    onSelect,
     className,
 }: {
     marketplaces: string[];
@@ -37,6 +45,8 @@ export function MarketplaceMarquee({
     logos?: Record<string, ReactNode>;
     /** Brand colours by marketplace name, as CSS colours. */
     colors?: Record<string, string>;
+    /** Called with the marketplace name when a tile is clicked. */
+    onSelect?: (marketplace: string) => void;
     className?: string;
 }) {
     // Alternating rather than splitting down the middle keeps the two rows a
@@ -68,7 +78,14 @@ export function MarketplaceMarquee({
                                     <li
                                         key={`${copy}-${marketplace}`}
                                         style={{ color: colors[marketplace] }}
-                                        className="flex h-20 min-w-20 shrink-0 items-center justify-center rounded-2xl border border-black/[0.07] bg-surface-tile px-6 text-neutral-900 shadow-sm transition-[transform,box-shadow] duration-300 hover:scale-105 hover:shadow-lg"
+                                        onClick={
+                                            onSelect &&
+                                            (() => onSelect(marketplace))
+                                        }
+                                        className={cn(
+                                            'flex h-20 min-w-20 shrink-0 items-center justify-center rounded-2xl border border-black/[0.07] bg-surface-tile px-6 text-neutral-900 shadow-sm transition-[transform,box-shadow] duration-300 hover:scale-105 hover:shadow-lg',
+                                            onSelect && 'cursor-pointer',
+                                        )}
                                     >
                                         {logos[marketplace] ?? (
                                             <span className="text-center text-sm leading-tight font-semibold tracking-tight">

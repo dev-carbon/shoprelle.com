@@ -152,11 +152,24 @@ type StageDefinition = {
 };
 
 /**
+ * Le domaine d'exemple d'une marque : son nom, réduit à ses lettres. Assez
+ * juste pour toutes celles du bandeau — « H&M » donne hm.com, « Foot Locker »
+ * donne footlocker.com — et un lien qui n'est là que pour être reconnu n'a pas
+ * besoin de plus.
+ */
+const demoDomain = (marketplace: string): string =>
+    `${marketplace.toLowerCase().replace(/[^a-z]/g, '')}.com`;
+
+/**
  * Les quatre étapes, construites avec le traducteur de la page : les textes
  * vivent dans des nœuds JSX déclarés hors composant, où aucun hook ne peut
  * être appelé.
+ *
+ * `marketplace` est la marque que la scène « Lien » met en scène. Elle vient
+ * du bandeau des marques quand le visiteur y a cliqué une tuile ; le reste du
+ * parcours ne change pas — c'est le même exemple, commencé chez lui.
  */
-const buildStages = (t: Translator): StageDefinition[] => [
+const buildStages = (t: Translator, marketplace: string): StageDefinition[] => [
     {
         label: t('Lien'),
         title: t('Vous collez le lien'),
@@ -171,18 +184,22 @@ const buildStages = (t: Translator): StageDefinition[] => [
                 <div className="flex items-center gap-3 rounded-2xl border bg-card px-4 py-3.5">
                     <LinkIcon className="size-4 shrink-0 text-muted-foreground" />
                     <p className="truncate font-mono text-sm text-muted-foreground">
-                        temu.com/women-jacket-p-8842
+                        {demoDomain(marketplace)}/women-jacket-p-8842
                     </p>
                 </div>
 
                 <div className="mt-5 flex items-center gap-3">
                     {/* La marque dans sa couleur, sur blanc : même règle que
-                        les tuiles du bandeau. */}
+                        les tuiles du bandeau, repli en lettres compris. */}
                     <span
-                        className="flex h-11 shrink-0 items-center rounded-xl border border-black/[0.07] bg-surface-tile px-3.5"
-                        style={{ color: MARKETPLACE_COLORS.Temu }}
+                        className="flex h-11 shrink-0 items-center rounded-xl border border-black/[0.07] bg-surface-tile px-3.5 text-neutral-900"
+                        style={{ color: MARKETPLACE_COLORS[marketplace] }}
                     >
-                        {MARKETPLACE_LOGOS.Temu}
+                        {MARKETPLACE_LOGOS[marketplace] ?? (
+                            <span className="text-sm leading-tight font-semibold tracking-tight">
+                                {marketplace}
+                            </span>
+                        )}
                     </span>
 
                     <p className="text-sm text-muted-foreground">
@@ -306,9 +323,19 @@ const buildStages = (t: Translator): StageDefinition[] => [
     },
 ];
 
-export function LinkToParcel({ className, ...props }: ComponentProps<'div'>) {
+/**
+ * `marketplace` : la marque de la scène « Lien », Temu par défaut. La page la
+ * change au clic sur une tuile du bandeau, en remontant le composant par sa
+ * `key` — le parcours repart alors de la première étape, jauge comprise, sans
+ * qu'aucun effet n'ait à le remettre à zéro.
+ */
+export function LinkToParcel({
+    marketplace = 'Temu',
+    className,
+    ...props
+}: ComponentProps<'div'> & { marketplace?: string }) {
     const t = useTranslations();
-    const stages = buildStages(t);
+    const stages = buildStages(t, marketplace);
 
     const [active, setActive] = useState(0);
 
