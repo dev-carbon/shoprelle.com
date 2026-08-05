@@ -547,17 +547,29 @@ export default function Welcome({
      * dans le champ. Le remontage par la `key` s'occupe du recommencement.
      */
     const [demoMarketplace, setDemoMarketplace] = useState('Temu');
-    const parcoursSection = useRef<HTMLDivElement>(null);
+    const parcoursCard = useRef<HTMLDivElement>(null);
 
     const showParcoursFor = (marketplace: string) => {
         setDemoMarketplace(marketplace);
-        parcoursSection.current?.scrollIntoView({
-            behavior: window.matchMedia('(prefers-reduced-motion: reduce)')
-                .matches
-                ? 'auto'
-                : 'smooth',
-            block: 'start',
-        });
+
+        // Le défilement vise la carte du parcours, pas le titre de sa
+        // section : atterrir sur le titre laissait la démonstration sous la
+        // ligne de flottaison des écrans courts — un « léger défilement » et
+        // rien à voir. Et il part deux images après le clic, une fois le
+        // parcours remonté : lancé avant, l'ancrage de défilement du
+        // navigateur peut l'écourter quand le sous-arbre se remplace.
+        requestAnimationFrame(() =>
+            requestAnimationFrame(() => {
+                parcoursCard.current?.scrollIntoView({
+                    behavior: window.matchMedia(
+                        '(prefers-reduced-motion: reduce)',
+                    ).matches
+                        ? 'auto'
+                        : 'smooth',
+                    block: 'start',
+                });
+            }),
+        );
     };
 
     const socials = SOCIAL_NETWORKS.flatMap((network) => {
@@ -966,15 +978,7 @@ export default function Welcome({
                         faut d'abord identifier est un bloc qu'on saute. Le titre
                         dit ce que le panneau va montrer, et le panneau le
                         montre. */}
-                    {/* `scroll-mt-24` parce que le clic d'une tuile amène ici :
-                        sans elle, l'en-tête collant recouvrirait le titre. */}
-                    <div
-                        ref={parcoursSection}
-                        className={cn(
-                            SHELL,
-                            'relative mt-24 scroll-mt-24 lg:mt-28',
-                        )}
-                    >
+                    <div className={cn(SHELL, 'relative mt-24 lg:mt-28')}>
                         <Reveal
                             from="blur"
                             className="mx-auto flex max-w-2xl flex-col items-center text-center"
@@ -999,12 +1003,18 @@ export default function Welcome({
                             ce panneau est sous la ligne de flottaison sur la
                             plupart des écrans, et une entrée jouée avant d'être
                             vue n'a jamais été jouée. */}
-                        <Reveal delay={80} className="mt-14">
-                            <LinkToParcel
-                                key={demoMarketplace}
-                                marketplace={demoMarketplace}
-                            />
-                        </Reveal>
+                        {/* Le porteur de la cible du défilement : `Reveal`
+                            garde son ref pour lui. `scroll-mt-24` pour que la
+                            carte se pose sous l'en-tête collant, pas
+                            dessous. */}
+                        <div ref={parcoursCard} className="scroll-mt-24">
+                            <Reveal delay={80} className="mt-14">
+                                <LinkToParcel
+                                    key={demoMarketplace}
+                                    marketplace={demoMarketplace}
+                                />
+                            </Reveal>
+                        </div>
 
                         {/* ── La sortie du parcours ───────────────────────────
                             On venait de regarder les quatre étapes, on était au
