@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Enums\Marketplace;
 use App\Enums\PurchaseRequestStatus;
 use App\Models\Customer;
+use App\Models\PageVisit;
 use App\Models\PurchaseItem;
 use App\Models\PurchaseRequest;
 use Carbon\CarbonImmutable;
@@ -29,6 +30,7 @@ class StatisticsService
         return [
             'period_days' => $days,
             'headline' => $this->headline($since),
+            'traffic' => $this->traffic($since, $days),
             'daily' => $this->daily($since, $days),
             'funnel' => $this->funnel(),
             'by_status' => $this->byStatus(),
@@ -63,6 +65,39 @@ class StatisticsService
                 '',
             ),
             'currency' => config('shoprelle.quote_currency'),
+        ];
+    }
+
+    /**
+     * The showcase's traffic: page views and visitors, counted by
+     * `RecordPageVisit` — the site's whole audience measurement.
+     *
+     * @return array{views: int, visitors: int, daily: list<array{date: string, label: string, count: int}>}
+     */
+    private function traffic(CarbonImmutable $since, int $days): array
+    {
+        $visits = PageVisit::query()
+            ->where('day', '>=', $since->toDateString())
+            ->get()
+            ->keyBy(fn (PageVisit $visit): string => $visit->day->format('Y-m-d'));
+
+        $series = [];
+
+        for ($offset = 0; $offset < $days; $offset++) {
+            $date = $since->addDays($offset);
+            $key = $date->format('Y-m-d');
+
+            $series[] = [
+                'date' => $key,
+                'label' => $date->translatedFormat('j M'),
+                'count' => (int) ($visits[$key]->views ?? 0),
+            ];
+        }
+
+        return [
+            'views' => (int) $visits->sum('views'),
+            'visitors' => (int) $visits->sum('visitors'),
+            'daily' => $series,
         ];
     }
 

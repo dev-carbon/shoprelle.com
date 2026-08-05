@@ -309,6 +309,11 @@ export type Statistics = {
         average_quote: string;
         currency: string;
     };
+    traffic: {
+        views: number;
+        visitors: number;
+        daily: { date: string; label: string; count: number }[];
+    };
     daily: { date: string; label: string; count: number }[];
     funnel: (LabelledCount & { share: number })[];
     by_status: LabelledCount[];

@@ -99,6 +99,37 @@ export default function StatisticsPage({ statistics, periods }: Props) {
                     </CardContent>
                 </Card>
 
+                {/* Le trafic de la vitrine, compté en interne — voir le
+                    middleware RecordPageVisit : deux compteurs par jour, et
+                    c'est tout ce que le site mesure. */}
+                <Card className="animate-rise">
+                    <CardHeader>
+                        <CardTitle>Visites de la vitrine</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <div className="mb-5 flex flex-wrap gap-x-10 gap-y-2">
+                            <div>
+                                <p className="text-sm text-muted-foreground">
+                                    Pages vues
+                                </p>
+                                <p className="mt-1 text-2xl font-semibold tabular-nums">
+                                    {statistics.traffic.views}
+                                </p>
+                            </div>
+                            <div>
+                                <p className="text-sm text-muted-foreground">
+                                    Visiteurs
+                                </p>
+                                <p className="mt-1 text-2xl font-semibold tabular-nums">
+                                    {statistics.traffic.visitors}
+                                </p>
+                            </div>
+                        </div>
+
+                        <TrendChart data={statistics.traffic.daily} />
+                    </CardContent>
+                </Card>
+
                 <div className="grid gap-4 lg:grid-cols-2">
                     <Card className="animate-rise">
                         <CardHeader>
