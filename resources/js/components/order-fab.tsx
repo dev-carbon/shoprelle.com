@@ -3,6 +3,7 @@ import { ShoppingCart } from 'lucide-react';
 import { OrderMenu } from '@/components/order-menu';
 import { Button } from '@/components/ui/button';
 import { useScrolled } from '@/hooks/use-scrolled';
+import { useTranslations } from '@/hooks/use-translations';
 import { cn } from '@/lib/utils';
 
 /**
@@ -32,6 +33,8 @@ export function OrderFab({
     telegramUrl: string | null;
     whatsappUrl: string | null;
 }) {
+    const t = useTranslations();
+
     const visible = useScrolled(520);
 
     return (
@@ -55,10 +58,10 @@ export function OrderFab({
                         // est un piège.
                         tabIndex={visible ? undefined : -1}
                         aria-hidden={!visible}
-                        className="h-12 rounded-full px-5 shadow-lg shadow-primary/30 transition-shadow hover:shadow-xl hover:shadow-primary/40"
+                        className="h-12 rounded-2xl px-5 shadow-lg shadow-primary/30 transition-shadow hover:shadow-xl hover:shadow-primary/40"
                     >
                         <ShoppingCart className="size-4" />
-                        Commander
+                        {t('Commander')}
                     </Button>
                 }
             />

@@ -11,6 +11,7 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { useTranslations } from '@/hooks/use-translations';
 import { cn } from '@/lib/utils';
 
 /**
@@ -96,6 +97,8 @@ export function OrderMenu({
     telegramUrl: string | null;
     whatsappUrl: string | null;
 }) {
+    const t = useTranslations();
+
     const external = (href: string) => (content: ReactNode) => (
         <a href={href} target="_blank" rel="noopener noreferrer">
             {content}
@@ -112,15 +115,15 @@ export function OrderMenu({
                 className="w-72 p-1.5"
             >
                 <DropdownMenuLabel className="px-3 pt-2 pb-1 text-xs font-normal text-muted-foreground">
-                    Par où souhaitez-vous commander ?
+                    {t('Par où souhaitez-vous commander ?')}
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
 
                 <div className="flex flex-col">
                     <Channel
                         icon={MessagesSquare}
-                        name="Chat web"
-                        hint="Ici même, sans rien installer"
+                        name={t('Chat web')}
+                        hint={t('Ici même, sans rien installer')}
                         className={telegramUrl ? 'order-2 sm:order-1' : ''}
                     >
                         {(content) => <Link href={chatHref}>{content}</Link>}
@@ -130,7 +133,7 @@ export function OrderMenu({
                         <Channel
                             icon={Send}
                             name="Telegram"
-                            hint="Le même assistant, dans votre messagerie"
+                            hint={t('Le même assistant, dans votre messagerie')}
                             className="order-1 sm:order-2"
                         >
                             {external(telegramUrl)}
@@ -141,7 +144,7 @@ export function OrderMenu({
                         <Channel
                             icon={WhatsAppIcon}
                             name="WhatsApp"
-                            hint="Une personne vous répond"
+                            hint={t('Une personne vous répond')}
                             tint={WHATSAPP_GREEN}
                             className="order-3"
                         >

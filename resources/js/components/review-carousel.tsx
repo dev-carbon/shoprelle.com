@@ -1,6 +1,7 @@
 import { ChevronDown, ChevronUp, Quote, Star } from 'lucide-react';
 import { useState } from 'react';
 
+import { useTranslations } from '@/hooks/use-translations';
 import { cn } from '@/lib/utils';
 
 export type Review = {
@@ -20,10 +21,12 @@ const MAX_RATING = 5;
  * à voix haute.
  */
 function Rating({ rating }: { rating: number }) {
+    const t = useTranslations();
+
     return (
         <p className="flex items-center gap-0.5">
             <span className="sr-only">
-                {rating} étoiles sur {MAX_RATING}
+                {rating} {t('étoiles sur')} {MAX_RATING}
             </span>
 
             {Array.from({ length: MAX_RATING }, (_, index) => (
@@ -61,6 +64,8 @@ function Rating({ rating }: { rating: number }) {
  * emporte la phrase qu'on était en train de lire.
  */
 export function ReviewCarousel({ reviews }: { reviews: Review[] }) {
+    const t = useTranslations();
+
     const [index, setIndex] = useState(0);
     const [downwards, setDownwards] = useState(true);
 
@@ -122,7 +127,7 @@ export function ReviewCarousel({ reviews }: { reviews: Review[] }) {
                     <button
                         type="button"
                         onClick={() => move(-1)}
-                        aria-label="Avis précédent"
+                        aria-label={t('Avis précédent')}
                         className="flex size-10 items-center justify-center rounded-full border bg-card text-muted-foreground shadow-sm transition-colors hover:border-primary hover:text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
                     >
                         <ChevronUp className="size-5" />
@@ -141,7 +146,7 @@ export function ReviewCarousel({ reviews }: { reviews: Review[] }) {
                     <button
                         type="button"
                         onClick={() => move(1)}
-                        aria-label="Avis suivant"
+                        aria-label={t('Avis suivant')}
                         className="flex size-10 items-center justify-center rounded-full border bg-card text-muted-foreground shadow-sm transition-colors hover:border-primary hover:text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
                     >
                         <ChevronDown className="size-5" />

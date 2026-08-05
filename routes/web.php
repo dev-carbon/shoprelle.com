@@ -6,8 +6,10 @@ use App\Http\Controllers\Admin\ContactMessageController;
 use App\Http\Controllers\Admin\CustomerAccessCodeController;
 use App\Http\Controllers\Admin\CustomerController;
 use App\Http\Controllers\Admin\DashboardController;
+use App\Http\Controllers\Admin\ErrorLogController;
 use App\Http\Controllers\Admin\PaymentController;
 use App\Http\Controllers\Admin\ProductController;
+use App\Http\Controllers\Admin\PromoBannerController;
 use App\Http\Controllers\Admin\PurchaseRequestController;
 use App\Http\Controllers\Admin\PurchaseRequestStatusController;
 use App\Http\Controllers\Admin\QuoteController;
@@ -20,6 +22,8 @@ use App\Http\Controllers\CustomerAttachmentController;
 use App\Http\Controllers\CustomerQuoteController;
 use App\Http\Controllers\CustomerRequestController;
 use App\Http\Controllers\HomeController;
+use App\Http\Controllers\LegalController;
+use App\Http\Controllers\LocaleController;
 use App\Http\Controllers\SitemapController;
 use App\Http\Controllers\Telegram\WebhookController as TelegramWebhookController;
 use App\Http\Middleware\EnsureUserIsAdmin;
@@ -30,6 +34,12 @@ Route::get('/', HomeController::class)->name('home');
 
 // Les pages publiques, pour les moteurs. Référencé depuis public/robots.txt.
 Route::get('/sitemap.xml', SitemapController::class)->name('sitemap');
+
+Route::get('mentions-legales', [LegalController::class, 'mentions'])->name('legal.mentions');
+Route::get('confidentialite', [LegalController::class, 'privacy'])->name('legal.privacy');
+
+// La langue de la vitrine, mémorisée en session depuis le footer.
+Route::post('langue', LocaleController::class)->name('locale.update');
 
 /*
 |--------------------------------------------------------------------------
@@ -154,6 +164,11 @@ Route::middleware(['auth', 'verified', EnsureUserIsAdmin::class])->group(functio
             ->name('reviews.approval');
 
         Route::get('statistiques', StatisticsController::class)->name('statistics');
+
+        Route::get('journal', ErrorLogController::class)->name('logs.index');
+
+        Route::get('bandeau', [PromoBannerController::class, 'edit'])->name('banner.edit');
+        Route::put('bandeau', [PromoBannerController::class, 'update'])->name('banner.update');
 
         Route::prefix('demandes/{purchaseRequest}')->group(function () {
             Route::get('/', [PurchaseRequestController::class, 'show'])->name('requests.show');

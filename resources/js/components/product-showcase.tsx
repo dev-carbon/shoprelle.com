@@ -2,6 +2,7 @@ import { ArrowUpRight } from 'lucide-react';
 import { useMemo, useState } from 'react';
 
 import { Reveal } from '@/components/reveal';
+import { useTranslations } from '@/hooks/use-translations';
 import { cn } from '@/lib/utils';
 
 /**
@@ -105,6 +106,8 @@ export function ProductShowcase({
     products: ShowcaseProduct[];
     className?: string;
 }) {
+    const t = useTranslations();
+
     const [category, setCategory] = useState<string | null>(null);
     const [marketplace, setMarketplace] = useState<string | null>(null);
 
@@ -149,13 +152,13 @@ export function ProductShowcase({
                     <div
                         className="flex flex-wrap gap-2.5"
                         role="group"
-                        aria-label="Filtrer par catégorie"
+                        aria-label={t('Filtrer par catégorie')}
                     >
                         <Chip
                             active={category === null}
                             onClick={() => setCategory(null)}
                         >
-                            Tout
+                            {t('Tout')}
                         </Chip>
                         {categories.map((facet) => (
                             <Chip
@@ -179,13 +182,13 @@ export function ProductShowcase({
                     <div
                         className="flex flex-wrap gap-2.5"
                         role="group"
-                        aria-label="Filtrer par plateforme"
+                        aria-label={t('Filtrer par plateforme')}
                     >
                         <Chip
                             active={marketplace === null}
                             onClick={() => setMarketplace(null)}
                         >
-                            Toutes les plateformes
+                            {t('Toutes les plateformes')}
                         </Chip>
                         {marketplaces.map((facet) => (
                             <Chip
@@ -254,7 +257,7 @@ export function ProductShowcase({
                                         </p>
                                     ) : (
                                         <p className="text-sm text-muted-foreground">
-                                            Prix sur devis
+                                            {t('Prix sur devis')}
                                         </p>
                                     )}
 

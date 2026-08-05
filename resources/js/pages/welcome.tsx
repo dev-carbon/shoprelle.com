@@ -7,6 +7,7 @@ import {
     Headset,
     Link as LinkIcon,
     Mail,
+    Megaphone,
     MessagesSquare,
     Plane,
     Receipt,
@@ -22,9 +23,11 @@ import { lazy, Suspense } from 'react';
 import type { ComponentType, ReactNode } from 'react';
 
 import AppLogoIcon from '@/components/app-logo-icon';
+import { AssistantConversation } from '@/components/assistant-conversation';
 import { BrandWordmark } from '@/components/brand-wordmark';
 import { HeroShowcase } from '@/components/hero-showcase';
 import { LinkToParcel } from '@/components/link-to-parcel';
+import { LocaleSwitcher } from '@/components/locale-switcher';
 import {
     MARKETPLACE_COLORS,
     MARKETPLACE_LOGOS,
@@ -41,6 +44,7 @@ import { Reveal } from '@/components/reveal';
 import { ReviewCarousel } from '@/components/review-carousel';
 import type { Review } from '@/components/review-carousel';
 import { ScrollProgress } from '@/components/scroll-progress';
+import { ScrollToTop } from '@/components/scroll-to-top';
 import { Accent, Eyebrow } from '@/components/section-heading';
 import {
     SOCIAL_ICONS,
@@ -52,11 +56,16 @@ import { Button } from '@/components/ui/button';
 import { WorldBackdrop } from '@/components/world-backdrop';
 import { useCountUp } from '@/hooks/use-count-up';
 import { useScrolled } from '@/hooks/use-scrolled';
+import { useTranslations } from '@/hooks/use-translations';
 import { flagFor } from '@/lib/destinations';
 import { SHOW_PROCESS_PHOTOS } from '@/lib/photos';
 import { cn } from '@/lib/utils';
 import { dashboard, login } from '@/routes';
 import { link, show as chat } from '@/routes/chat';
+import {
+    mentions as legalMentions,
+    privacy as legalPrivacy,
+} from '@/routes/legal';
 import { index as orders } from '@/routes/orders';
 
 /**
@@ -269,6 +278,8 @@ type NetworkStats = {
 };
 
 type Props = {
+    /** Le message du bandeau, déjà localisé, ou null quand il est désactivé. */
+    promoBanner: string | null;
     contact: { email: string; responseTime: string };
     telegramUrl: string | null;
     whatsappUrl: string | null;
@@ -391,6 +402,8 @@ function ChannelCard({
     featured?: boolean;
     children?: ReactNode;
 }) {
+    const t = useTranslations();
+
     const body = (
         <>
             <div className="flex items-center gap-4">
@@ -433,7 +446,7 @@ function ChannelCard({
 
             {href && (
                 <p className="mt-auto inline-flex items-center gap-1.5 pt-8 text-sm font-semibold text-primary">
-                    Ouvrir
+                    {t('Ouvrir')}
                     <ArrowRight className="size-4 transition-transform group-hover:translate-x-0.5" />
                 </p>
             )}
@@ -504,6 +517,7 @@ const SOCIAL_NETWORKS: { key: SocialNetwork; label: string }[] = [
 ];
 
 export default function Welcome({
+    promoBanner,
     contact,
     telegramUrl,
     whatsappUrl,
@@ -517,6 +531,7 @@ export default function Welcome({
 }: Props) {
     const { auth } = usePage().props;
     const scrolled = useScrolled();
+    const t = useTranslations();
 
     const socials = SOCIAL_NETWORKS.flatMap((network) => {
         const href = social[network.key];
@@ -535,18 +550,18 @@ export default function Welcome({
     const figures = [
         {
             value: stats.countries,
-            label: 'Pays desservis',
+            label: t('Pays desservis'),
             hint:
                 stats.upcoming > 0
-                    ? `+ ${stats.upcoming} destinations annoncées`
+                    ? `+ ${stats.upcoming} ${t('destinations annoncées')}`
                     : undefined,
         },
         ...(stats.parcelsShipped
             ? [
                   {
                       value: stats.parcelsShipped,
-                      label: 'Colis expédiés',
-                      hint: "Depuis l'ouverture du service.",
+                      label: t('Colis expédiés'),
+                      hint: t("Depuis l'ouverture du service."),
                   },
               ]
             : []),
@@ -555,8 +570,8 @@ export default function Welcome({
                   {
                       value: stats.satisfactionPercent,
                       suffix: '%',
-                      label: 'Satisfaction client',
-                      hint: 'Sur les demandes livrées.',
+                      label: t('Satisfaction client'),
+                      hint: t('Sur les demandes livrées.'),
                   },
               ]
             : []),
@@ -566,7 +581,46 @@ export default function Welcome({
         <div className="flex min-h-svh flex-col bg-background">
             {/* The slogan is the title: it is what a search result and a
                 browser tab have room for, and it says the whole service. */}
-            <Head title="Un lien. Une commande. Une livraison." />
+            <Head title={t('Un lien. Une commande. Une livraison.')} />
+
+            {/* Le bandeau de promotion, tout en haut : le message arrive déjà
+                dans la langue de la session, contrôlé depuis le back-office
+                (écran « Bandeau »). Absent, il n'occupe pas un pixel.
+
+                Il défile, dans l'idiome du bandeau des marketplaces : la piste
+                contient deux copies de la même liste et l'animation la décale
+                d'exactement la moitié, donc la boucle est invisible. Le
+                message est répété pour que la liste dépasse toujours la
+                largeur de l'écran. Survoler suspend ; en mouvement réduit,
+                l'animation est annulée par la feuille de style et la première
+                copie reste lisible, immobile. Les lecteurs d'écran reçoivent
+                le message une fois, en clair. */}
+            {promoBanner && (
+                <div className="group bg-accent-brand text-accent-brand-foreground">
+                    <p className="sr-only">{promoBanner}</p>
+
+                    <div aria-hidden className="overflow-hidden py-2.5">
+                        <div className="flex w-max animate-marquee items-center group-hover:[animation-play-state:paused]">
+                            {[0, 1].map((copy) => (
+                                <ul
+                                    key={copy}
+                                    className="flex shrink-0 items-center"
+                                >
+                                    {Array.from({ length: 6 }, (_, index) => (
+                                        <li
+                                            key={index}
+                                            className="flex items-center gap-2.5 pr-12 text-sm font-semibold whitespace-nowrap"
+                                        >
+                                            <Megaphone className="size-4 shrink-0" />
+                                            {promoBanner}
+                                        </li>
+                                    ))}
+                                </ul>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {/* The header tightens and lifts once the page moves: at the top
                 it is part of the hero, and after that it is a bar. The border
@@ -587,45 +641,52 @@ export default function Welcome({
                         scrolled ? 'py-3' : 'py-5',
                     )}
                 >
-                    <a
-                        href="#top"
-                        className="flex items-center gap-2.5 font-display text-lg font-extrabold tracking-tight"
-                    >
-                        <span
-                            className={cn(
-                                'flex items-center justify-center rounded-xl bg-accent-brand transition-[width,height] duration-300',
-                                scrolled ? 'size-8' : 'size-9',
-                            )}
+                    {/* Le logo et les ancres forment un seul groupe, calé à
+                        gauche ; tout ce qui est réglage ou action vit à
+                        droite. Deux rives, pas trois colonnes. */}
+                    <div className="flex min-w-0 items-center gap-8">
+                        <a
+                            href="#top"
+                            className="flex shrink-0 items-center gap-2.5 font-display text-lg font-extrabold tracking-tight"
                         >
-                            <AppLogoIcon className="size-4 text-accent-brand-foreground" />
-                        </span>
-                        Shoprelle
-                    </a>
-
-                    {/* Les liens ont maintenant une zone à eux : au survol, une
-                        pastille apparaît sous le mot au lieu de le teinter. Sur
-                        une barre aussi dépouillée, changer la couleur d'un mot
-                        est le retour le plus discret qu'on puisse donner — et
-                        au bout de cinq liens il ne se voit plus. */}
-                    <nav
-                        aria-label="Sections du site"
-                        className="hidden items-center gap-1 lg:flex"
-                    >
-                        {NAVIGATION.map((item) => (
-                            <a
-                                key={item.href}
-                                href={item.href}
-                                className="rounded-full px-3.5 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+                            <span
+                                className={cn(
+                                    'flex items-center justify-center rounded-xl bg-accent-brand transition-[width,height] duration-300',
+                                    scrolled ? 'size-8' : 'size-9',
+                                )}
                             >
-                                {item.label}
-                            </a>
-                        ))}
-                    </nav>
+                                <AppLogoIcon className="size-4 text-accent-brand-foreground" />
+                            </span>
+                            Shoprelle
+                        </a>
+
+                        {/* Les liens ont maintenant une zone à eux : au survol,
+                            une pastille apparaît sous le mot au lieu de le
+                            teinter. Sur une barre aussi dépouillée, changer la
+                            couleur d'un mot est le retour le plus discret qu'on
+                            puisse donner — et au bout de cinq liens il ne se
+                            voit plus. */}
+                        <nav
+                            aria-label={t('Sections du site')}
+                            className="hidden items-center gap-1 lg:flex"
+                        >
+                            {NAVIGATION.map((item) => (
+                                <a
+                                    key={item.href}
+                                    href={item.href}
+                                    className="rounded-full px-3.5 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+                                >
+                                    {t(item.label)}
+                                </a>
+                            ))}
+                        </nav>
+                    </div>
 
                     {/* The staff entrance lives in the footer only: the header
                         belongs to the visitor, and a door marked for somebody
                         else is one more thing for them to read past. */}
                     <div className="flex items-center gap-2">
+                        <LocaleSwitcher />
                         <ThemeSwitcher />
 
                         {/* ── La porte des clients qui reviennent ────────────
@@ -654,8 +715,8 @@ export default function Welcome({
                             qu'une icône seule n'a jamais annoncé où elle mène. */}
                         <Link
                             href={orders()}
-                            title="Mes demandes"
-                            aria-label="Mes demandes"
+                            title={t('Mes demandes')}
+                            aria-label={t('Mes demandes')}
                             className="inline-flex size-9 items-center justify-center rounded-md text-muted-foreground transition-colors outline-none hover:bg-accent hover:text-accent-foreground focus-visible:ring-[3px] focus-visible:ring-ring/50"
                         >
                             <UserRound className="size-4" />
@@ -675,9 +736,12 @@ export default function Welcome({
                             telegramUrl={telegramUrl}
                             whatsappUrl={whatsappUrl}
                             trigger={
-                                <Button className="hidden h-10 rounded-full px-5 shadow-md shadow-primary/25 transition-shadow hover:shadow-lg hover:shadow-primary/30 sm:inline-flex">
+                                // Le même rayon que les autres boutons
+                                // « Commander » de la page : une seule famille
+                                // de boutons, pas une pilule isolée.
+                                <Button className="hidden h-10 rounded-2xl px-5 shadow-md shadow-primary/25 transition-shadow hover:shadow-lg hover:shadow-primary/30 sm:inline-flex">
                                     <ShoppingCart className="size-4" />
-                                    Commander
+                                    {t('Commander')}
                                 </Button>
                             }
                         />
@@ -733,16 +797,16 @@ export default function Welcome({
                                 className="animate-rise-blur font-display text-hero font-black"
                                 style={{ animationDelay: '60ms' }}
                             >
-                                Vos envies, enfin livrées chez vous.
+                                {t('Vos envies, enfin livrées chez vous.')}
                             </h1>
 
                             <p
                                 className="mx-auto mt-9 max-w-lg animate-rise text-lead text-muted-foreground lg:mx-0"
                                 style={{ animationDelay: '160ms' }}
                             >
-                                Un lien suffit pour commander sur vos
-                                plateformes préférées. Nous achetons depuis la
-                                France et livrons jusqu'à votre ville.
+                                {t(
+                                    "Un lien suffit pour commander sur vos plateformes préférées. Nous achetons depuis la France et livrons jusqu'à votre ville.",
+                                )}
                             </p>
 
                             {/* Not a mock-up of a field: it is the field.
@@ -764,7 +828,7 @@ export default function Welcome({
                                                 htmlFor="hero-url"
                                                 className="sr-only"
                                             >
-                                                Lien du produit
+                                                {t('Lien du produit')}
                                             </label>
                                             {/* Plus haut et plus posé qu'un
                                                 champ de formulaire ordinaire :
@@ -797,8 +861,12 @@ export default function Welcome({
                                             disabled={processing}
                                             className="h-16 shrink-0 rounded-2xl px-8 text-base shadow-lg shadow-primary/25 transition-shadow hover:shadow-xl hover:shadow-primary/30"
                                         >
-                                            Commander
-                                            <ArrowRight className="size-4" />
+                                            {/* Le chariot, à gauche : la même
+                                                icône à la même place sur tous
+                                                les boutons « Commander » de la
+                                                page. */}
+                                            <ShoppingCart className="size-4" />
+                                            {t('Commander')}
                                         </Button>
                                     </>
                                 )}
@@ -814,9 +882,9 @@ export default function Welcome({
                                 style={{ animationDelay: '280ms' }}
                             >
                                 {[
-                                    'Gratuit, sans inscription',
-                                    'Devis avant paiement',
-                                    `Réponse ${contact.responseTime}`,
+                                    t('Gratuit, sans inscription'),
+                                    t('Devis avant paiement'),
+                                    `${t('Réponse')} ${t(contact.responseTime)}`,
                                 ].map((promise) => (
                                     <li
                                         key={promise}
@@ -873,15 +941,18 @@ export default function Welcome({
                             from="blur"
                             className="mx-auto flex max-w-2xl flex-col items-center text-center"
                         >
-                            <Eyebrow tone="gold">Du lien au colis</Eyebrow>
+                            <Eyebrow tone="gold">
+                                {t('Du lien au colis')}
+                            </Eyebrow>
 
                             <h2 className="mt-8 font-display text-title font-black">
-                                Ce qui se passe une fois le{' '}
-                                <Accent tone="gold">lien envoyé</Accent>
+                                {t('Ce qui se passe une fois le')}{' '}
+                                <Accent tone="gold">{t('lien envoyé')}</Accent>
                             </h2>
                             <p className="mt-8 text-lead text-muted-foreground">
-                                Quatre étapes, et vous n'en pilotez qu'une : la
-                                première. Le reste, c'est nous.
+                                {t(
+                                    "Quatre étapes, et vous n'en pilotez qu'une : la première. Le reste, c'est nous.",
+                                )}
                             </p>
                         </Reveal>
 
@@ -918,7 +989,7 @@ export default function Welcome({
                             className="mt-16 flex flex-col items-center text-center"
                         >
                             <p className="font-display text-subtitle font-extrabold">
-                                Prêt ? Envoyez votre premier lien.
+                                {t('Prêt ? Envoyez votre premier lien.')}
                             </p>
 
                             <OrderMenu
@@ -931,7 +1002,7 @@ export default function Welcome({
                                         className="mt-7 h-14 rounded-2xl px-9 text-base shadow-lg shadow-primary/25 transition-shadow hover:shadow-xl hover:shadow-primary/30"
                                     >
                                         <ShoppingCart className="size-4" />
-                                        Commander maintenant
+                                        {t('Commander maintenant')}
                                     </Button>
                                 }
                             />
@@ -940,8 +1011,9 @@ export default function Welcome({
                                 aucun de plus : celui du haut de page, et celui
                                 que l'étape « Devis » vient de montrer. */}
                             <p className="mt-5 text-sm text-muted-foreground">
-                                Gratuit, sans inscription — vous n'engagez rien
-                                avant d'avoir vu le devis.
+                                {t(
+                                    "Gratuit, sans inscription — vous n'engagez rien avant d'avoir vu le devis.",
+                                )}
                             </p>
                         </Reveal>
                     </div>
@@ -982,17 +1054,17 @@ export default function Welcome({
                             'relative flex max-w-3xl flex-col items-center text-center',
                         )}
                     >
-                        <Eyebrow>Le réseau</Eyebrow>
+                        <Eyebrow>{t('Le réseau')}</Eyebrow>
 
                         <h2 className="mt-8 font-display text-title font-black">
-                            <Accent tone="blue">Vos envies</Accent> voyagent
-                            jusqu'à vous.
+                            <Accent tone="blue">{t('Vos envies')}</Accent>{' '}
+                            {t("voyagent jusqu'à vous.")}
                         </h2>
 
                         <p className="mt-8 text-lead text-muted-foreground">
-                            Shoprelle vous ouvre l'accès aux plus grandes
-                            plateformes d'achat et organise l'acheminement de
-                            vos commandes jusqu'à votre destination.
+                            {t(
+                                "Shoprelle vous ouvre l'accès aux plus grandes plateformes d'achat et organise l'acheminement de vos commandes jusqu'à votre destination.",
+                            )}
                         </p>
                     </Reveal>
 
@@ -1062,13 +1134,13 @@ export default function Welcome({
                                 ailleurs. */}
                             <ul className="flex flex-wrap items-center gap-x-8 gap-y-2 text-xs font-semibold">
                                 <Legend swatch="bg-primary">
-                                    Livraison disponible
+                                    {t('Livraison disponible')}
                                 </Legend>
                                 <Legend swatch="bg-primary/35">
-                                    Bientôt desservi
+                                    {t('Bientôt desservi')}
                                 </Legend>
                                 <Legend swatch="bg-muted-foreground/20">
-                                    Pas encore desservi
+                                    {t('Pas encore desservi')}
                                 </Legend>
                             </ul>
 
@@ -1104,7 +1176,7 @@ export default function Welcome({
                                 <div>
                                     <p className="flex items-center gap-2 text-sm font-semibold">
                                         <span className="size-2 rounded-full bg-primary" />
-                                        Nous livrons aujourd'hui
+                                        {t("Nous livrons aujourd'hui")}
                                     </p>
                                     <ul className="mt-4 flex flex-wrap gap-2.5">
                                         {countries.map((country) => (
@@ -1122,7 +1194,7 @@ export default function Welcome({
                                                 >
                                                     {flagFor(country.code)}
                                                 </span>
-                                                {country.name}
+                                                {t(country.name)}
                                             </li>
                                         ))}
                                     </ul>
@@ -1131,7 +1203,7 @@ export default function Welcome({
                                 {upcomingCountries.length > 0 && (
                                     <div>
                                         <p className="text-sm text-muted-foreground">
-                                            Bientôt
+                                            {t('Bientôt')}
                                         </p>
                                         {/* En pointillés plutôt qu'en plein,
                                             comme les pays pâles de la carte :
@@ -1154,7 +1226,7 @@ export default function Welcome({
                                                                 country.code,
                                                             )}
                                                         </span>
-                                                        {country.name}
+                                                        {t(country.name)}
                                                     </li>
                                                 ),
                                             )}
@@ -1182,12 +1254,14 @@ export default function Welcome({
                                     de la section qui le porte, pas un chapitre
                                     de plus. */}
                                 <h3 className="font-display text-subtitle font-extrabold">
-                                    Le même parcours, quelle que soit la
-                                    destination.
+                                    {t(
+                                        'Le même parcours, quelle que soit la destination.',
+                                    )}
                                 </h3>
                                 <p className="mt-4 max-w-sm text-body text-muted-foreground">
-                                    Chaque commande suit les mêmes étapes, du
-                                    panier français jusqu'à votre ville.
+                                    {t(
+                                        "Chaque commande suit les mêmes étapes, du panier français jusqu'à votre ville.",
+                                    )}
                                 </p>
                             </Reveal>
 
@@ -1206,10 +1280,10 @@ export default function Welcome({
 
                                         <div className="pt-1">
                                             <p className="font-display text-lg font-extrabold">
-                                                {assurance.title}
+                                                {t(assurance.title)}
                                             </p>
                                             <p className="mt-2 text-body text-muted-foreground">
-                                                {assurance.description}
+                                                {t(assurance.description)}
                                             </p>
                                         </div>
                                     </Reveal>
@@ -1246,18 +1320,21 @@ export default function Welcome({
 
                         <div className={cn(SHELL, 'relative')}>
                             <Reveal from="blur" className="max-w-2xl">
-                                <Eyebrow tone="gold">La sélection</Eyebrow>
+                                <Eyebrow tone="gold">
+                                    {t('La sélection')}
+                                </Eyebrow>
 
                                 <h2 className="mt-8 font-display text-title font-black">
-                                    Ce qu'on nous commande{' '}
-                                    <Accent tone="gold">le plus souvent</Accent>
+                                    {t("Ce qu'on nous commande")}{' '}
+                                    <Accent tone="gold">
+                                        {t('le plus souvent')}
+                                    </Accent>
                                 </h2>
 
                                 <p className="mt-8 text-lead text-muted-foreground">
-                                    Quelques exemples, avec leur prix relevé sur
-                                    la plateforme. Vous n'êtes pas limité à
-                                    cette liste : n'importe quel lien fait
-                                    l'affaire.
+                                    {t(
+                                        "Quelques exemples, avec leur prix relevé sur la plateforme. Vous n'êtes pas limité à cette liste : n'importe quel lien fait l'affaire.",
+                                    )}
                                 </p>
                             </Reveal>
 
@@ -1272,9 +1349,9 @@ export default function Welcome({
                                 devis, et cette page n'a pas le droit de laisser
                                 croire autre chose. */}
                             <p className="mt-12 text-sm text-muted-foreground">
-                                Prix indicatifs relevés sur les plateformes,
-                                hors transport. Votre devis les recalcule au
-                                cours du jour.
+                                {t(
+                                    'Prix indicatifs relevés sur les plateformes, hors transport. Votre devis les recalcule au cours du jour.',
+                                )}
                             </p>
                         </div>
                     </section>
@@ -1308,14 +1385,15 @@ export default function Welcome({
                             haut que la fenêtre a un bas que l'on n'atteint
                             jamais. */}
                         <div className="lg:order-2">
-                            <Eyebrow>Comment ça marche</Eyebrow>
+                            <Eyebrow>{t('Comment ça marche')}</Eyebrow>
 
                             <h2 className="mt-8 font-display text-title font-black">
-                                Trois étapes, et c'est tout
+                                {t("Trois étapes, et c'est tout")}
                             </h2>
                             <p className="mt-8 max-w-sm text-lead text-muted-foreground">
-                                Pas de formulaire interminable, pas de compte :
-                                une conversation.
+                                {t(
+                                    'Pas de formulaire interminable, pas de compte : une conversation.',
+                                )}
                             </p>
 
                             {/* La conversation elle-même, en dessous.
@@ -1356,14 +1434,14 @@ export default function Welcome({
 
                                     <div className="pt-1.5 pb-14 group-last:pb-0">
                                         <span className="inline-flex items-center rounded-lg bg-accent-brand px-2.5 py-1 text-xs font-bold tracking-wide text-accent-brand-foreground tabular-nums">
-                                            Étape 0{index + 1}
+                                            {t('Étape')} 0{index + 1}
                                         </span>
 
                                         <h3 className="mt-5 font-display text-subtitle font-extrabold">
-                                            {step.title}
+                                            {t(step.title)}
                                         </h3>
                                         <p className="mt-3 max-w-xl text-body text-muted-foreground">
-                                            {step.description}
+                                            {t(step.description)}
                                         </p>
                                     </div>
                                 </Reveal>
@@ -1406,17 +1484,18 @@ export default function Welcome({
                                 from="blur"
                                 className="flex max-w-2xl flex-col items-center text-center"
                             >
-                                <Eyebrow tone="gold">En vrai</Eyebrow>
+                                <Eyebrow tone="gold">{t('En vrai')}</Eyebrow>
 
                                 <h2 className="mt-8 font-display text-title font-black">
-                                    Ce que ça donne,{' '}
-                                    <Accent tone="gold">concrètement</Accent>
+                                    {t('Ce que ça donne,')}{' '}
+                                    <Accent tone="gold">
+                                        {t('concrètement')}
+                                    </Accent>
                                 </h2>
                                 <p className="mt-8 text-lead text-muted-foreground">
-                                    Les trois mêmes étapes, photographiées. Rien
-                                    de mis en scène : c'est le travail tel qu'il
-                                    se fait, de la commande passée en France au
-                                    colis remis chez vous.
+                                    {t(
+                                        "Les trois mêmes étapes, photographiées. Rien de mis en scène : c'est le travail tel qu'il se fait, de la commande passée en France au colis remis chez vous.",
+                                    )}
                                 </p>
                             </Reveal>
 
@@ -1455,16 +1534,16 @@ export default function Welcome({
                             from="blur"
                             className="flex max-w-2xl flex-col items-center text-center"
                         >
-                            <Eyebrow>L'assistant</Eyebrow>
+                            <Eyebrow>{t("L'assistant")}</Eyebrow>
 
                             <h2 className="mt-8 font-display text-title font-black">
-                                Commandez simplement{' '}
-                                <Accent tone="blue">en discutant</Accent>
+                                {t('Commandez simplement')}{' '}
+                                <Accent tone="blue">{t('en discutant')}</Accent>
                             </h2>
                             <p className="mt-8 text-lead text-muted-foreground">
-                                Plus besoin de remplir des formulaires
-                                compliqués. Envoyez un lien à notre assistant et
-                                laissez-vous guider étape par étape.
+                                {t(
+                                    'Plus besoin de remplir des formulaires compliqués. Envoyez un lien à notre assistant et laissez-vous guider étape par étape.',
+                                )}
                             </p>
                         </Reveal>
 
@@ -1480,9 +1559,11 @@ export default function Welcome({
                             <Reveal className="h-full">
                                 <ChannelCard
                                     icon={MessagesSquare}
-                                    name="Chat web"
-                                    badge="Disponible maintenant"
-                                    description="Ici même, dans votre navigateur. Rien à installer, aucun compte à créer : la conversation commence tout de suite."
+                                    name={t('Chat web')}
+                                    badge={t('Disponible maintenant')}
+                                    description={t(
+                                        'Ici même, dans votre navigateur. Rien à installer, aucun compte à créer : la conversation commence tout de suite.',
+                                    )}
                                     href={chat().url}
                                     featured
                                 >
@@ -1494,19 +1575,9 @@ export default function Welcome({
                                         dit déjà tout. */}
                                     <div
                                         aria-hidden
-                                        className="mt-8 space-y-2.5 rounded-2xl bg-muted/50 p-4 sm:p-5"
+                                        className="mt-8 space-y-2.5 rounded-2xl bg-muted/50 bg-dots-chat p-4 sm:p-5"
                                     >
-                                        <p className="w-fit max-w-[85%] rounded-2xl rounded-bl-md border bg-card px-3.5 py-2 text-xs">
-                                            Envoyez le lien du produit qui vous
-                                            fait envie.
-                                        </p>
-                                        <p className="ml-auto w-fit max-w-[85%] rounded-2xl rounded-br-md bg-primary px-3.5 py-2 text-xs text-primary-foreground">
-                                            https://www.shein.com/…
-                                        </p>
-                                        <p className="w-fit max-w-[85%] rounded-2xl rounded-bl-md border bg-card px-3.5 py-2 text-xs">
-                                            Parfait ! Quelle couleur
-                                            souhaitez-vous ?
-                                        </p>
+                                        <AssistantConversation />
                                     </div>
                                 </ChannelCard>
                             </Reveal>
@@ -1518,10 +1589,12 @@ export default function Welcome({
                                         name="Telegram"
                                         badge={
                                             telegramUrl
-                                                ? 'Disponible maintenant'
-                                                : 'Bientôt disponible'
+                                                ? t('Disponible maintenant')
+                                                : t('Bientôt disponible')
                                         }
-                                        description="Le même assistant, dans votre messagerie. Vous gardez l'historique de vos demandes dans une conversation que vous n'avez pas à rouvrir."
+                                        description={t(
+                                            "Le même assistant, dans votre messagerie. Vous gardez l'historique de vos demandes dans une conversation que vous n'avez pas à rouvrir.",
+                                        )}
                                         href={telegramUrl ?? undefined}
                                         external
                                     />
@@ -1541,10 +1614,12 @@ export default function Welcome({
                                         name="WhatsApp"
                                         badge={
                                             whatsappUrl
-                                                ? 'Disponible maintenant'
-                                                : 'Bientôt disponible'
+                                                ? t('Disponible maintenant')
+                                                : t('Bientôt disponible')
                                         }
-                                        description="Écrivez-nous sur WhatsApp : une personne vous répond et vous accompagne jusqu'à la commande."
+                                        description={t(
+                                            "Écrivez-nous sur WhatsApp : une personne vous répond et vous accompagne jusqu'à la commande.",
+                                        )}
                                         href={whatsappUrl ?? undefined}
                                         external
                                     />
@@ -1584,18 +1659,17 @@ export default function Welcome({
                             from="left"
                             className="lg:sticky lg:top-32 lg:self-start"
                         >
-                            <Eyebrow tone="gold">À propos</Eyebrow>
+                            <Eyebrow tone="gold">{t('À propos')}</Eyebrow>
 
                             <h2 className="mt-8 font-display text-title font-black">
-                                Pourquoi <Accent tone="gold">Shoprelle</Accent>{' '}
-                                existe ?
+                                {t('Pourquoi')}{' '}
+                                <Accent tone="gold">Shoprelle</Accent>{' '}
+                                {t('existe ?')}
                             </h2>
                             <p className="mt-7 text-lead text-muted-foreground">
-                                De nombreux produits sont difficiles à obtenir
-                                dans certaines régions du monde. Shoprelle
-                                simplifie l'accès aux grandes plateformes
-                                internationales en prenant en charge l'achat et
-                                la livraison pour vous.
+                                {t(
+                                    "De nombreux produits sont difficiles à obtenir dans certaines régions du monde. Shoprelle simplifie l'accès aux grandes plateformes internationales en prenant en charge l'achat et la livraison pour vous.",
+                                )}
                             </p>
                         </Reveal>
 
@@ -1617,7 +1691,7 @@ export default function Welcome({
                                 className="rounded-3xl border border-dashed p-7 sm:p-8"
                             >
                                 <p className="font-display text-eyebrow font-extrabold text-muted-foreground uppercase">
-                                    Sans Shoprelle
+                                    {t('Sans Shoprelle')}
                                 </p>
                                 <ul className="mt-6 space-y-4">
                                     {OBSTACLES.map((obstacle) => (
@@ -1626,7 +1700,7 @@ export default function Welcome({
                                             className="flex gap-3 text-muted-foreground"
                                         >
                                             <X className="mt-1 size-4 shrink-0" />
-                                            {obstacle}
+                                            {t(obstacle)}
                                         </li>
                                     ))}
                                 </ul>
@@ -1640,13 +1714,13 @@ export default function Welcome({
                                 {/* L'or du chapitre, repris sur le libellé : le
                                     même ton que le sur-titre de la section. */}
                                 <p className="font-display text-eyebrow font-extrabold text-accent-brand-ink uppercase">
-                                    Avec Shoprelle
+                                    {t('Avec Shoprelle')}
                                 </p>
                                 <ul className="mt-6 space-y-4">
                                     {ANSWERS.map((answer) => (
                                         <li key={answer} className="flex gap-3">
                                             <Check className="mt-1 size-4 shrink-0 text-success" />
-                                            {answer}
+                                            {t(answer)}
                                         </li>
                                     ))}
                                 </ul>
@@ -1672,11 +1746,11 @@ export default function Welcome({
 
                     <div className={cn(SHELL, 'relative')}>
                         <Reveal from="blur" className="max-w-2xl">
-                            <Eyebrow>Nos engagements</Eyebrow>
+                            <Eyebrow>{t('Nos engagements')}</Eyebrow>
 
                             <h2 className="mt-8 font-display text-title font-black">
-                                Une solution simple, transparente et{' '}
-                                <Accent tone="blue">fiable</Accent>
+                                {t('Une solution simple, transparente et')}{' '}
+                                <Accent tone="blue">{t('fiable')}</Accent>
                             </h2>
                         </Reveal>
 
@@ -1720,10 +1794,10 @@ export default function Welcome({
                                                 : 'text-lg',
                                         )}
                                     >
-                                        {promise.title}
+                                        {t(promise.title)}
                                     </h3>
                                     <p className="mt-6 max-w-md text-body text-muted-foreground">
-                                        {promise.description}
+                                        {t(promise.description)}
                                     </p>
                                 </Reveal>
                             ))}
@@ -1768,11 +1842,12 @@ export default function Welcome({
                             >
                                 <div>
                                     <p className="font-display text-lg font-extrabold">
-                                        Vous réglez par
+                                        {t('Vous réglez par')}
                                     </p>
                                     <p className="mt-1.5 text-sm text-muted-foreground">
-                                        En monnaie locale, une seule fois — et
-                                        jamais avant d'avoir validé le devis.
+                                        {t(
+                                            "En monnaie locale, une seule fois — et jamais avant d'avoir validé le devis.",
+                                        )}
                                     </p>
                                 </div>
 
@@ -1841,17 +1916,19 @@ export default function Welcome({
                             )}
                         >
                             <Reveal from="left">
-                                <Eyebrow tone="gold">Ils l'ont fait</Eyebrow>
+                                <Eyebrow tone="gold">
+                                    {t("Ils l'ont fait")}
+                                </Eyebrow>
 
                                 <h2 className="mt-8 font-display text-title font-black">
-                                    Ils ont{' '}
-                                    <Accent tone="gold">commandé</Accent> avec
-                                    nous
+                                    {t('Ils ont')}{' '}
+                                    <Accent tone="gold">{t('commandé')}</Accent>{' '}
+                                    {t('avec nous')}
                                 </h2>
                                 <p className="mt-8 max-w-sm text-lead text-muted-foreground">
-                                    Des avis laissés à la fin d'une
-                                    conversation, par des clients qui ont reçu
-                                    leur colis.
+                                    {t(
+                                        "Des avis laissés à la fin d'une conversation, par des clients qui ont reçu leur colis.",
+                                    )}
                                 </p>
                             </Reveal>
 
@@ -1870,11 +1947,13 @@ export default function Welcome({
                         )}
                     >
                         <div className="lg:sticky lg:top-32 lg:self-start">
-                            <Eyebrow tone="gold">Questions fréquentes</Eyebrow>
+                            <Eyebrow tone="gold">
+                                {t('Questions fréquentes')}
+                            </Eyebrow>
 
                             <h2 className="mt-8 font-display text-title font-black">
-                                Ce qu'on nous demande{' '}
-                                <Accent tone="gold">le plus</Accent>
+                                {t("Ce qu'on nous demande")}{' '}
+                                <Accent tone="gold">{t('le plus')}</Accent>
                             </h2>
                         </div>
 
@@ -1900,7 +1979,7 @@ export default function Welcome({
                                         clair, et la question a déjà été lue
                                         avant d'être survolée. */}
                                     <summary className="flex cursor-pointer list-none items-center justify-between gap-6 py-7 font-display text-lg font-extrabold transition-colors hover:text-accent-brand-ink focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ring [&::-webkit-details-marker]:hidden">
-                                        {item.question}
+                                        {t(item.question)}
 
                                         <ChevronDown
                                             aria-hidden
@@ -1909,7 +1988,7 @@ export default function Welcome({
                                     </summary>
 
                                     <p className="max-w-2xl pb-9 text-body text-muted-foreground">
-                                        {item.answer}
+                                        {t(item.answer)}
                                     </p>
                                 </Reveal>
                             ))}
@@ -1933,15 +2012,17 @@ export default function Welcome({
                         )}
                     >
                         <Reveal from="left">
-                            <Eyebrow>Contact</Eyebrow>
+                            <Eyebrow>{t('Contact')}</Eyebrow>
 
                             <h2 className="mt-8 font-display text-title font-black">
-                                Nous <Accent tone="blue">contacter</Accent>
+                                {t('Nous')}{' '}
+                                <Accent tone="blue">{t('contacter')}</Accent>
                             </h2>
                             <p className="mt-8 max-w-md text-body text-muted-foreground">
-                                Une question avant de commander, un partenariat,
-                                ou simplement une hésitation : écrivez-nous, on
-                                répond {contact.responseTime}.
+                                {t(
+                                    'Une question avant de commander, un partenariat, ou simplement une hésitation : écrivez-nous, on répond',
+                                )}{' '}
+                                {t(contact.responseTime)}.
                             </p>
                         </Reveal>
 
@@ -1966,7 +2047,7 @@ export default function Welcome({
                                 </span>
 
                                 <p className="mt-6 font-display text-lg font-extrabold">
-                                    Par email
+                                    {t('Par email')}
                                 </p>
                                 {/* `break-all` : une adresse ne se coupe pas
                                     sur une espace, et une tuile de téléphone
@@ -1976,7 +2057,7 @@ export default function Welcome({
                                 </p>
 
                                 <p className="mt-auto inline-flex items-center gap-1.5 pt-8 text-sm font-semibold text-primary">
-                                    Écrire
+                                    {t('Écrire')}
                                     <ArrowRight className="size-4 transition-transform group-hover:translate-x-0.5" />
                                 </p>
                             </a>
@@ -1990,15 +2071,16 @@ export default function Welcome({
                                 </span>
 
                                 <p className="mt-6 font-display text-lg font-extrabold">
-                                    Une demande en cours ?
+                                    {t('Une demande en cours ?')}
                                 </p>
                                 <p className="mt-2 text-body text-muted-foreground">
-                                    L'assistant la retrouve avec votre référence
-                                    et vous donne son statut tout de suite.
+                                    {t(
+                                        "L'assistant la retrouve avec votre référence et vous donne son statut tout de suite.",
+                                    )}
                                 </p>
 
                                 <p className="mt-auto inline-flex items-center gap-1.5 pt-8 text-sm font-semibold text-primary">
-                                    Suivre ma demande
+                                    {t('Suivre ma demande')}
                                     <ArrowRight className="size-4 transition-transform group-hover:translate-x-0.5" />
                                 </p>
                             </Link>
@@ -2020,8 +2102,9 @@ export default function Welcome({
                             from="blur"
                             className="font-display text-display font-black"
                         >
-                            Le produit que vous cherchez est à un lien de
-                            distance.
+                            {t(
+                                'Le produit que vous cherchez est à un lien de distance.',
+                            )}
                         </Reveal>
 
                         <Button
@@ -2030,7 +2113,7 @@ export default function Welcome({
                             className="mt-14 h-16 rounded-2xl px-10 text-base shadow-xl shadow-black/10"
                         >
                             <Link href={chat()}>
-                                Envoyer un lien
+                                {t('Envoyer un lien')}
                                 <ArrowRight className="size-4" />
                             </Link>
                         </Button>
@@ -2054,14 +2137,13 @@ export default function Welcome({
                         </span>
 
                         <p className="mt-6 font-display text-subtitle font-extrabold">
-                            Un lien. Une commande. Une livraison.
+                            {t('Un lien. Une commande. Une livraison.')}
                         </p>
 
                         <p className="mt-5 max-w-sm text-muted-foreground">
-                            Shoprelle simplifie vos achats en ligne. Envoyez un
-                            lien depuis vos plateformes préférées, nous nous
-                            chargeons de l'achat, du suivi et de la livraison
-                            jusqu'à votre destination.
+                            {t(
+                                "Shoprelle simplifie vos achats en ligne. Envoyez un lien depuis vos plateformes préférées, nous nous chargeons de l'achat, du suivi et de la livraison jusqu'à votre destination.",
+                            )}
                         </p>
 
                         {socials.length > 0 && (
@@ -2089,26 +2171,26 @@ export default function Welcome({
 
                     {/* The header nav disappears below `lg`; this column is
                         where a phone gets the same anchors. */}
-                    <FooterColumn title="Le site">
+                    <FooterColumn title={t('Le site')}>
                         {NAVIGATION.map((item) => (
                             <li key={item.href}>
                                 <a
                                     href={item.href}
                                     className="transition-colors hover:text-foreground"
                                 >
-                                    {item.label}
+                                    {t(item.label)}
                                 </a>
                             </li>
                         ))}
                     </FooterColumn>
 
-                    <FooterColumn title="Commander">
+                    <FooterColumn title={t('Commander')}>
                         <li>
                             <Link
                                 href={chat()}
                                 className="transition-colors hover:text-foreground"
                             >
-                                Créer une demande
+                                {t('Créer une demande')}
                             </Link>
                         </li>
                         <li>
@@ -2116,7 +2198,7 @@ export default function Welcome({
                                 href={chat()}
                                 className="transition-colors hover:text-foreground"
                             >
-                                Suivre ma demande
+                                {t('Suivre ma demande')}
                             </Link>
                         </li>
                         {/* Deux portes, et elles n'ouvrent pas sur la même
@@ -2128,7 +2210,7 @@ export default function Welcome({
                                 href={orders()}
                                 className="transition-colors hover:text-foreground"
                             >
-                                Mes demandes et devis
+                                {t('Mes demandes et devis')}
                             </Link>
                         </li>
                         {telegramUrl && (
@@ -2139,7 +2221,7 @@ export default function Welcome({
                                     rel="noopener noreferrer"
                                     className="transition-colors hover:text-foreground"
                                 >
-                                    Sur Telegram
+                                    {t('Sur Telegram')}
                                 </a>
                             </li>
                         )}
@@ -2151,13 +2233,13 @@ export default function Welcome({
                                     rel="noopener noreferrer"
                                     className="transition-colors hover:text-foreground"
                                 >
-                                    Sur WhatsApp
+                                    {t('Sur WhatsApp')}
                                 </a>
                             </li>
                         )}
                     </FooterColumn>
 
-                    <FooterColumn title="Contact">
+                    <FooterColumn title={t('Contact')}>
                         <li>
                             <a
                                 href={`mailto:${contact.email}`}
@@ -2171,18 +2253,52 @@ export default function Welcome({
                                 href={auth.user ? dashboard() : login()}
                                 className="transition-colors hover:text-foreground"
                             >
-                                Espace équipe
+                                {t('Espace équipe')}
                             </Link>
                         </li>
                     </FooterColumn>
                 </div>
 
-                <div className={cn(SHELL, 'border-t py-7')}>
+                <div
+                    className={cn(
+                        SHELL,
+                        'flex flex-wrap items-center justify-between gap-x-6 gap-y-4 border-t py-7',
+                    )}
+                >
                     <p className="text-sm text-muted-foreground">
-                        © {new Date().getFullYear()} Shoprelle. Tous droits
-                        réservés.
+                        © {new Date().getFullYear()} Shoprelle.{' '}
+                        {t('Tous droits réservés.')}
                     </p>
+
+                    <div className="flex flex-wrap items-center gap-x-6 gap-y-4">
+                        <nav
+                            className="flex gap-5 text-sm text-muted-foreground"
+                            aria-label={t('Pages légales')}
+                        >
+                            <Link
+                                href={legalMentions()}
+                                className="transition-colors hover:text-foreground"
+                            >
+                                {t('Mentions légales')}
+                            </Link>
+                            <Link
+                                href={legalPrivacy()}
+                                className="transition-colors hover:text-foreground"
+                            >
+                                {t('Confidentialité')}
+                            </Link>
+                        </nav>
+
+                        {/* Tout à droite de la barre, comme demandé : la
+                            langue est un réglage du site, et le pied de page
+                            est l'endroit où on va la chercher. */}
+                        <LocaleSwitcher />
+                    </div>
                 </div>
+
+                {/* Le retour en haut, juste au-dessus du wordmark : on vient
+                    de finir la page, c'est ici que remonter se propose. */}
+                <ScrollToTop className="mt-4 -mb-3" />
 
                 <BrandWordmark />
             </footer>

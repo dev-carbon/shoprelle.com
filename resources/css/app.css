@@ -798,6 +798,21 @@
     background-size: 22px 22px;
 }
 
+/*
+ * Les pois du colophon (le wordmark du footer), en utilitaire : mêmes points,
+ * même densité, mais en `muted-foreground` — `bg-dots` est dessiné dans la
+ * couleur des bordures et disparaît sur un fond `muted`. C'est le fond des
+ * aperçus de conversation du chat web.
+ */
+@utility bg-dots-chat {
+    background-image: radial-gradient(
+        color-mix(in oklab, var(--color-muted-foreground) 30%, transparent)
+            1.5px,
+        transparent 1.5px
+    );
+    background-size: 14px 14px;
+}
+
 /* Des hachures à 45°, une ligne toutes les 14 px. */
 @utility bg-diagonals {
     background-image: repeating-linear-gradient(

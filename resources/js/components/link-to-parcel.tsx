@@ -9,10 +9,13 @@ import {
 import { useRef, useState } from 'react';
 import type { ComponentProps, ReactNode } from 'react';
 
+import { AssistantConversation } from '@/components/assistant-conversation';
 import {
     MARKETPLACE_COLORS,
     MARKETPLACE_LOGOS,
 } from '@/components/marketplace-logos';
+import { useTranslations } from '@/hooks/use-translations';
+import type { Translator } from '@/hooks/use-translations';
 import jacket from '@/images/products/veste-matelassee.webp';
 import { cn } from '@/lib/utils';
 
@@ -148,13 +151,19 @@ type StageDefinition = {
     visual: ReactNode;
 };
 
-const STAGES: StageDefinition[] = [
+/**
+ * Les quatre étapes, construites avec le traducteur de la page : les textes
+ * vivent dans des nœuds JSX déclarés hors composant, où aucun hook ne peut
+ * être appelé.
+ */
+const buildStages = (t: Translator): StageDefinition[] => [
     {
-        label: 'Lien',
-        title: 'Vous collez le lien',
-        caption:
+        label: t('Lien'),
+        title: t('Vous collez le lien'),
+        caption: t(
             "L'assistant reconnaît la plateforme et retrouve le produit. Vous n'avez rien d'autre à saisir.",
-        confirmation: 'Produit détecté',
+        ),
+        confirmation: t('Produit détecté'),
         visual: (
             <Stage>
                 {/* Le champ tel qu'il est en haut de page, pour que la
@@ -177,46 +186,43 @@ const STAGES: StageDefinition[] = [
                     </span>
 
                     <p className="text-sm text-muted-foreground">
-                        Plateforme reconnue automatiquement
+                        {t('Plateforme reconnue automatiquement')}
                     </p>
                 </div>
             </Stage>
         ),
     },
     {
-        label: 'Détails',
-        title: 'Trois questions, pas un formulaire',
-        caption:
+        label: t('Détails'),
+        title: t('Trois questions, pas un formulaire'),
+        caption: t(
             'La couleur, la taille, la quantité. Vous répondez en un mot, ou vous choisissez dans la liste proposée.',
-        confirmation: 'Détails enregistrés',
+        ),
+        confirmation: t('Détails enregistrés'),
         visual: (
-            <Stage className="space-y-4">
-                {[
-                    { question: 'Quelle couleur ?', answer: 'Noir' },
-                    { question: 'Quelle taille ?', answer: 'XL' },
-                    { question: 'Combien ?', answer: '×1' },
-                ].map((exchange) => (
-                    <div
-                        key={exchange.question}
-                        className="flex items-center justify-between gap-4"
-                    >
-                        <p className="rounded-2xl rounded-tl-md border bg-card px-4 py-2 text-sm">
-                            {exchange.question}
-                        </p>
-                        <p className="rounded-2xl rounded-tr-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground">
-                            {exchange.answer}
-                        </p>
-                    </div>
-                ))}
+            // La même conversation que la carte « Chat web » de la section
+            // assistant, par le composant partagé : la page ne raconte qu'un
+            // seul dialogue, ici comme là-bas. Les pois vivent sur leur propre
+            // couche : posés dans la même classe que le fond, tailwind-merge
+            // les prend pour une couleur et jette le `bg-muted` du panneau.
+            <Stage className="relative overflow-hidden">
+                <div
+                    aria-hidden
+                    className="pointer-events-none absolute inset-0 bg-dots-chat"
+                />
+                <div className="relative space-y-3">
+                    <AssistantConversation bubbleClassName="px-4 text-sm" />
+                </div>
             </Stage>
         ),
     },
     {
-        label: 'Devis',
-        title: 'Le prix, détaillé avant de payer',
-        caption:
+        label: t('Devis'),
+        title: t('Le prix, détaillé avant de payer'),
+        caption: t(
             'Le produit et le transport au poids réel, séparés. Vous validez, ou vous ne validez pas — rien n’est acheté avant.',
-        confirmation: 'Devis envoyé pour validation',
+        ),
+        confirmation: t('Devis envoyé pour validation'),
         visual: (
             <Stage>
                 <div className="flex items-center gap-4">
@@ -232,28 +238,29 @@ const STAGES: StageDefinition[] = [
 
                     <div className="min-w-0">
                         <p className="truncate font-display font-extrabold">
-                            Veste matelassée
+                            {t('Veste matelassée')}
                         </p>
                         <p className="mt-0.5 truncate text-sm text-muted-foreground">
-                            Noir · XL · ×1
+                            {t('Noir · XL · ×1')}
                         </p>
                     </div>
                 </div>
 
                 <div className="mt-6 space-y-3">
-                    <QuoteLine label="Produit" amount="19 500" />
-                    <QuoteLine label="Transport (0,9 kg)" amount="5 000" />
-                    <QuoteLine label="Total" amount="24 500" total />
+                    <QuoteLine label={t('Produit')} amount="19 500" />
+                    <QuoteLine label={t('Transport (0,9 kg)')} amount="5 000" />
+                    <QuoteLine label={t('Total')} amount="24 500" total />
                 </div>
             </Stage>
         ),
     },
     {
-        label: 'Livraison',
-        title: 'Votre colis, suivi par sa référence',
-        caption:
+        label: t('Livraison'),
+        title: t('Votre colis, suivi par sa référence'),
+        caption: t(
             'Une référence suffit pour savoir où il en est, à tout moment, sans compte ni mot de passe.',
-        confirmation: 'En route vers Douala',
+        ),
+        confirmation: t('En route vers Douala'),
         visual: (
             <Stage>
                 <div className="flex items-center justify-between gap-4">
@@ -292,7 +299,7 @@ const STAGES: StageDefinition[] = [
                 </div>
 
                 <p className="mt-5 text-sm text-muted-foreground">
-                    Expédié le 12 juillet · arrivée estimée sous 5 jours
+                    {t('Expédié le 12 juillet · arrivée estimée sous 5 jours')}
                 </p>
             </Stage>
         ),
@@ -300,6 +307,9 @@ const STAGES: StageDefinition[] = [
 ];
 
 export function LinkToParcel({ className, ...props }: ComponentProps<'div'>) {
+    const t = useTranslations();
+    const stages = buildStages(t);
+
     const [active, setActive] = useState(0);
 
     /**
@@ -320,7 +330,7 @@ export function LinkToParcel({ className, ...props }: ComponentProps<'div'>) {
     const tabs = useRef<(HTMLButtonElement | null)[]>([]);
 
     /** L'étape suivante. Appelée par la jauge, qui est l'horloge — voir plus bas. */
-    const advance = () => setActive((current) => (current + 1) % STAGES.length);
+    const advance = () => setActive((current) => (current + 1) % stages.length);
 
     /** Aller à une étape. Le compte à rebours repart de zéro sur celle-là. */
     const select = (index: number) => setActive(index);
@@ -335,7 +345,7 @@ export function LinkToParcel({ className, ...props }: ComponentProps<'div'>) {
 
         event.preventDefault();
 
-        const next = (active + step + STAGES.length) % STAGES.length;
+        const next = (active + step + stages.length) % stages.length;
 
         select(next);
         tabs.current[next]?.focus();
@@ -354,7 +364,9 @@ export function LinkToParcel({ className, ...props }: ComponentProps<'div'>) {
             {/* Visible, et pas seulement annoncé : tout ce qui suit est un
                 exemple, et un devis qui a l'air vrai sur une page de vente est
                 la seule chose que ce site ne peut pas se permettre. */}
-            <p className="text-xs text-muted-foreground">Exemple de parcours</p>
+            <p className="text-xs text-muted-foreground">
+                {t('Exemple de parcours')}
+            </p>
 
             {/*
              * Les quatre libellés côte à côte à partir de `sm` ; sur un
@@ -379,11 +391,11 @@ export function LinkToParcel({ className, ...props }: ComponentProps<'div'>) {
             <div className="mt-7 flex items-center gap-4">
                 <ol
                     role="tablist"
-                    aria-label="Les étapes d'une commande"
+                    aria-label={t("Les étapes d'une commande")}
                     onKeyDown={onKeyDown}
                     className="grid min-w-0 flex-1 grid-cols-1 gap-x-4 sm:grid-cols-4 sm:gap-x-6"
                 >
-                    {STAGES.map((item, index) => {
+                    {stages.map((item, index) => {
                         const done = index < active;
                         const current = index === active;
 
@@ -453,9 +465,9 @@ export function LinkToParcel({ className, ...props }: ComponentProps<'div'>) {
                 <div className="flex shrink-0 gap-2 sm:hidden">
                     <button
                         type="button"
-                        aria-label="Étape précédente"
+                        aria-label={t('Étape précédente')}
                         onClick={() =>
-                            select((active - 1 + STAGES.length) % STAGES.length)
+                            select((active - 1 + stages.length) % stages.length)
                         }
                         className="flex size-8 items-center justify-center rounded-full border text-muted-foreground transition-colors hover:bg-accent hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
                     >
@@ -463,8 +475,8 @@ export function LinkToParcel({ className, ...props }: ComponentProps<'div'>) {
                     </button>
                     <button
                         type="button"
-                        aria-label="Étape suivante"
-                        onClick={() => select((active + 1) % STAGES.length)}
+                        aria-label={t('Étape suivante')}
+                        onClick={() => select((active + 1) % stages.length)}
                         className="flex size-8 items-center justify-center rounded-full border text-muted-foreground transition-colors hover:bg-accent hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
                     >
                         <ChevronRight className="size-4" />
@@ -506,7 +518,7 @@ export function LinkToParcel({ className, ...props }: ComponentProps<'div'>) {
              * sélectionné dit déjà, et le ferait en continu.
              */}
             <div aria-hidden className="mt-7 flex gap-1.5">
-                {STAGES.map((item, index) => (
+                {stages.map((item, index) => (
                     <span
                         key={item.label}
                         className="h-1.5 flex-1 overflow-hidden rounded-full bg-border"
@@ -577,7 +589,7 @@ export function LinkToParcel({ className, ...props }: ComponentProps<'div'>) {
              * translation comprise.
              */}
             <div className="mt-9 grid">
-                {STAGES.map((item, index) => (
+                {stages.map((item, index) => (
                     <div
                         key={item.label}
                         role="tabpanel"

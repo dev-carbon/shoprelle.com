@@ -4,8 +4,10 @@ import {
     Globe,
     Inbox,
     LayoutGrid,
+    Megaphone,
     MessagesSquare,
     PackageSearch,
+    ScrollText,
     Settings,
     ShoppingBag,
     Star,
@@ -26,7 +28,9 @@ import {
 } from '@/components/ui/sidebar';
 import { dashboard, home } from '@/routes';
 import { statistics } from '@/routes/admin';
+import { edit as bannerEdit } from '@/routes/admin/banner';
 import { index as customersIndex } from '@/routes/admin/customers';
+import { index as logsIndex } from '@/routes/admin/logs';
 import { index as messagesIndex } from '@/routes/admin/messages';
 import { index as productsIndex } from '@/routes/admin/products';
 import { index as requestsIndex } from '@/routes/admin/requests';
@@ -57,6 +61,11 @@ const mainNavItems: NavItem[] = [
         icon: ShoppingBag,
     },
     {
+        title: 'Bandeau',
+        href: bannerEdit(),
+        icon: Megaphone,
+    },
+    {
         title: 'Messages',
         href: messagesIndex(),
         icon: Inbox,
@@ -70,6 +79,11 @@ const mainNavItems: NavItem[] = [
         title: 'Statistiques',
         href: statistics(),
         icon: ChartNoAxesColumn,
+    },
+    {
+        title: 'Journal',
+        href: logsIndex(),
+        icon: ScrollText,
     },
     {
         title: 'Paramètres',

@@ -2,6 +2,7 @@ import { BadgeCheck, Check } from 'lucide-react';
 import type { ComponentProps } from 'react';
 
 import { useSlideshow } from '@/hooks/use-slideshow';
+import { useTranslations } from '@/hooks/use-translations';
 import delivered from '@/images/colis-livre.webp';
 import ordering from '@/images/commande-telephone.webp';
 import family from '@/images/famille-colis.webp';
@@ -72,6 +73,8 @@ export function HeroShowcase({
     /** Deux ou trois codes alpha-2, pour les drapeaux de la vignette basse. */
     destinationCodes: string[];
 } & Omit<ComponentProps<'div'>, 'children'>) {
+    const t = useTranslations();
+
     const { current, setCurrent, holdHandlers } = useSlideshow(
         PHOTOS.length,
         PHOTO_DURATION_MS,
@@ -103,7 +106,7 @@ export function HeroShowcase({
                         <img
                             key={photo.src}
                             src={photo.src}
-                            alt={photo.alt}
+                            alt={t(photo.alt)}
                             width={1200}
                             height={655}
                             // La première photo est ce que le navigateur peint
@@ -187,7 +190,7 @@ export function HeroShowcase({
                         <div>
                             <p className="flex items-center gap-1.5 text-xs font-semibold text-success">
                                 <Check className="size-3.5" />
-                                Devis validé
+                                {t('Devis validé')}
                             </p>
                             <p className="mt-1 font-display text-sm font-extrabold tabular-nums">
                                 24 500 XAF
@@ -203,7 +206,7 @@ export function HeroShowcase({
 
                         <div>
                             <p className="font-display text-sm font-extrabold tabular-nums">
-                                {countries} pays desservis
+                                {countries} {t('pays desservis')}
                             </p>
                             <p
                                 aria-hidden

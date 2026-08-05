@@ -10,6 +10,7 @@ import {
     SheetTitle,
     SheetTrigger,
 } from '@/components/ui/sheet';
+import { useTranslations } from '@/hooks/use-translations';
 import { index as orders } from '@/routes/orders';
 
 /**
@@ -33,10 +34,12 @@ export function MobileNav({
 }: {
     items: { href: string; label: string }[];
 }) {
+    const t = useTranslations();
+
     return (
         <Sheet>
             <SheetTrigger
-                aria-label="Ouvrir le menu"
+                aria-label={t('Ouvrir le menu')}
                 className="inline-flex size-9 items-center justify-center rounded-md text-muted-foreground transition-colors outline-none hover:bg-accent hover:text-accent-foreground focus-visible:ring-[3px] focus-visible:ring-ring/50 lg:hidden"
             >
                 <Menu className="size-5" />
@@ -53,7 +56,7 @@ export function MobileNav({
                 </SheetHeader>
 
                 <nav
-                    aria-label="Sections du site"
+                    aria-label={t('Sections du site')}
                     className="flex flex-col p-4"
                 >
                     {items.map((item) => (
@@ -62,7 +65,7 @@ export function MobileNav({
                                 href={item.href}
                                 className="rounded-xl px-3 py-3.5 font-display text-lg font-extrabold transition-colors hover:bg-accent"
                             >
-                                {item.label}
+                                {t(item.label)}
                             </a>
                         </SheetClose>
                     ))}

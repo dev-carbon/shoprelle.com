@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Product;
 use App\Models\Review;
+use App\Models\Setting;
 use App\Services\AcceptedPayments;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -20,6 +21,8 @@ class HomeController extends Controller
     public function __invoke(): Response
     {
         return Inertia::render('welcome', [
+            'translations' => $this->translations(),
+            'promoBanner' => $this->promoBanner(),
             'contact' => [
                 'email' => config('shoprelle.contact.email'),
                 'responseTime' => config('shoprelle.contact.response_time'),
@@ -37,6 +40,50 @@ class HomeController extends Controller
             'paymentMethods' => AcceptedPayments::announced(),
             'products' => $this->products(),
         ]);
+    }
+
+    /**
+     * Le message du bandeau de promotion, déjà dans la langue de la session.
+     *
+     * Ce que le back-office a enregistré prime sur le défaut de
+     * configuration ; désactivé, la vitrine ne reçoit rien du tout — le
+     * bandeau n'existe pas plutôt que d'exister vide.
+     */
+    private function promoBanner(): ?string
+    {
+        $banner = Setting::valueFor('promo_banner', config('shoprelle.promo_banner'));
+
+        if (! ($banner['enabled'] ?? false)) {
+            return null;
+        }
+
+        $message = app()->getLocale() === 'en' && ($banner['message_en'] ?? '') !== ''
+            ? $banner['message_en']
+            : ($banner['message'] ?? '');
+
+        return $message === '' ? null : $message;
+    }
+
+    /**
+     * Le dictionnaire de la vitrine pour la langue courante.
+     *
+     * Les clés sont les textes français eux-mêmes : en français le
+     * dictionnaire est vide et chaque appel à t() rend sa clé, et une entrée
+     * manquante en anglais laisse la phrase en français plutôt que de casser
+     * la page. Seule la vitrine est traduite pour l'instant — c'est pourquoi
+     * le dictionnaire est un prop de cette page et non un partage global.
+     *
+     * @return array<string, string>|object
+     */
+    private function translations(): array|object
+    {
+        $dictionary = lang_path(app()->getLocale().'.json');
+
+        if (app()->getLocale() === 'fr' || ! is_file($dictionary)) {
+            return (object) [];
+        }
+
+        return json_decode((string) file_get_contents($dictionary), true) ?? (object) [];
     }
 
     /**

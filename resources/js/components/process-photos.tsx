@@ -1,5 +1,6 @@
 import { Reveal } from '@/components/reveal';
 import { useSlideshow } from '@/hooks/use-slideshow';
+import { useTranslations } from '@/hooks/use-translations';
 import {
     CONVERSATION_SLOT,
     PHOTO_SLOTS,
@@ -70,6 +71,8 @@ function Brief({
 const SHOT_DURATION_MS = 4000;
 
 export function ConversationShot({ className }: { className?: string }) {
+    const t = useTranslations();
+
     const shots = conversationShots();
     const { current, setCurrent, holdHandlers } = useSlideshow(
         shots.length,
@@ -99,7 +102,7 @@ export function ConversationShot({ className }: { className?: string }) {
                                 <img
                                     key={shot.src}
                                     src={shot.src}
-                                    alt={shot.alt}
+                                    alt={t(shot.alt)}
                                     // Le premier écran est celui qu'on voit
                                     // arriver ; les suivants attendent leur
                                     // tour et peuvent se charger plus tard.
@@ -149,6 +152,8 @@ export function ConversationShot({ className }: { className?: string }) {
 }
 
 export function ProcessPhotos({ className }: { className?: string }) {
+    const t = useTranslations();
+
     const photos = PHOTO_SLOTS.map((slot) => ({
         slot,
         src: photoFor(slot),
@@ -219,10 +224,10 @@ export function ProcessPhotos({ className }: { className?: string }) {
 
                     <figcaption className="mt-7">
                         <p className="font-display text-lg font-extrabold">
-                            {slot.title}
+                            {t(slot.title)}
                         </p>
                         <p className="mt-3 text-body text-muted-foreground">
-                            {slot.caption}
+                            {t(slot.caption)}
                         </p>
                     </figcaption>
                 </Reveal>

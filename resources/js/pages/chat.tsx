@@ -115,17 +115,20 @@ export default function Chat({ conversation }: Props) {
         // the transcript owns the scrolling, which is what lets it be scrolled
         // to the newest message. On `min-h-svh` the page grew instead, the
         // transcript never overflowed, and scrollTo had nothing to move.
-        <div className="relative flex h-svh flex-col bg-background">
+        // Le même fond que les mocks de conversation de la vitrine : la teinte
+        // `muted` sous les pois. L'en-tête et la barre de saisie gardent leur
+        // fond propre et se détachent dessus.
+        <div className="relative flex h-svh flex-col bg-muted/50">
             <Head title="Votre concierge d'achat" />
 
-            {/* Le réseau de losanges, qui n'appartient qu'à cet écran : les
-                autres trames du site disent « fond de page », celle-ci dit
-                l'endroit où la demande se fabrique. Masquée en dégradé, comme
-                partout ailleurs — une trame qui s'arrête net sur un bord se lit
-                comme un défaut d'affichage. */}
+            {/* Les pois du wordmark du footer, en fond du chat : la texture
+                d'un fil de discussion — les losanges disaient « atelier », les
+                pois disent « conversation ». Masqués en dégradé, comme partout
+                ailleurs — une trame qui s'arrête net sur un bord se lit comme
+                un défaut d'affichage. */}
             <div
                 aria-hidden
-                className="pointer-events-none absolute inset-0 bg-geo [mask-image:radial-gradient(95%_75%_at_50%_38%,black,transparent)] opacity-70"
+                className="pointer-events-none absolute inset-0 bg-dots-chat [mask-image:radial-gradient(95%_75%_at_50%_38%,black,transparent)] opacity-70"
             />
 
             <header className="relative shrink-0 border-b bg-background">
