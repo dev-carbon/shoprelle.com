@@ -144,6 +144,90 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Promo Banner
+    |--------------------------------------------------------------------------
+    |
+    | Le bandeau au-dessus de la vitrine. Ceci n'est que le point de départ :
+    | dès que quelqu'un enregistre l'écran « Bandeau » du back-office, c'est
+    | la ligne `promo_banner` de la table settings qui fait foi, sans
+    | déploiement. Le message anglais est servi quand la vitrine est en
+    | anglais ; vide, le français s'affiche pour tout le monde.
+    |
+    */
+
+    'promo_banner' => [
+        'enabled' => true,
+        'message' => '-50 % sur la livraison de votre première commande',
+        'message_en' => '50% off delivery on your first order',
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Locales
+    |--------------------------------------------------------------------------
+    |
+    | The languages the visitor can pick from the footer. French is the
+    | application's locale; English exists for the storefront only for now —
+    | its dictionary is lang/en.json, keyed by the French source strings, and
+    | anything missing there simply stays in French.
+    |
+    */
+
+    'locales' => [
+        'fr' => 'Français',
+        'en' => 'English',
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Legal
+    |--------------------------------------------------------------------------
+    |
+    | What the legal pages display. The publisher is the person behind the
+    | service — the name is public on the site by definition, so it lives here
+    | rather than in an environment file someone could forget to fill on the
+    | server. The variable is the override for the day the immatriculation
+    | turns it into a company name.
+    |
+    */
+
+    'legal' => [
+        'publisher' => env('SHOPRELLE_LEGAL_PUBLISHER', 'Farelle KEMENE'),
+
+        'publisher_email' => 'farelle.kemene@shoprelle.com',
+
+        'developer' => 'Hugues TCHOUALA',
+
+        'developer_email' => 'hugues.tchouala@shoprelle.com',
+
+        'contact_email' => 'contact@shoprelle.com',
+
+        'host' => [
+            'name' => 'IONOS SARL',
+            'address' => '7 place de la Gare, BP 70109, 57201 Sarreguemines Cedex, France',
+            'website' => 'https://www.ionos.fr',
+        ],
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Backups
+    |--------------------------------------------------------------------------
+    |
+    | Where `shoprelle:backup` writes its nightly archives of the database and
+    | the customer screenshots. Kept out of `storage/app` so an archive never
+    | ends up containing the previous ones. Point the variable at another
+    | mount — or a directory synchronized off the server — to survive more
+    | than an application mistake.
+    |
+    */
+
+    'backups' => [
+        'directory' => env('SHOPRELLE_BACKUP_DIRECTORY', storage_path('backups')),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Chatbot
     |--------------------------------------------------------------------------
     |

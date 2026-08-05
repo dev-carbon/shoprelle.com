@@ -20,7 +20,7 @@ class ProductFactory extends Factory
         $marketplace = fake()->randomElement(Marketplace::cases());
 
         return [
-            'name' => ucfirst(fake()->words(3, true)),
+            'name' => rtrim(fake()->sentence(3), '.'),
             'image_path' => 'products/'.fake()->uuid().'.webp',
             'marketplace' => $marketplace,
             'category' => fake()->randomElement(ProductCategory::cases()),

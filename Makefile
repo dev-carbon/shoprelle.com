@@ -76,6 +76,10 @@ deploy:
 	php artisan optimize:clear
 	npm ci && npm run build && npm prune --omit=dev
 	php artisan migrate --force
+	# Les photos produits sont servies depuis public/storage, un lien symbolique
+	# que rien ne crée sur un serveur fraîchement installé : sans lui, chaque
+	# image uploadée répond 404. --force le recrée sans broncher s'il existe.
+	php artisan storage:link --force
 	php artisan optimize
 	# Les notifications d'achat implémentent ShouldQueue sur la file `database` :
 	# sans ce redémarrage le worker continue d'exécuter l'ancien code.
